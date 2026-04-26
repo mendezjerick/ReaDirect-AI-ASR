@@ -1,0 +1,12 @@
+{
+  "audio_path": "data/samples/sample.wav",
+  "expected_text": "cat",
+  "accepted_answers": [
+    "cat"
+  ],
+  "prompt_id": "M2-001",
+  "module_key": "module_2",
+  "activity_type": "read_word",
+  "learner_history": [],
+  "debug": false
+}

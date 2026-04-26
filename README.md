@@ -488,3 +488,48 @@ For this reason, ReaDirect uses a hybrid AI architecture instead of relying only
 - Use adaptive recommendations with Laravel eligibility rules.
 - Optionally convert the fine-tuned model to faster-whisper/CTranslate2 format.
 - Evaluate the model on real pilot data later with consent.
+
+## Final Laravel Integration Readiness
+
+The AI service is designed to remain a separate Python service. The main Laravel repository does not need Speechocean762, training manifests, training JSONL files, checkpoints, or external dataset files.
+
+Runtime needs:
+
+- AI service code from this repository.
+- selected model artifact under `model_artifacts/`, such as `model_artifacts/readirect-whisper-base-en-v1-hf/`.
+- CMUdict files under `external_datasets/cmudict/`.
+- content metadata from `data/manifests/content_index.csv` or `content_bank_enriched/enriched_content_index.csv`.
+- Laravel API contract and `.env` variables.
+
+Validate service readiness:
+
+```powershell
+python scripts/validate_ai_service_startup.py
+```
+
+Start local development service:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/start_ai_service_dev.ps1
+```
+
+Test Laravel-facing contract:
+
+```powershell
+python scripts/test_laravel_contract.py --base-url http://127.0.0.1:8001
+```
+
+Export the Laravel integration package:
+
+```powershell
+python scripts/export_laravel_integration_package.py --output-dir exports/readirect-ai-laravel-integration --zip-output exports/readirect-ai-laravel-integration.zip
+```
+
+The export package includes API documentation, Laravel `.env` examples, request/response examples, deployment notes, and optional enriched content. It excludes external datasets and model artifacts by default.
+
+Suggested main Laravel destinations:
+
+- docs: `ReaDirect/docs/ai-service/`
+- env variables: `ReaDirect/.env` and `ReaDirect/.env.example`
+- enriched content ZIP: `ReaDirect/content-bank/import/readirect-enriched-content.zip`
+- reviewed enriched CSVs: `ReaDirect/database/seed-data/readirect/enriched/`

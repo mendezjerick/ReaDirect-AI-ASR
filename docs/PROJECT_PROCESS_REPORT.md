@@ -95,3 +95,5 @@ This design supports a reading-tutor workflow rather than a simple correct/incor
 GitHub includes source code, scripts, configs, tests, documentation, and safe placeholders. GitHub excludes dataset archives, extracted audio, generated manifests, generated reports, model checkpoints, model artifacts, `.env`, private learner data, and real learner audio.
 
 To reproduce the workflow locally, install dependencies, place Speechocean762 in `external_datasets/speechocean762/raw/`, build the manifest, run baseline ASR, prepare Whisper JSONL files, train manually, and evaluate the fine-tuned model.
+
+For Laravel deployment, external training datasets are not imported into the main repository. Runtime only needs the AI service code, selected model artifact, CMUdict, content metadata/enriched CSVs, and the API contract.

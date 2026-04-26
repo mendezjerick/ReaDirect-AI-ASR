@@ -1,0 +1,17 @@
+{
+  "learner_history": [
+    {
+      "error_type": "final_sound_error",
+      "skill_signal": "final_consonant",
+      "is_correct": false
+    }
+  ],
+  "candidate_items": [
+    {
+      "prompt_id": "M2-014",
+      "expected_text": "hat",
+      "error_focus": "final_consonant",
+      "difficulty_level": "easy"
+    }
+  ]
+}

@@ -38,9 +38,14 @@ def get_config() -> dict[str, Any]:
     config["analysis"]["enriched_content_index_path"] = os.getenv("ENRICHED_CONTENT_INDEX_PATH", config["analysis"].get("enriched_content_index_path", "content_bank_enriched/enriched_content_index.csv"))
     config["asr"]["provider"] = os.getenv("ASR_PROVIDER", config["asr"].get("provider", "mock"))
     config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "base.en"))
+    config["asr"]["pretrained_model_size"] = os.getenv("ASR_PRETRAINED_MODEL_SIZE", config["asr"].get("pretrained_model_size", config["asr"].get("model_size", "base.en")))
+    config["asr"]["hf_model_path"] = os.getenv("ASR_HF_MODEL_PATH", config["asr"].get("hf_model_path", "model_artifacts/readirect-whisper-base-en-v1-hf"))
+    config["asr"]["ct2_model_path"] = os.getenv("ASR_CT2_MODEL_PATH", config["asr"].get("ct2_model_path", "model_artifacts/readirect-whisper-base-en-v1-ct2"))
     config["asr"]["device"] = os.getenv("ASR_DEVICE", config["asr"].get("device", "cpu"))
     config["asr"]["compute_type"] = os.getenv("ASR_COMPUTE_TYPE", config["asr"].get("compute_type", "int8"))
+    config["asr"]["use_fp16"] = os.getenv("ASR_USE_FP16", str(config["asr"].get("use_fp16", False))).lower() in {"1", "true", "yes"}
     config["asr"]["language"] = os.getenv("ASR_LANGUAGE", config["asr"].get("language", "en"))
+    config["asr"]["task"] = os.getenv("ASR_TASK", config["asr"].get("task", "transcribe"))
     config["asr"]["beam_size"] = int(os.getenv("ASR_BEAM_SIZE", str(config["asr"].get("beam_size", 1))))
     return config
 

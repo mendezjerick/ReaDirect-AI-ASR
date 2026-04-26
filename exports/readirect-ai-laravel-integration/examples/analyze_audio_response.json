@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "request_id": "uuid",
+  "transcript": "cat",
+  "normalized_transcript": "cat",
+  "provider": "hf_whisper_local",
+  "expected_text": "cat",
+  "is_correct": true,
+  "similarity_label": "exact",
+  "error_type": "correct",
+  "warnings": [],
+  "error": null
+}

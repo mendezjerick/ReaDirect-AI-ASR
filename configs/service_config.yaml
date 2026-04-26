@@ -14,8 +14,13 @@ analysis:
 
 asr:
   provider: mock
+  hf_model_path: model_artifacts/readirect-whisper-base-en-v1-hf
+  ct2_model_path: model_artifacts/readirect-whisper-base-en-v1-ct2
+  pretrained_model_size: base.en
   model_size: base.en
-  device: cpu
-  compute_type: int8
+  device: cuda
+  compute_type: float16
+  use_fp16: true
   language: en
+  task: transcribe
   timeout_seconds: 60

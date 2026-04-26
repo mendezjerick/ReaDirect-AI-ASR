@@ -1,0 +1,26 @@
+local_development:
+  api_base_url: http://127.0.0.1:8001
+  auth_enabled: false
+  asr_provider: mock
+  notes: Use mock for tests and collaborators without model artifacts.
+
+production_same_server:
+  api_host: 127.0.0.1
+  api_port: 8001
+  auth_enabled: true
+  asr_provider: hf_whisper_local
+  hf_model_path: model_artifacts/readirect-whisper-base-en-v1-hf
+  laravel_base_url: http://127.0.0.1:8000
+
+production_separate_ai_server:
+  api_host: 0.0.0.0
+  api_port: 8001
+  auth_enabled: true
+  asr_provider: hf_whisper_local
+  hf_model_path: /opt/readirect-ai/model_artifacts/readirect-whisper-base-en-v1-hf
+  laravel_base_url: https://your-readirect-host.example
+
+optional_converted_faster_whisper:
+  asr_provider: faster_whisper_local
+  ct2_model_path: model_artifacts/readirect-whisper-base-en-v1-ct2
+  compute_type: float16
