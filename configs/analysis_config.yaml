@@ -1,0 +1,26 @@
+similarity_thresholds:
+  very_close: 0.80
+  close: 0.60
+  somewhat_close: 0.40
+
+enabled_error_types:
+  - correct
+  - accepted_variant
+  - blank
+  - very_close_text_error
+  - initial_sound_error
+  - final_sound_error
+  - vowel_error
+  - consonant_error
+  - substitution
+  - omission
+  - insertion
+  - skipped_word
+  - word_order_error
+  - partial_sentence
+  - far_answer
+  - unclear_asr
+  - incorrect_general
+
+feedback_hint_mode: template_keys
+analysis_source: heuristic_transcript_phoneme

@@ -1,0 +1,20 @@
+id,mode,agent_type,context_key,is_correct,error_type,similarity_label,message,state,is_active
+ACT-001,assessment_neutral,assessment,task_answer,any,any,any,Thank you. Let us continue.,speaking,1
+ACT-002,assessment_neutral,assessment,task_answer,any,any,any,Good effort. Let us go to the next one.,speaking,1
+ACT-003,assessment_neutral,assessment,task_answer,any,any,any,I heard your answer. Let us keep going.,speaking,1
+ACT-004,module_coaching,coach_feedback,practice,1,correct,exact,Great job! You got it.,happy,1
+ACT-005,module_coaching,coach_feedback,practice,1,correct,exact,Nice reading! Let us keep going.,happy,1
+ACT-006,module_coaching,coach_feedback,practice,0,incorrect_general,very_close,Good try! That was very close. Let us fix one small sound.,encouraging,1
+ACT-007,module_coaching,coach_feedback,practice,0,incorrect_general,close,Great effort! You are getting close. Let us try it slowly.,encouraging,1
+ACT-008,module_coaching,coach_feedback,practice,0,incorrect_general,far,Good effort! Let us listen again and try one more time.,thinking,1
+ACT-009,module_coaching,coach_feedback,practice,0,blank,blank,Let us try this one first.,encouraging,1
+ACT-010,module_coaching,coach_feedback,practice,0,final_sound_error,any,Good try! Listen to the ending sound and try again.,encouraging,1
+ACT-011,module_coaching,coach_feedback,practice,0,initial_sound_error,any,Good effort! Let us listen to the first sound.,encouraging,1
+ACT-012,module_coaching,coach_feedback,practice,0,vowel_error,any,Nice try! Let us listen to the middle sound.,encouraging,1
+ACT-013,module_coaching,coach_feedback,practice,0,skipped_word,any,Good effort! Let us read each word from left to right.,encouraging,1
+ACT-014,evaluator_summary,evaluator,move_to_module_2,any,any,any,You are moving to Module 2. Now we will practice reading words.,pointing,1
+ACT-015,evaluator_summary,evaluator,move_to_module_3,any,any,any,You are moving to Module 3. Now we will practice sentences.,pointing,1
+ACT-016,evaluator_summary,evaluator,repeat_module,any,any,any,Good effort. We will practice this module again.,pointing,1
+ACT-017,evaluator_summary,evaluator,extra_drills,any,any,any,We will do extra sound practice to get stronger.,pointing,1
+ACT-018,evaluator_summary,evaluator,proceed_to_reassessment,any,any,any,Great work. You are ready for the next reading check.,celebrating,1
+ACT-019,evaluator_summary,evaluator,no_module_needed,any,any,any,Great work. Your reading path is complete for now.,celebrating,1

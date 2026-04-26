@@ -1,0 +1,9 @@
+id,crla_level,reading_classification,assigned_module,decision_key,description,is_active
+MP-001,Full Refresher,ANY,Module 1,assign_module_1,CRLA refresher levels start with Letter and Sound Learning.,1
+MP-002,Moderate Refresher,ANY,Module 1,assign_module_1,CRLA refresher levels start with Letter and Sound Learning.,1
+MP-003,Light Refresher,ANY,Module 1,assign_module_1,CRLA refresher levels start with Letter and Sound Learning.,1
+MP-004,Grade Ready,Low Emerging Reader,Module 2,assign_module_2,Grade Ready learners with low emerging reading move to Word Reading.,1
+MP-005,Grade Ready,High Emerging Reader,Module 2,assign_module_2,Grade Ready learners with high emerging reading move to Word Reading.,1
+MP-006,Grade Ready,Developing Reader,Module 3,assign_module_3,Grade Ready learners with developing reading move to Sentence Reading and Fluency.,1
+MP-007,Grade Ready,Transitioning Reader,Module 3,assign_module_3,Grade Ready learners with transitioning reading move to Sentence Reading and Fluency.,1
+MP-008,Grade Ready,Reading at Grade Level,No module needed,no_module_needed,Grade Ready learners at grade level do not need an assigned module.,1

@@ -1,0 +1,21 @@
+id,sequence,content_type,sentence_text,target_word,expected_answer,accepted_answers,difficulty,points,is_active
+T2B-W001,1,word_sentence,I see a cat.,cat,cat,"cat",easy,1,1
+T2B-W002,2,word_sentence,The dog can run.,dog,dog,"dog",easy,1,1
+T2B-W003,3,word_sentence,We sit in the sun.,sun,sun,"sun",easy,1,1
+T2B-W004,4,word_sentence,My hat is blue.,hat,hat,"hat",easy,1,1
+T2B-W005,5,word_sentence,I have a pen.,pen,pen,"pen",easy,1,1
+T2B-W006,6,word_sentence,A bug is on the leaf.,bug,bug,"bug",easy,1,1
+T2B-W007,7,word_sentence,The cup is full.,cup,cup,"cup",easy,1,1
+T2B-W008,8,word_sentence,The red ball rolls.,red,red,"red",easy,1,1
+T2B-W009,9,word_sentence,Put the toy in the box.,box,box,"box",easy,1,1
+T2B-W010,10,word_sentence,The fish can swim.,fish,fish,"fish",easy,1,1
+T2B-W011,11,word_sentence,I kick the ball.,ball,ball,"ball",easy,1,1
+T2B-W012,12,word_sentence,The bed is soft.,bed,bed,"bed",easy,1,1
+T2B-W013,13,word_sentence,The moon is bright.,moon,moon,"moon",easy,1,1
+T2B-W014,14,word_sentence,A bird sits in the tree.,tree,tree,"tree",easy,1,1
+T2B-W015,15,word_sentence,Read the book with me.,book,book,"book",easy,1,1
+T2B-W016,16,word_sentence,Dad drives the car.,car,car,"car",easy,1,1
+T2B-W017,17,word_sentence,Wash your hand.,hand,hand,"hand",easy,1,1
+T2B-W018,18,word_sentence,The rock is gray.,rock,rock,"rock",easy,1,1
+T2B-W019,19,word_sentence,A bee is on the flower.,bee,bee,"bee",easy,1,1
+T2B-W020,20,word_sentence,The duck is in the pond.,duck,duck,"duck",easy,1,1

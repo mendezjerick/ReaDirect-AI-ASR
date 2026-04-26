@@ -1,0 +1,11 @@
+min_total_hours: 2.0
+min_rows: 500
+min_transcript_coverage: 0.90
+wer_recommend_threshold: 0.20
+cer_recommend_threshold: 0.10
+wer_good_threshold: 0.10
+cer_good_threshold: 0.05
+short_word_accuracy_threshold: 0.75
+short_word_good_threshold: 0.85
+blank_hypothesis_rate_threshold: 0.05
+suggested_model: openai/whisper-base.en

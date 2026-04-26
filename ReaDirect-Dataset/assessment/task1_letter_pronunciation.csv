@@ -1,0 +1,27 @@
+id,sequence,content_type,prompt_text,expected_answer,expected_phoneme,accepted_answers,difficulty,points,is_active
+T1-L001,1,letter,A,A,/a/,"A|a|ah",easy,1,1
+T1-L002,2,letter,B,B,/b/,"B|b|bee",easy,1,1
+T1-L003,3,letter,C,C,/k/,"C|c|see",easy,1,1
+T1-L004,4,letter,D,D,/d/,"D|d|dee",easy,1,1
+T1-L005,5,letter,E,E,/e/,"E|e|ee",easy,1,1
+T1-L006,6,letter,F,F,/f/,"F|f|ef",easy,1,1
+T1-L007,7,letter,G,G,/g/,"G|g|gee",easy,1,1
+T1-L008,8,letter,H,H,/h/,"H|h|aitch|haych",easy,1,1
+T1-L009,9,letter,I,I,/i/,"I|i|eye",easy,1,1
+T1-L010,10,letter,J,J,/j/,"J|j|jay",easy,1,1
+T1-L011,11,letter,K,K,/k/,"K|k|kay",easy,1,1
+T1-L012,12,letter,L,L,/l/,"L|l|el",easy,1,1
+T1-L013,13,letter,M,M,/m/,"M|m|em",easy,1,1
+T1-L014,14,letter,N,N,/n/,"N|n|en",easy,1,1
+T1-L015,15,letter,O,O,/o/,"O|o|oh",easy,1,1
+T1-L016,16,letter,P,P,/p/,"P|p|pee",easy,1,1
+T1-L017,17,letter,Q,Q,/kw/,"Q|q|cue|queue",easy,1,1
+T1-L018,18,letter,R,R,/r/,"R|r|ar",easy,1,1
+T1-L019,19,letter,S,S,/s/,"S|s|ess",easy,1,1
+T1-L020,20,letter,T,T,/t/,"T|t|tee",easy,1,1
+T1-L021,21,letter,U,U,/u/,"U|u|you",easy,1,1
+T1-L022,22,letter,V,V,/v/,"V|v|vee",easy,1,1
+T1-L023,23,letter,W,W,/w/,"W|w|double you",easy,1,1
+T1-L024,24,letter,X,X,/ks/,"X|x|ex",easy,1,1
+T1-L025,25,letter,Y,Y,/y/,"Y|y|why",easy,1,1
+T1-L026,26,letter,Z,Z,/z/,"Z|z|zee|zed",easy,1,1

@@ -1,0 +1,14 @@
+id,module,error_type,severity,feedback_text,retry_instruction,example_text,is_active
+FT-001,all,correct,positive,Nice reading. That sounded clear.,Keep going to the next item.,You read cat clearly.,1
+FT-002,all,incorrect_general,low,Great effort. Let us listen and try again.,Say the word slowly one more time.,Try saying sun again.,1
+FT-003,module_1,final_consonant_substitution,medium,You started well. Listen for the last sound.,Try the word again and finish the last sound.,Say cap and listen for p.,1
+FT-004,module_1,initial_sound_error,medium,Great effort. Let us listen to the first sound.,Start the word with the first sound you hear.,Map starts with m.,1
+FT-005,module_2,vowel_error,medium,Good try. The middle sound needs another listen.,Stretch the word and say the middle sound.,Cat has the a sound.,1
+FT-006,all,omission,medium,You skipped a word. That is okay.,Go back and read the word again.,Read the word dog.,1
+FT-007,all,substitution,medium,You said a different word. Let us try the printed word.,Look at each letter and read it again.,Read run instead of ran.,1
+FT-008,all,skipped_word,medium,Great effort. One word was not read yet.,Point to the word and say it clearly.,Read the word ball.,1
+FT-009,module_3,long_pause,low,Take your time. Let us keep the sentence moving.,Read the sentence again with a smooth voice.,I see a red ball.,1
+FT-010,all,too_quiet,low,I need to hear your clear reading voice.,Move closer and say it again.,Use a strong classroom voice.,1
+FT-011,all,background_noise,low,There was noise around you.,Wait for a quiet moment and try again.,Try again when the room is quiet.,1
+FT-012,all,try_again,low,Great effort. Try again.,Listen once more and read clearly.,Try the word again.,1
+FT-013,all,module_complete,positive,You finished this practice step.,Tap continue for your next reading step.,Great job finishing the activity.,1

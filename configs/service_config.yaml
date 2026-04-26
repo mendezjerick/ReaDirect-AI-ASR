@@ -1,0 +1,21 @@
+api:
+  host: 127.0.0.1
+  port: 8001
+  debug: true
+  auth_enabled: false
+  cors_allow_origins:
+    - http://127.0.0.1:8000
+    - http://localhost:8000
+
+analysis:
+  content_index_path: data/manifests/content_index.csv
+  enriched_content_index_path: content_bank_enriched/enriched_content_index.csv
+  prefer_enriched_content: true
+
+asr:
+  provider: mock
+  model_size: base.en
+  device: cpu
+  compute_type: int8
+  language: en
+  timeout_seconds: 60

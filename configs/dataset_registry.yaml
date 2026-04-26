@@ -1,0 +1,45 @@
+datasets:
+  readirect_content_bank:
+    status: active
+    type: target_content
+    local_path: content_bank
+    has_audio: false
+    has_transcripts: false
+    has_expected_answers: true
+    has_phoneme_labels: generated_from_cmudict
+    license_notes: project-curated content
+
+  cmudict:
+    status: active
+    type: phoneme_dictionary
+    local_path: external_datasets/cmudict
+    has_audio: false
+    has_transcripts: false
+    has_phoneme_labels: true
+    license_notes: check included LICENSE
+
+  speechocean762:
+    status: active
+    type: pronunciation_assessment
+    local_path: external_datasets/speechocean762
+    has_audio: true
+    has_transcripts: true
+    has_phoneme_labels: true
+    has_word_scores: true
+    has_sentence_scores: true
+    license_notes: check OpenSLR license/readme before use
+
+  l2_arctic:
+    status: research_only_optional_noncommercial
+    type: mispronunciation_detection
+    local_path: external_datasets/research_only/l2_arctic
+    has_audio: true
+    has_transcripts: true
+    has_phoneme_labels: true
+    license_notes: CC BY-NC 4.0 / non-commercial only; not active for deployable training, evaluation, or inference
+
+  pf_star:
+    status: future_optional_only
+    type: child_speech
+    local_path: null
+    reason: requires access/request; not active in current pipeline

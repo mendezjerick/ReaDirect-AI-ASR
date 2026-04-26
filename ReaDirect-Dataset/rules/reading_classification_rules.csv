@@ -1,0 +1,6 @@
+id,min_score,max_score,classification,description,is_active
+RC-001,0,25,Low Emerging Reader,Learner needs strong reading support.,1
+RC-002,26,50,High Emerging Reader,Learner is beginning to develop reading skills.,1
+RC-003,51,75,Developing Reader,Learner is developing reading accuracy and comprehension.,1
+RC-004,76,90,Transitioning Reader,Learner is approaching grade-level reading.,1
+RC-005,91,100,Reading at Grade Level,Learner meets grade-level reading expectations.,1

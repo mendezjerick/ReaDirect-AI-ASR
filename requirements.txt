@@ -1,0 +1,23 @@
+pandas
+numpy
+pydantic
+pyyaml
+python-dotenv
+soundfile
+librosa
+jiwer
+rapidfuzz
+fastapi
+uvicorn
+pytest
+httpx
+faster-whisper
+
+# Optional future ASR/modeling dependencies. Install only when needed:
+# torch
+# transformers
+# datasets
+# evaluate
+# phonemizer
+# epitran
+# g2p-en

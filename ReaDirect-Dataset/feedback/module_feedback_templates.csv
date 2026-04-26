@@ -1,0 +1,13 @@
+id,module_key,activity_type,error_type,severity,feedback_text,retry_instruction,success_text,is_active
+MFB-001,all,all,correct,low,Great work! You read that clearly.,Keep going to the next one.,Nice reading!,1
+MFB-002,all,all,incorrect_general,medium,Great effort! Listen carefully and try this one again.,Try again when you are ready.,You are getting better.,1
+MFB-003,all,all,missing_answer,medium,Almost there! Try this item before moving on.,Say or type your answer first.,You finished this item.,1
+MFB-004,all,all,retry,low,Good try. Take a breath and try once more.,Try again with a clear voice.,Nice effort!,1
+MFB-005,all,all,great_effort,low,Great effort! Your reading practice is growing.,Keep practicing one step at a time.,Great effort!,1
+MFB-006,all,all,module_complete,low,You completed this module step. Great effort!,Tap continue to see your next step.,Module complete!,1
+MFB-007,module_1,all,sound_error,medium,Great effort! Listen for the letter sound and try again.,Say the sound slowly first.,That sound is clear!,1
+MFB-008,module_2,all,word_error,medium,Great effort! Look at each sound in the word.,Touch each sound and read the word again.,You read the word clearly!,1
+MFB-009,module_3,all,sentence_error,medium,Great effort! Read the sentence one small part at a time.,Try the sentence again slowly.,That sentence was clear!,1
+MFB-010,module_3,all,fluency_pause,low,Nice try. A short pause can help the sentence sound smooth.,Pause at the comma and keep reading.,Smooth reading!,1
+MFB-011,all,all,too_quiet,low,I could use a clearer voice next time.,Try again with a strong reading voice.,I can hear you clearly!,1
+MFB-012,all,all,try_again,low,You are close. Try this one again.,Try again when you are ready.,You did it!,1

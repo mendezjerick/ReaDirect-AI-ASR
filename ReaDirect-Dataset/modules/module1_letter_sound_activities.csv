@@ -1,0 +1,501 @@
+id,module_key,activity_type,sequence,prompt_text,expected_answer,accepted_answers,difficulty,points,is_mastery_item,is_active
+M1-HR001,module_1,hear_and_repeat,1,"Listen and say the short a sound for A, as in apple.",A,A|a|ah|short a,easy,1,0,1
+M1-HR002,module_1,hear_and_repeat,2,"Listen and say the b sound for B, as in bag.",B,B|b|buh,easy,1,0,1
+M1-HR003,module_1,hear_and_repeat,3,"Listen and say the hard c sound for C, as in cat.",C,C|c|kuh|hard c,easy,1,0,1
+M1-HR004,module_1,hear_and_repeat,4,"Listen and say the d sound for D, as in dog.",D,D|d|duh,easy,1,0,1
+M1-HR005,module_1,hear_and_repeat,5,"Listen and say the short e sound for E, as in egg.",E,E|e|eh|short e,easy,1,0,1
+M1-HR006,module_1,hear_and_repeat,6,"Listen and say the f sound for F, as in fan.",F,F|f|fff,easy,1,0,1
+M1-HR007,module_1,hear_and_repeat,7,"Listen and say the hard g sound for G, as in goat.",G,G|g|guh|hard g,easy,1,0,1
+M1-HR008,module_1,hear_and_repeat,8,"Listen and say the h sound for H, as in hat.",H,H|h|huh,easy,1,0,1
+M1-HR009,module_1,hear_and_repeat,9,"Listen and say the short i sound for I, as in igloo.",I,I|i|ih|short i,easy,1,0,1
+M1-HR010,module_1,hear_and_repeat,10,"Listen and say the j sound for J, as in jam.",J,J|j|juh,easy,1,0,1
+M1-HR011,module_1,hear_and_repeat,11,"Listen and say the k sound for K, as in kite.",K,K|k|kuh,easy,1,0,1
+M1-HR012,module_1,hear_and_repeat,12,"Listen and say the l sound for L, as in lid.",L,L|l|luh,easy,1,0,1
+M1-HR013,module_1,hear_and_repeat,13,"Listen and say the m sound for M, as in map.",M,M|m|mmm,easy,1,0,1
+M1-HR014,module_1,hear_and_repeat,14,"Listen and say the n sound for N, as in net.",N,N|n|nnn,easy,1,0,1
+M1-HR015,module_1,hear_and_repeat,15,"Listen and say the short o sound for O, as in octopus.",O,O|o|ah|short o,easy,1,0,1
+M1-HR016,module_1,hear_and_repeat,16,"Listen and say the p sound for P, as in pin.",P,P|p|puh,easy,1,0,1
+M1-HR017,module_1,hear_and_repeat,17,"Listen and say the q sound for Q, as in queen.",Q,Q|q|kw,easy,1,0,1
+M1-HR018,module_1,hear_and_repeat,18,"Listen and say the r sound for R, as in rat.",R,R|r|ruh,easy,1,0,1
+M1-HR019,module_1,hear_and_repeat,19,"Listen and say the s sound for S, as in sun.",S,S|s|sss,easy,1,0,1
+M1-HR020,module_1,hear_and_repeat,20,"Listen and say the t sound for T, as in tap.",T,T|t|tuh,easy,1,0,1
+M1-HR021,module_1,hear_and_repeat,21,"Listen and say the short u sound for U, as in up.",U,U|u|uh|short u,easy,1,0,1
+M1-HR022,module_1,hear_and_repeat,22,"Listen and say the v sound for V, as in van.",V,V|v|vvv,easy,1,0,1
+M1-HR023,module_1,hear_and_repeat,23,"Listen and say the w sound for W, as in web.",W,W|w|wuh,easy,1,0,1
+M1-HR024,module_1,hear_and_repeat,24,"Listen and say the x sound for X, as in x-ray.",X,X|x|ks,easy,1,0,1
+M1-HR025,module_1,hear_and_repeat,25,"Listen and say the y sound for Y, as in yak.",Y,Y|y|yuh,easy,1,0,1
+M1-HR026,module_1,hear_and_repeat,26,"Listen and say the z sound for Z, as in zip.",Z,Z|z|zzz,easy,1,0,1
+M1-HR027,module_1,hear_and_repeat,27,"Listen and say the short a sound for A, as in ant.",A,A|a|ah|short a,easy,1,0,1
+M1-HR028,module_1,hear_and_repeat,28,"Listen and say the b sound for B, as in bat.",B,B|b|buh,easy,1,0,1
+M1-HR029,module_1,hear_and_repeat,29,"Listen and say the hard c sound for C, as in cup.",C,C|c|kuh|hard c,easy,1,0,1
+M1-HR030,module_1,hear_and_repeat,30,"Listen and say the d sound for D, as in dig.",D,D|d|duh,easy,1,0,1
+M1-HR031,module_1,hear_and_repeat,31,"Listen and say the short e sound for E, as in elf.",E,E|e|eh|short e,easy,1,0,1
+M1-HR032,module_1,hear_and_repeat,32,"Listen and say the f sound for F, as in fish.",F,F|f|fff,easy,1,0,1
+M1-HR033,module_1,hear_and_repeat,33,"Listen and say the hard g sound for G, as in gum.",G,G|g|guh|hard g,easy,1,0,1
+M1-HR034,module_1,hear_and_repeat,34,"Listen and say the h sound for H, as in hen.",H,H|h|huh,easy,1,0,1
+M1-HR035,module_1,hear_and_repeat,35,"Listen and say the short i sound for I, as in ink.",I,I|i|ih|short i,easy,1,0,1
+M1-HR036,module_1,hear_and_repeat,36,"Listen and say the j sound for J, as in jet.",J,J|j|juh,easy,1,0,1
+M1-HR037,module_1,hear_and_repeat,37,"Listen and say the k sound for K, as in kid.",K,K|k|kuh,easy,1,0,1
+M1-HR038,module_1,hear_and_repeat,38,"Listen and say the l sound for L, as in lamp.",L,L|l|luh,easy,1,0,1
+M1-HR039,module_1,hear_and_repeat,39,"Listen and say the m sound for M, as in moon.",M,M|m|mmm,easy,1,0,1
+M1-HR040,module_1,hear_and_repeat,40,"Listen and say the n sound for N, as in nest.",N,N|n|nnn,easy,1,0,1
+M1-HR041,module_1,hear_and_repeat,41,"Listen and say the short o sound for O, as in ox.",O,O|o|ah|short o,easy,1,0,1
+M1-HR042,module_1,hear_and_repeat,42,"Listen and say the p sound for P, as in pan.",P,P|p|puh,easy,1,0,1
+M1-HR043,module_1,hear_and_repeat,43,"Listen and say the q sound for Q, as in quilt.",Q,Q|q|kw,easy,1,0,1
+M1-HR044,module_1,hear_and_repeat,44,"Listen and say the r sound for R, as in red.",R,R|r|ruh,easy,1,0,1
+M1-HR045,module_1,hear_and_repeat,45,"Listen and say the s sound for S, as in sit.",S,S|s|sss,easy,1,0,1
+M1-HR046,module_1,hear_and_repeat,46,"Listen and say the t sound for T, as in top.",T,T|t|tuh,easy,1,0,1
+M1-HR047,module_1,hear_and_repeat,47,"Listen and say the short u sound for U, as in under.",U,U|u|uh|short u,easy,1,0,1
+M1-HR048,module_1,hear_and_repeat,48,"Listen and say the v sound for V, as in vet.",V,V|v|vvv,easy,1,0,1
+M1-HR049,module_1,hear_and_repeat,49,"Listen and say the w sound for W, as in win.",W,W|w|wuh,easy,1,0,1
+M1-HR050,module_1,hear_and_repeat,50,"Listen and say the x sound for X, as in box.",X,X|x|ks,easy,1,0,1
+M1-HR051,module_1,hear_and_repeat,51,"Listen and say the y sound for Y, as in yam.",Y,Y|y|yuh,easy,1,0,1
+M1-HR052,module_1,hear_and_repeat,52,"Listen and say the z sound for Z, as in zoo.",Z,Z|z|zzz,easy,1,0,1
+M1-HR053,module_1,hear_and_repeat,53,"Listen and say the short a sound for A, as in ax.",A,A|a|ah|short a,easy,1,0,1
+M1-HR054,module_1,hear_and_repeat,54,"Listen and say the b sound for B, as in bed.",B,B|b|buh,easy,1,0,1
+M1-HR055,module_1,hear_and_repeat,55,"Listen and say the hard c sound for C, as in cap.",C,C|c|kuh|hard c,easy,1,0,1
+M1-HR056,module_1,hear_and_repeat,56,"Listen and say the d sound for D, as in desk.",D,D|d|duh,easy,1,0,1
+M1-HR057,module_1,hear_and_repeat,57,"Listen and say the short e sound for E, as in end.",E,E|e|eh|short e,easy,1,0,1
+M1-HR058,module_1,hear_and_repeat,58,"Listen and say the f sound for F, as in fog.",F,F|f|fff,easy,1,0,1
+M1-HR059,module_1,hear_and_repeat,59,"Listen and say the hard g sound for G, as in gate.",G,G|g|guh|hard g,easy,1,0,1
+M1-HR060,module_1,hear_and_repeat,60,"Listen and say the h sound for H, as in hill.",H,H|h|huh,easy,1,0,1
+M1-HR061,module_1,hear_and_repeat,61,"Listen and say the short i sound for I, as in insect.",I,I|i|ih|short i,easy,1,0,1
+M1-HR062,module_1,hear_and_repeat,62,"Listen and say the j sound for J, as in jog.",J,J|j|juh,easy,1,0,1
+M1-HR063,module_1,hear_and_repeat,63,"Listen and say the k sound for K, as in kit.",K,K|k|kuh,easy,1,0,1
+M1-HR064,module_1,hear_and_repeat,64,"Listen and say the l sound for L, as in leg.",L,L|l|luh,easy,1,0,1
+M1-HR065,module_1,hear_and_repeat,65,"Listen and say the m sound for M, as in mat.",M,M|m|mmm,easy,1,0,1
+M1-HR066,module_1,hear_and_repeat,66,"Listen and say the n sound for N, as in nap.",N,N|n|nnn,easy,1,0,1
+M1-HR067,module_1,hear_and_repeat,67,"Listen and say the short o sound for O, as in odd.",O,O|o|ah|short o,easy,1,0,1
+M1-HR068,module_1,hear_and_repeat,68,"Listen and say the p sound for P, as in pig.",P,P|p|puh,easy,1,0,1
+M1-HR069,module_1,hear_and_repeat,69,"Listen and say the q sound for Q, as in quick.",Q,Q|q|kw,easy,1,0,1
+M1-HR070,module_1,hear_and_repeat,70,"Listen and say the r sound for R, as in rock.",R,R|r|ruh,easy,1,0,1
+M1-HR071,module_1,hear_and_repeat,71,"Listen and say the s sound for S, as in sock.",S,S|s|sss,easy,1,0,1
+M1-HR072,module_1,hear_and_repeat,72,"Listen and say the t sound for T, as in ten.",T,T|t|tuh,easy,1,0,1
+M1-HR073,module_1,hear_and_repeat,73,"Listen and say the short u sound for U, as in uncle.",U,U|u|uh|short u,easy,1,0,1
+M1-HR074,module_1,hear_and_repeat,74,"Listen and say the v sound for V, as in vest.",V,V|v|vvv,easy,1,0,1
+M1-HR075,module_1,hear_and_repeat,75,"Listen and say the w sound for W, as in water.",W,W|w|wuh,easy,1,0,1
+M1-HR076,module_1,hear_and_repeat,76,"Listen and say the x sound for X, as in fox.",X,X|x|ks,easy,1,0,1
+M1-HR077,module_1,hear_and_repeat,77,"Listen and say the y sound for Y, as in yes.",Y,Y|y|yuh,easy,1,0,1
+M1-HR078,module_1,hear_and_repeat,78,"Listen and say the z sound for Z, as in zero.",Z,Z|z|zzz,easy,1,0,1
+M1-HR079,module_1,hear_and_repeat,79,"Listen and say the short a sound for A, as in alligator.",A,A|a|ah|short a,easy,1,0,1
+M1-HR080,module_1,hear_and_repeat,80,"Listen and say the b sound for B, as in bell.",B,B|b|buh,easy,1,0,1
+M1-HR081,module_1,hear_and_repeat,81,"Listen and say the hard c sound for C, as in cot.",C,C|c|kuh|hard c,easy,1,0,1
+M1-HR082,module_1,hear_and_repeat,82,"Listen and say the d sound for D, as in duck.",D,D|d|duh,easy,1,0,1
+M1-HR083,module_1,hear_and_repeat,83,"Listen and say the short e sound for E, as in engine.",E,E|e|eh|short e,easy,1,0,1
+M1-HR084,module_1,hear_and_repeat,84,"Listen and say the f sound for F, as in foot.",F,F|f|fff,easy,1,0,1
+M1-HR085,module_1,hear_and_repeat,85,"Listen and say the hard g sound for G, as in gift.",G,G|g|guh|hard g,easy,1,0,1
+M1-HR086,module_1,hear_and_repeat,86,"Listen and say the h sound for H, as in hop.",H,H|h|huh,easy,1,0,1
+M1-HR087,module_1,hear_and_repeat,87,"Listen and say the short i sound for I, as in inch.",I,I|i|ih|short i,easy,1,0,1
+M1-HR088,module_1,hear_and_repeat,88,"Listen and say the j sound for J, as in jug.",J,J|j|juh,easy,1,0,1
+M1-HR089,module_1,hear_and_repeat,89,"Listen and say the k sound for K, as in king.",K,K|k|kuh,easy,1,0,1
+M1-HR090,module_1,hear_and_repeat,90,"Listen and say the l sound for L, as in leaf.",L,L|l|luh,easy,1,0,1
+M1-HR091,module_1,hear_and_repeat,91,"Listen and say the m sound for M, as in milk.",M,M|m|mmm,easy,1,0,1
+M1-HR092,module_1,hear_and_repeat,92,"Listen and say the n sound for N, as in nose.",N,N|n|nnn,easy,1,0,1
+M1-HR093,module_1,hear_and_repeat,93,"Listen and say the short o sound for O, as in ostrich.",O,O|o|ah|short o,easy,1,0,1
+M1-HR094,module_1,hear_and_repeat,94,"Listen and say the p sound for P, as in pot.",P,P|p|puh,easy,1,0,1
+M1-HR095,module_1,hear_and_repeat,95,"Listen and say the q sound for Q, as in quiz.",Q,Q|q|kw,easy,1,0,1
+M1-HR096,module_1,hear_and_repeat,96,"Listen and say the r sound for R, as in rain.",R,R|r|ruh,easy,1,0,1
+M1-HR097,module_1,hear_and_repeat,97,"Listen and say the s sound for S, as in sand.",S,S|s|sss,easy,1,0,1
+M1-HR098,module_1,hear_and_repeat,98,"Listen and say the t sound for T, as in tub.",T,T|t|tuh,easy,1,0,1
+M1-HR099,module_1,hear_and_repeat,99,"Listen and say the short u sound for U, as in umbrella.",U,U|u|uh|short u,easy,1,0,1
+M1-HR100,module_1,hear_and_repeat,100,"Listen and say the v sound for V, as in vine.",V,V|v|vvv,easy,1,0,1
+M1-SL001,module_1,see_letter_say_sound,101,"Look at A. Say its sound, like the first sound in apple.",A,A|a|ah|short a,easy,1,0,1
+M1-SL002,module_1,see_letter_say_sound,102,"Look at D. Say its sound, like the first sound in dog.",D,D|d|duh,easy,1,0,1
+M1-SL003,module_1,see_letter_say_sound,103,"Look at G. Say its sound, like the first sound in goat.",G,G|g|guh|hard g,easy,1,0,1
+M1-SL004,module_1,see_letter_say_sound,104,"Look at J. Say its sound, like the first sound in jam.",J,J|j|juh,easy,1,0,1
+M1-SL005,module_1,see_letter_say_sound,105,"Look at M. Say its sound, like the first sound in map.",M,M|m|mmm,easy,1,0,1
+M1-SL006,module_1,see_letter_say_sound,106,"Look at P. Say its sound, like the first sound in pin.",P,P|p|puh,easy,1,0,1
+M1-SL007,module_1,see_letter_say_sound,107,"Look at S. Say its sound, like the first sound in sun.",S,S|s|sss,easy,1,0,1
+M1-SL008,module_1,see_letter_say_sound,108,"Look at V. Say its sound, like the first sound in van.",V,V|v|vvv,easy,1,0,1
+M1-SL009,module_1,see_letter_say_sound,109,"Look at Y. Say its sound, like the first sound in yak.",Y,Y|y|yuh,easy,1,0,1
+M1-SL010,module_1,see_letter_say_sound,110,"Look at B. Say its sound, like the first sound in bag.",B,B|b|buh,easy,1,0,1
+M1-SL011,module_1,see_letter_say_sound,111,"Look at E. Say its sound, like the first sound in egg.",E,E|e|eh|short e,easy,1,0,1
+M1-SL012,module_1,see_letter_say_sound,112,"Look at H. Say its sound, like the first sound in hat.",H,H|h|huh,easy,1,0,1
+M1-SL013,module_1,see_letter_say_sound,113,"Look at K. Say its sound, like the first sound in kite.",K,K|k|kuh,easy,1,0,1
+M1-SL014,module_1,see_letter_say_sound,114,"Look at N. Say its sound, like the first sound in net.",N,N|n|nnn,easy,1,0,1
+M1-SL015,module_1,see_letter_say_sound,115,"Look at Q. Say its sound, like the first sound in queen.",Q,Q|q|kw,easy,1,0,1
+M1-SL016,module_1,see_letter_say_sound,116,"Look at T. Say its sound, like the first sound in tap.",T,T|t|tuh,easy,1,0,1
+M1-SL017,module_1,see_letter_say_sound,117,"Look at W. Say its sound, like the first sound in web.",W,W|w|wuh,easy,1,0,1
+M1-SL018,module_1,see_letter_say_sound,118,"Look at Z. Say its sound, like the first sound in zip.",Z,Z|z|zzz,easy,1,0,1
+M1-SL019,module_1,see_letter_say_sound,119,"Look at C. Say its sound, like the first sound in cat.",C,C|c|kuh|hard c,easy,1,0,1
+M1-SL020,module_1,see_letter_say_sound,120,"Look at F. Say its sound, like the first sound in fan.",F,F|f|fff,easy,1,0,1
+M1-SL021,module_1,see_letter_say_sound,121,"Look at I. Say its sound, like the first sound in igloo.",I,I|i|ih|short i,easy,1,0,1
+M1-SL022,module_1,see_letter_say_sound,122,"Look at L. Say its sound, like the first sound in lid.",L,L|l|luh,easy,1,0,1
+M1-SL023,module_1,see_letter_say_sound,123,"Look at O. Say its sound, like the first sound in octopus.",O,O|o|ah|short o,easy,1,0,1
+M1-SL024,module_1,see_letter_say_sound,124,"Look at R. Say its sound, like the first sound in rat.",R,R|r|ruh,easy,1,0,1
+M1-SL025,module_1,see_letter_say_sound,125,"Look at U. Say its sound, like the first sound in up.",U,U|u|uh|short u,easy,1,0,1
+M1-SL026,module_1,see_letter_say_sound,126,"Look at X. Say its sound, like the first sound in x-ray.",X,X|x|ks,easy,1,0,1
+M1-SL027,module_1,see_letter_say_sound,127,"Look at A. Say its sound, like the first sound in ant.",A,A|a|ah|short a,easy,1,0,1
+M1-SL028,module_1,see_letter_say_sound,128,"Look at D. Say its sound, like the first sound in dig.",D,D|d|duh,easy,1,0,1
+M1-SL029,module_1,see_letter_say_sound,129,"Look at G. Say its sound, like the first sound in gum.",G,G|g|guh|hard g,easy,1,0,1
+M1-SL030,module_1,see_letter_say_sound,130,"Look at J. Say its sound, like the first sound in jet.",J,J|j|juh,easy,1,0,1
+M1-SL031,module_1,see_letter_say_sound,131,"Look at M. Say its sound, like the first sound in moon.",M,M|m|mmm,easy,1,0,1
+M1-SL032,module_1,see_letter_say_sound,132,"Look at P. Say its sound, like the first sound in pan.",P,P|p|puh,easy,1,0,1
+M1-SL033,module_1,see_letter_say_sound,133,"Look at S. Say its sound, like the first sound in sit.",S,S|s|sss,easy,1,0,1
+M1-SL034,module_1,see_letter_say_sound,134,"Look at V. Say its sound, like the first sound in vet.",V,V|v|vvv,easy,1,0,1
+M1-SL035,module_1,see_letter_say_sound,135,"Look at Y. Say its sound, like the first sound in yam.",Y,Y|y|yuh,easy,1,0,1
+M1-SL036,module_1,see_letter_say_sound,136,"Look at B. Say its sound, like the first sound in bat.",B,B|b|buh,easy,1,0,1
+M1-SL037,module_1,see_letter_say_sound,137,"Look at E. Say its sound, like the first sound in elf.",E,E|e|eh|short e,easy,1,0,1
+M1-SL038,module_1,see_letter_say_sound,138,"Look at H. Say its sound, like the first sound in hen.",H,H|h|huh,easy,1,0,1
+M1-SL039,module_1,see_letter_say_sound,139,"Look at K. Say its sound, like the first sound in kid.",K,K|k|kuh,easy,1,0,1
+M1-SL040,module_1,see_letter_say_sound,140,"Look at N. Say its sound, like the first sound in nest.",N,N|n|nnn,easy,1,0,1
+M1-SL041,module_1,see_letter_say_sound,141,"Look at Q. Say its sound, like the first sound in quilt.",Q,Q|q|kw,easy,1,0,1
+M1-SL042,module_1,see_letter_say_sound,142,"Look at T. Say its sound, like the first sound in top.",T,T|t|tuh,easy,1,0,1
+M1-SL043,module_1,see_letter_say_sound,143,"Look at W. Say its sound, like the first sound in win.",W,W|w|wuh,easy,1,0,1
+M1-SL044,module_1,see_letter_say_sound,144,"Look at Z. Say its sound, like the first sound in zoo.",Z,Z|z|zzz,easy,1,0,1
+M1-SL045,module_1,see_letter_say_sound,145,"Look at C. Say its sound, like the first sound in cup.",C,C|c|kuh|hard c,easy,1,0,1
+M1-SL046,module_1,see_letter_say_sound,146,"Look at F. Say its sound, like the first sound in fish.",F,F|f|fff,easy,1,0,1
+M1-SL047,module_1,see_letter_say_sound,147,"Look at I. Say its sound, like the first sound in ink.",I,I|i|ih|short i,easy,1,0,1
+M1-SL048,module_1,see_letter_say_sound,148,"Look at L. Say its sound, like the first sound in lamp.",L,L|l|luh,easy,1,0,1
+M1-SL049,module_1,see_letter_say_sound,149,"Look at O. Say its sound, like the first sound in ox.",O,O|o|ah|short o,easy,1,0,1
+M1-SL050,module_1,see_letter_say_sound,150,"Look at R. Say its sound, like the first sound in red.",R,R|r|ruh,easy,1,0,1
+M1-SL051,module_1,see_letter_say_sound,151,"Look at U. Say its sound, like the first sound in under.",U,U|u|uh|short u,easy,1,0,1
+M1-SL052,module_1,see_letter_say_sound,152,"Look at X. Say its sound, like the first sound in box.",X,X|x|ks,easy,1,0,1
+M1-SL053,module_1,see_letter_say_sound,153,"Look at A. Say its sound, like the first sound in ax.",A,A|a|ah|short a,easy,1,0,1
+M1-SL054,module_1,see_letter_say_sound,154,"Look at D. Say its sound, like the first sound in desk.",D,D|d|duh,easy,1,0,1
+M1-SL055,module_1,see_letter_say_sound,155,"Look at G. Say its sound, like the first sound in gate.",G,G|g|guh|hard g,easy,1,0,1
+M1-SL056,module_1,see_letter_say_sound,156,"Look at J. Say its sound, like the first sound in jog.",J,J|j|juh,easy,1,0,1
+M1-SL057,module_1,see_letter_say_sound,157,"Look at M. Say its sound, like the first sound in mat.",M,M|m|mmm,easy,1,0,1
+M1-SL058,module_1,see_letter_say_sound,158,"Look at P. Say its sound, like the first sound in pig.",P,P|p|puh,easy,1,0,1
+M1-SL059,module_1,see_letter_say_sound,159,"Look at S. Say its sound, like the first sound in sock.",S,S|s|sss,easy,1,0,1
+M1-SL060,module_1,see_letter_say_sound,160,"Look at V. Say its sound, like the first sound in vest.",V,V|v|vvv,easy,1,0,1
+M1-SL061,module_1,see_letter_say_sound,161,"Look at Y. Say its sound, like the first sound in yes.",Y,Y|y|yuh,easy,1,0,1
+M1-SL062,module_1,see_letter_say_sound,162,"Look at B. Say its sound, like the first sound in bed.",B,B|b|buh,easy,1,0,1
+M1-SL063,module_1,see_letter_say_sound,163,"Look at E. Say its sound, like the first sound in end.",E,E|e|eh|short e,easy,1,0,1
+M1-SL064,module_1,see_letter_say_sound,164,"Look at H. Say its sound, like the first sound in hill.",H,H|h|huh,easy,1,0,1
+M1-SL065,module_1,see_letter_say_sound,165,"Look at K. Say its sound, like the first sound in kit.",K,K|k|kuh,easy,1,0,1
+M1-SL066,module_1,see_letter_say_sound,166,"Look at N. Say its sound, like the first sound in nap.",N,N|n|nnn,easy,1,0,1
+M1-SL067,module_1,see_letter_say_sound,167,"Look at Q. Say its sound, like the first sound in quick.",Q,Q|q|kw,easy,1,0,1
+M1-SL068,module_1,see_letter_say_sound,168,"Look at T. Say its sound, like the first sound in ten.",T,T|t|tuh,easy,1,0,1
+M1-SL069,module_1,see_letter_say_sound,169,"Look at W. Say its sound, like the first sound in water.",W,W|w|wuh,easy,1,0,1
+M1-SL070,module_1,see_letter_say_sound,170,"Look at Z. Say its sound, like the first sound in zero.",Z,Z|z|zzz,easy,1,0,1
+M1-SL071,module_1,see_letter_say_sound,171,"Look at C. Say its sound, like the first sound in cap.",C,C|c|kuh|hard c,easy,1,0,1
+M1-SL072,module_1,see_letter_say_sound,172,"Look at F. Say its sound, like the first sound in fog.",F,F|f|fff,easy,1,0,1
+M1-SL073,module_1,see_letter_say_sound,173,"Look at I. Say its sound, like the first sound in insect.",I,I|i|ih|short i,easy,1,0,1
+M1-SL074,module_1,see_letter_say_sound,174,"Look at L. Say its sound, like the first sound in leg.",L,L|l|luh,easy,1,0,1
+M1-SL075,module_1,see_letter_say_sound,175,"Look at O. Say its sound, like the first sound in odd.",O,O|o|ah|short o,easy,1,0,1
+M1-SL076,module_1,see_letter_say_sound,176,"Look at R. Say its sound, like the first sound in rock.",R,R|r|ruh,easy,1,0,1
+M1-SL077,module_1,see_letter_say_sound,177,"Look at U. Say its sound, like the first sound in uncle.",U,U|u|uh|short u,easy,1,0,1
+M1-SL078,module_1,see_letter_say_sound,178,"Look at X. Say its sound, like the first sound in fox.",X,X|x|ks,easy,1,0,1
+M1-SL079,module_1,see_letter_say_sound,179,"Look at A. Say its sound, like the first sound in alligator.",A,A|a|ah|short a,easy,1,0,1
+M1-SL080,module_1,see_letter_say_sound,180,"Look at D. Say its sound, like the first sound in duck.",D,D|d|duh,easy,1,0,1
+M1-SL081,module_1,see_letter_say_sound,181,"Look at G. Say its sound, like the first sound in gift.",G,G|g|guh|hard g,easy,1,0,1
+M1-SL082,module_1,see_letter_say_sound,182,"Look at J. Say its sound, like the first sound in jug.",J,J|j|juh,easy,1,0,1
+M1-SL083,module_1,see_letter_say_sound,183,"Look at M. Say its sound, like the first sound in milk.",M,M|m|mmm,easy,1,0,1
+M1-SL084,module_1,see_letter_say_sound,184,"Look at P. Say its sound, like the first sound in pot.",P,P|p|puh,easy,1,0,1
+M1-SL085,module_1,see_letter_say_sound,185,"Look at S. Say its sound, like the first sound in sand.",S,S|s|sss,easy,1,0,1
+M1-SL086,module_1,see_letter_say_sound,186,"Look at V. Say its sound, like the first sound in vine.",V,V|v|vvv,easy,1,0,1
+M1-SL087,module_1,see_letter_say_sound,187,"Look at Y. Say its sound, like the first sound in yellow.",Y,Y|y|yuh,easy,1,0,1
+M1-SL088,module_1,see_letter_say_sound,188,"Look at B. Say its sound, like the first sound in bell.",B,B|b|buh,easy,1,0,1
+M1-SL089,module_1,see_letter_say_sound,189,"Look at E. Say its sound, like the first sound in engine.",E,E|e|eh|short e,easy,1,0,1
+M1-SL090,module_1,see_letter_say_sound,190,"Look at H. Say its sound, like the first sound in hop.",H,H|h|huh,easy,1,0,1
+M1-SL091,module_1,see_letter_say_sound,191,"Look at K. Say its sound, like the first sound in king.",K,K|k|kuh,easy,1,0,1
+M1-SL092,module_1,see_letter_say_sound,192,"Look at N. Say its sound, like the first sound in nose.",N,N|n|nnn,easy,1,0,1
+M1-SL093,module_1,see_letter_say_sound,193,"Look at Q. Say its sound, like the first sound in quiz.",Q,Q|q|kw,easy,1,0,1
+M1-SL094,module_1,see_letter_say_sound,194,"Look at T. Say its sound, like the first sound in tub.",T,T|t|tuh,easy,1,0,1
+M1-SL095,module_1,see_letter_say_sound,195,"Look at W. Say its sound, like the first sound in wind.",W,W|w|wuh,easy,1,0,1
+M1-SL096,module_1,see_letter_say_sound,196,"Look at Z. Say its sound, like the first sound in zebra.",Z,Z|z|zzz,easy,1,0,1
+M1-SL097,module_1,see_letter_say_sound,197,"Look at C. Say its sound, like the first sound in cot.",C,C|c|kuh|hard c,easy,1,0,1
+M1-SL098,module_1,see_letter_say_sound,198,"Look at F. Say its sound, like the first sound in foot.",F,F|f|fff,easy,1,0,1
+M1-SL099,module_1,see_letter_say_sound,199,"Look at I. Say its sound, like the first sound in inch.",I,I|i|ih|short i,easy,1,0,1
+M1-SL100,module_1,see_letter_say_sound,200,"Look at L. Say its sound, like the first sound in leaf.",L,L|l|luh,easy,1,0,1
+M1-ML001,module_1,match_sound_to_letter,201,Which letter makes the first sound in apple?,A,A|a,easy,1,0,1
+M1-ML002,module_1,match_sound_to_letter,202,Which letter makes the first sound in ant?,A,A|a,easy,1,0,1
+M1-ML003,module_1,match_sound_to_letter,203,Which letter makes the first sound in ax?,A,A|a,easy,1,0,1
+M1-ML004,module_1,match_sound_to_letter,204,Which letter makes the first sound in alligator?,A,A|a,easy,1,0,1
+M1-ML005,module_1,match_sound_to_letter,205,Which letter makes the first sound in bag?,B,B|b,easy,1,0,1
+M1-ML006,module_1,match_sound_to_letter,206,Which letter makes the first sound in bat?,B,B|b,easy,1,0,1
+M1-ML007,module_1,match_sound_to_letter,207,Which letter makes the first sound in bed?,B,B|b,easy,1,0,1
+M1-ML008,module_1,match_sound_to_letter,208,Which letter makes the first sound in bell?,B,B|b,easy,1,0,1
+M1-ML009,module_1,match_sound_to_letter,209,Which letter makes the first sound in cat?,C,C|c,easy,1,0,1
+M1-ML010,module_1,match_sound_to_letter,210,Which letter makes the first sound in cup?,C,C|c,easy,1,0,1
+M1-ML011,module_1,match_sound_to_letter,211,Which letter makes the first sound in cap?,C,C|c,easy,1,0,1
+M1-ML012,module_1,match_sound_to_letter,212,Which letter makes the first sound in cot?,C,C|c,easy,1,0,1
+M1-ML013,module_1,match_sound_to_letter,213,Which letter makes the first sound in dog?,D,D|d,easy,1,0,1
+M1-ML014,module_1,match_sound_to_letter,214,Which letter makes the first sound in dig?,D,D|d,easy,1,0,1
+M1-ML015,module_1,match_sound_to_letter,215,Which letter makes the first sound in desk?,D,D|d,easy,1,0,1
+M1-ML016,module_1,match_sound_to_letter,216,Which letter makes the first sound in duck?,D,D|d,easy,1,0,1
+M1-ML017,module_1,match_sound_to_letter,217,Which letter makes the first sound in egg?,E,E|e,easy,1,0,1
+M1-ML018,module_1,match_sound_to_letter,218,Which letter makes the first sound in elf?,E,E|e,easy,1,0,1
+M1-ML019,module_1,match_sound_to_letter,219,Which letter makes the first sound in end?,E,E|e,easy,1,0,1
+M1-ML020,module_1,match_sound_to_letter,220,Which letter makes the first sound in engine?,E,E|e,easy,1,0,1
+M1-ML021,module_1,match_sound_to_letter,221,Which letter makes the first sound in fan?,F,F|f,easy,1,0,1
+M1-ML022,module_1,match_sound_to_letter,222,Which letter makes the first sound in fish?,F,F|f,easy,1,0,1
+M1-ML023,module_1,match_sound_to_letter,223,Which letter makes the first sound in fog?,F,F|f,easy,1,0,1
+M1-ML024,module_1,match_sound_to_letter,224,Which letter makes the first sound in foot?,F,F|f,easy,1,0,1
+M1-ML025,module_1,match_sound_to_letter,225,Which letter makes the first sound in goat?,G,G|g,easy,1,0,1
+M1-ML026,module_1,match_sound_to_letter,226,Which letter makes the first sound in gum?,G,G|g,easy,1,0,1
+M1-ML027,module_1,match_sound_to_letter,227,Which letter makes the first sound in gate?,G,G|g,easy,1,0,1
+M1-ML028,module_1,match_sound_to_letter,228,Which letter makes the first sound in gift?,G,G|g,easy,1,0,1
+M1-ML029,module_1,match_sound_to_letter,229,Which letter makes the first sound in hat?,H,H|h,easy,1,0,1
+M1-ML030,module_1,match_sound_to_letter,230,Which letter makes the first sound in hen?,H,H|h,easy,1,0,1
+M1-ML031,module_1,match_sound_to_letter,231,Which letter makes the first sound in hill?,H,H|h,easy,1,0,1
+M1-ML032,module_1,match_sound_to_letter,232,Which letter makes the first sound in hop?,H,H|h,easy,1,0,1
+M1-ML033,module_1,match_sound_to_letter,233,Which letter makes the first sound in igloo?,I,I|i,easy,1,0,1
+M1-ML034,module_1,match_sound_to_letter,234,Which letter makes the first sound in ink?,I,I|i,easy,1,0,1
+M1-ML035,module_1,match_sound_to_letter,235,Which letter makes the first sound in insect?,I,I|i,easy,1,0,1
+M1-ML036,module_1,match_sound_to_letter,236,Which letter makes the first sound in inch?,I,I|i,easy,1,0,1
+M1-ML037,module_1,match_sound_to_letter,237,Which letter makes the first sound in jam?,J,J|j,easy,1,0,1
+M1-ML038,module_1,match_sound_to_letter,238,Which letter makes the first sound in jet?,J,J|j,easy,1,0,1
+M1-ML039,module_1,match_sound_to_letter,239,Which letter makes the first sound in jog?,J,J|j,easy,1,0,1
+M1-ML040,module_1,match_sound_to_letter,240,Which letter makes the first sound in jug?,J,J|j,easy,1,0,1
+M1-ML041,module_1,match_sound_to_letter,241,Which letter makes the first sound in kite?,K,K|k,easy,1,0,1
+M1-ML042,module_1,match_sound_to_letter,242,Which letter makes the first sound in kid?,K,K|k,easy,1,0,1
+M1-ML043,module_1,match_sound_to_letter,243,Which letter makes the first sound in kit?,K,K|k,easy,1,0,1
+M1-ML044,module_1,match_sound_to_letter,244,Which letter makes the first sound in king?,K,K|k,easy,1,0,1
+M1-ML045,module_1,match_sound_to_letter,245,Which letter makes the first sound in lid?,L,L|l,easy,1,0,1
+M1-ML046,module_1,match_sound_to_letter,246,Which letter makes the first sound in lamp?,L,L|l,easy,1,0,1
+M1-ML047,module_1,match_sound_to_letter,247,Which letter makes the first sound in leg?,L,L|l,easy,1,0,1
+M1-ML048,module_1,match_sound_to_letter,248,Which letter makes the first sound in leaf?,L,L|l,easy,1,0,1
+M1-ML049,module_1,match_sound_to_letter,249,Which letter makes the first sound in map?,M,M|m,easy,1,0,1
+M1-ML050,module_1,match_sound_to_letter,250,Which letter makes the first sound in moon?,M,M|m,easy,1,0,1
+M1-ML051,module_1,match_sound_to_letter,251,Which letter makes the first sound in mat?,M,M|m,easy,1,0,1
+M1-ML052,module_1,match_sound_to_letter,252,Which letter makes the first sound in milk?,M,M|m,easy,1,0,1
+M1-ML053,module_1,match_sound_to_letter,253,Which letter makes the first sound in net?,N,N|n,easy,1,0,1
+M1-ML054,module_1,match_sound_to_letter,254,Which letter makes the first sound in nest?,N,N|n,easy,1,0,1
+M1-ML055,module_1,match_sound_to_letter,255,Which letter makes the first sound in nap?,N,N|n,easy,1,0,1
+M1-ML056,module_1,match_sound_to_letter,256,Which letter makes the first sound in nose?,N,N|n,easy,1,0,1
+M1-ML057,module_1,match_sound_to_letter,257,Which letter makes the first sound in octopus?,O,O|o,easy,1,0,1
+M1-ML058,module_1,match_sound_to_letter,258,Which letter makes the first sound in ox?,O,O|o,easy,1,0,1
+M1-ML059,module_1,match_sound_to_letter,259,Which letter makes the first sound in odd?,O,O|o,easy,1,0,1
+M1-ML060,module_1,match_sound_to_letter,260,Which letter makes the first sound in ostrich?,O,O|o,easy,1,0,1
+M1-ML061,module_1,match_sound_to_letter,261,Which letter makes the first sound in pin?,P,P|p,easy,1,0,1
+M1-ML062,module_1,match_sound_to_letter,262,Which letter makes the first sound in pan?,P,P|p,easy,1,0,1
+M1-ML063,module_1,match_sound_to_letter,263,Which letter makes the first sound in pig?,P,P|p,easy,1,0,1
+M1-ML064,module_1,match_sound_to_letter,264,Which letter makes the first sound in pot?,P,P|p,easy,1,0,1
+M1-ML065,module_1,match_sound_to_letter,265,Which letter makes the first sound in queen?,Q,Q|q,easy,1,0,1
+M1-ML066,module_1,match_sound_to_letter,266,Which letter makes the first sound in quilt?,Q,Q|q,easy,1,0,1
+M1-ML067,module_1,match_sound_to_letter,267,Which letter makes the first sound in quick?,Q,Q|q,easy,1,0,1
+M1-ML068,module_1,match_sound_to_letter,268,Which letter makes the first sound in quiz?,Q,Q|q,easy,1,0,1
+M1-ML069,module_1,match_sound_to_letter,269,Which letter makes the first sound in rat?,R,R|r,easy,1,0,1
+M1-ML070,module_1,match_sound_to_letter,270,Which letter makes the first sound in red?,R,R|r,easy,1,0,1
+M1-ML071,module_1,match_sound_to_letter,271,Which letter makes the first sound in rock?,R,R|r,easy,1,0,1
+M1-ML072,module_1,match_sound_to_letter,272,Which letter makes the first sound in rain?,R,R|r,easy,1,0,1
+M1-ML073,module_1,match_sound_to_letter,273,Which letter makes the first sound in sun?,S,S|s,easy,1,0,1
+M1-ML074,module_1,match_sound_to_letter,274,Which letter makes the first sound in sit?,S,S|s,easy,1,0,1
+M1-ML075,module_1,match_sound_to_letter,275,Which letter makes the first sound in sock?,S,S|s,easy,1,0,1
+M1-ML076,module_1,match_sound_to_letter,276,Which letter makes the first sound in sand?,S,S|s,easy,1,0,1
+M1-ML077,module_1,match_sound_to_letter,277,Which letter makes the first sound in tap?,T,T|t,easy,1,0,1
+M1-ML078,module_1,match_sound_to_letter,278,Which letter makes the first sound in top?,T,T|t,easy,1,0,1
+M1-ML079,module_1,match_sound_to_letter,279,Which letter makes the first sound in ten?,T,T|t,easy,1,0,1
+M1-ML080,module_1,match_sound_to_letter,280,Which letter makes the first sound in tub?,T,T|t,easy,1,0,1
+M1-ML081,module_1,match_sound_to_letter,281,Which letter makes the first sound in up?,U,U|u,easy,1,0,1
+M1-ML082,module_1,match_sound_to_letter,282,Which letter makes the first sound in under?,U,U|u,easy,1,0,1
+M1-ML083,module_1,match_sound_to_letter,283,Which letter makes the first sound in uncle?,U,U|u,easy,1,0,1
+M1-ML084,module_1,match_sound_to_letter,284,Which letter makes the first sound in umbrella?,U,U|u,easy,1,0,1
+M1-ML085,module_1,match_sound_to_letter,285,Which letter makes the first sound in van?,V,V|v,easy,1,0,1
+M1-ML086,module_1,match_sound_to_letter,286,Which letter makes the first sound in vet?,V,V|v,easy,1,0,1
+M1-ML087,module_1,match_sound_to_letter,287,Which letter makes the first sound in vest?,V,V|v,easy,1,0,1
+M1-ML088,module_1,match_sound_to_letter,288,Which letter makes the first sound in vine?,V,V|v,easy,1,0,1
+M1-ML089,module_1,match_sound_to_letter,289,Which letter makes the first sound in web?,W,W|w,easy,1,0,1
+M1-ML090,module_1,match_sound_to_letter,290,Which letter makes the first sound in win?,W,W|w,easy,1,0,1
+M1-ML091,module_1,match_sound_to_letter,291,Which letter makes the first sound in water?,W,W|w,easy,1,0,1
+M1-ML092,module_1,match_sound_to_letter,292,Which letter makes the first sound in wind?,W,W|w,easy,1,0,1
+M1-ML093,module_1,match_sound_to_letter,293,Which letter makes the first sound in x-ray?,X,X|x,easy,1,0,1
+M1-ML094,module_1,match_sound_to_letter,294,Which letter makes the first sound in box?,X,X|x,easy,1,0,1
+M1-ML095,module_1,match_sound_to_letter,295,Which letter makes the first sound in fox?,X,X|x,easy,1,0,1
+M1-ML096,module_1,match_sound_to_letter,296,Which letter makes the first sound in six?,X,X|x,easy,1,0,1
+M1-ML097,module_1,match_sound_to_letter,297,Which letter makes the first sound in yak?,Y,Y|y,easy,1,0,1
+M1-ML098,module_1,match_sound_to_letter,298,Which letter makes the first sound in yam?,Y,Y|y,easy,1,0,1
+M1-ML099,module_1,match_sound_to_letter,299,Which letter makes the first sound in yes?,Y,Y|y,easy,1,0,1
+M1-ML100,module_1,match_sound_to_letter,300,Which letter makes the first sound in yellow?,Y,Y|y,easy,1,0,1
+M1-SD001,module_1,sound_drill,301,Say the first sound in dig.,D,D|d|duh,easy,1,0,1
+M1-SD002,module_1,sound_drill,302,Say the first sound in desk.,D,D|d|duh,easy,1,0,1
+M1-SD003,module_1,sound_drill,303,Say the first sound in duck.,D,D|d|duh,easy,1,0,1
+M1-SD004,module_1,sound_drill,304,Say the first sound in egg.,E,E|e|eh|short e,easy,1,0,1
+M1-SD005,module_1,sound_drill,305,Say the first sound in elf.,E,E|e|eh|short e,easy,1,0,1
+M1-SD006,module_1,sound_drill,306,Say the first sound in end.,E,E|e|eh|short e,easy,1,0,1
+M1-SD007,module_1,sound_drill,307,Say the first sound in engine.,E,E|e|eh|short e,easy,1,0,1
+M1-SD008,module_1,sound_drill,308,Say the first sound in fan.,F,F|f|fff,easy,1,0,1
+M1-SD009,module_1,sound_drill,309,Say the first sound in fish.,F,F|f|fff,easy,1,0,1
+M1-SD010,module_1,sound_drill,310,Say the first sound in fog.,F,F|f|fff,easy,1,0,1
+M1-SD011,module_1,sound_drill,311,Say the first sound in foot.,F,F|f|fff,easy,1,0,1
+M1-SD012,module_1,sound_drill,312,Say the first sound in goat.,G,G|g|guh|hard g,easy,1,0,1
+M1-SD013,module_1,sound_drill,313,Say the first sound in gum.,G,G|g|guh|hard g,easy,1,0,1
+M1-SD014,module_1,sound_drill,314,Say the first sound in gate.,G,G|g|guh|hard g,easy,1,0,1
+M1-SD015,module_1,sound_drill,315,Say the first sound in gift.,G,G|g|guh|hard g,easy,1,0,1
+M1-SD016,module_1,sound_drill,316,Say the first sound in hat.,H,H|h|huh,easy,1,0,1
+M1-SD017,module_1,sound_drill,317,Say the first sound in hen.,H,H|h|huh,easy,1,0,1
+M1-SD018,module_1,sound_drill,318,Say the first sound in hill.,H,H|h|huh,easy,1,0,1
+M1-SD019,module_1,sound_drill,319,Say the first sound in hop.,H,H|h|huh,easy,1,0,1
+M1-SD020,module_1,sound_drill,320,Say the first sound in igloo.,I,I|i|ih|short i,easy,1,0,1
+M1-SD021,module_1,sound_drill,321,Say the first sound in ink.,I,I|i|ih|short i,easy,1,0,1
+M1-SD022,module_1,sound_drill,322,Say the first sound in insect.,I,I|i|ih|short i,easy,1,0,1
+M1-SD023,module_1,sound_drill,323,Say the first sound in inch.,I,I|i|ih|short i,easy,1,0,1
+M1-SD024,module_1,sound_drill,324,Say the first sound in jam.,J,J|j|juh,easy,1,0,1
+M1-SD025,module_1,sound_drill,325,Say the first sound in jet.,J,J|j|juh,easy,1,0,1
+M1-SD026,module_1,sound_drill,326,Say the first sound in jog.,J,J|j|juh,easy,1,0,1
+M1-SD027,module_1,sound_drill,327,Say the first sound in jug.,J,J|j|juh,easy,1,0,1
+M1-SD028,module_1,sound_drill,328,Say the first sound in kite.,K,K|k|kuh,easy,1,0,1
+M1-SD029,module_1,sound_drill,329,Say the first sound in kid.,K,K|k|kuh,easy,1,0,1
+M1-SD030,module_1,sound_drill,330,Say the first sound in kit.,K,K|k|kuh,easy,1,0,1
+M1-SD031,module_1,sound_drill,331,Say the first sound in king.,K,K|k|kuh,easy,1,0,1
+M1-SD032,module_1,sound_drill,332,Say the first sound in lid.,L,L|l|luh,easy,1,0,1
+M1-SD033,module_1,sound_drill,333,Say the first sound in lamp.,L,L|l|luh,easy,1,0,1
+M1-SD034,module_1,sound_drill,334,Say the first sound in leg.,L,L|l|luh,easy,1,0,1
+M1-SD035,module_1,sound_drill,335,Say the first sound in leaf.,L,L|l|luh,easy,1,0,1
+M1-SD036,module_1,sound_drill,336,Say the first sound in map.,M,M|m|mmm,easy,1,0,1
+M1-SD037,module_1,sound_drill,337,Say the first sound in moon.,M,M|m|mmm,easy,1,0,1
+M1-SD038,module_1,sound_drill,338,Say the first sound in mat.,M,M|m|mmm,easy,1,0,1
+M1-SD039,module_1,sound_drill,339,Say the first sound in milk.,M,M|m|mmm,easy,1,0,1
+M1-SD040,module_1,sound_drill,340,Say the first sound in net.,N,N|n|nnn,easy,1,0,1
+M1-SD041,module_1,sound_drill,341,Say the first sound in nest.,N,N|n|nnn,easy,1,0,1
+M1-SD042,module_1,sound_drill,342,Say the first sound in nap.,N,N|n|nnn,easy,1,0,1
+M1-SD043,module_1,sound_drill,343,Say the first sound in nose.,N,N|n|nnn,easy,1,0,1
+M1-SD044,module_1,sound_drill,344,Say the first sound in octopus.,O,O|o|ah|short o,easy,1,0,1
+M1-SD045,module_1,sound_drill,345,Say the first sound in ox.,O,O|o|ah|short o,easy,1,0,1
+M1-SD046,module_1,sound_drill,346,Say the first sound in odd.,O,O|o|ah|short o,easy,1,0,1
+M1-SD047,module_1,sound_drill,347,Say the first sound in ostrich.,O,O|o|ah|short o,easy,1,0,1
+M1-SD048,module_1,sound_drill,348,Say the first sound in pin.,P,P|p|puh,easy,1,0,1
+M1-SD049,module_1,sound_drill,349,Say the first sound in pan.,P,P|p|puh,easy,1,0,1
+M1-SD050,module_1,sound_drill,350,Say the first sound in pig.,P,P|p|puh,easy,1,0,1
+M1-SD051,module_1,sound_drill,351,Say the first sound in pot.,P,P|p|puh,easy,1,0,1
+M1-SD052,module_1,sound_drill,352,Say the first sound in queen.,Q,Q|q|kw,easy,1,0,1
+M1-SD053,module_1,sound_drill,353,Say the first sound in quilt.,Q,Q|q|kw,easy,1,0,1
+M1-SD054,module_1,sound_drill,354,Say the first sound in quick.,Q,Q|q|kw,easy,1,0,1
+M1-SD055,module_1,sound_drill,355,Say the first sound in quiz.,Q,Q|q|kw,easy,1,0,1
+M1-SD056,module_1,sound_drill,356,Say the first sound in rat.,R,R|r|ruh,easy,1,0,1
+M1-SD057,module_1,sound_drill,357,Say the first sound in red.,R,R|r|ruh,easy,1,0,1
+M1-SD058,module_1,sound_drill,358,Say the first sound in rock.,R,R|r|ruh,easy,1,0,1
+M1-SD059,module_1,sound_drill,359,Say the first sound in rain.,R,R|r|ruh,easy,1,0,1
+M1-SD060,module_1,sound_drill,360,Say the first sound in sun.,S,S|s|sss,easy,1,0,1
+M1-SD061,module_1,sound_drill,361,Say the first sound in sit.,S,S|s|sss,easy,1,0,1
+M1-SD062,module_1,sound_drill,362,Say the first sound in sock.,S,S|s|sss,easy,1,0,1
+M1-SD063,module_1,sound_drill,363,Say the first sound in sand.,S,S|s|sss,easy,1,0,1
+M1-SD064,module_1,sound_drill,364,Say the first sound in tap.,T,T|t|tuh,easy,1,0,1
+M1-SD065,module_1,sound_drill,365,Say the first sound in top.,T,T|t|tuh,easy,1,0,1
+M1-SD066,module_1,sound_drill,366,Say the first sound in ten.,T,T|t|tuh,easy,1,0,1
+M1-SD067,module_1,sound_drill,367,Say the first sound in tub.,T,T|t|tuh,easy,1,0,1
+M1-SD068,module_1,sound_drill,368,Say the first sound in up.,U,U|u|uh|short u,easy,1,0,1
+M1-SD069,module_1,sound_drill,369,Say the first sound in under.,U,U|u|uh|short u,easy,1,0,1
+M1-SD070,module_1,sound_drill,370,Say the first sound in uncle.,U,U|u|uh|short u,easy,1,0,1
+M1-SD071,module_1,sound_drill,371,Say the first sound in umbrella.,U,U|u|uh|short u,easy,1,0,1
+M1-SD072,module_1,sound_drill,372,Say the first sound in van.,V,V|v|vvv,easy,1,0,1
+M1-SD073,module_1,sound_drill,373,Say the first sound in vet.,V,V|v|vvv,easy,1,0,1
+M1-SD074,module_1,sound_drill,374,Say the first sound in vest.,V,V|v|vvv,easy,1,0,1
+M1-SD075,module_1,sound_drill,375,Say the first sound in vine.,V,V|v|vvv,easy,1,0,1
+M1-SD076,module_1,sound_drill,376,Say the first sound in web.,W,W|w|wuh,easy,1,0,1
+M1-SD077,module_1,sound_drill,377,Say the first sound in win.,W,W|w|wuh,easy,1,0,1
+M1-SD078,module_1,sound_drill,378,Say the first sound in water.,W,W|w|wuh,easy,1,0,1
+M1-SD079,module_1,sound_drill,379,Say the first sound in wind.,W,W|w|wuh,easy,1,0,1
+M1-SD080,module_1,sound_drill,380,Say the first sound in x-ray.,X,X|x|ks,easy,1,0,1
+M1-SD081,module_1,sound_drill,381,Say the first sound in box.,X,X|x|ks,easy,1,0,1
+M1-SD082,module_1,sound_drill,382,Say the first sound in fox.,X,X|x|ks,easy,1,0,1
+M1-SD083,module_1,sound_drill,383,Say the first sound in six.,X,X|x|ks,easy,1,0,1
+M1-SD084,module_1,sound_drill,384,Say the first sound in yak.,Y,Y|y|yuh,easy,1,0,1
+M1-SD085,module_1,sound_drill,385,Say the first sound in yam.,Y,Y|y|yuh,easy,1,0,1
+M1-SD086,module_1,sound_drill,386,Say the first sound in yes.,Y,Y|y|yuh,easy,1,0,1
+M1-SD087,module_1,sound_drill,387,Say the first sound in yellow.,Y,Y|y|yuh,easy,1,0,1
+M1-SD088,module_1,sound_drill,388,Say the first sound in zip.,Z,Z|z|zzz,easy,1,0,1
+M1-SD089,module_1,sound_drill,389,Say the first sound in zoo.,Z,Z|z|zzz,easy,1,0,1
+M1-SD090,module_1,sound_drill,390,Say the first sound in zero.,Z,Z|z|zzz,easy,1,0,1
+M1-SD091,module_1,sound_drill,391,Say the first sound in zebra.,Z,Z|z|zzz,easy,1,0,1
+M1-SD092,module_1,sound_drill,392,Say the first sound in apple.,A,A|a|ah|short a,easy,1,0,1
+M1-SD093,module_1,sound_drill,393,Say the first sound in ant.,A,A|a|ah|short a,easy,1,0,1
+M1-SD094,module_1,sound_drill,394,Say the first sound in ax.,A,A|a|ah|short a,easy,1,0,1
+M1-SD095,module_1,sound_drill,395,Say the first sound in alligator.,A,A|a|ah|short a,easy,1,0,1
+M1-SD096,module_1,sound_drill,396,Say the first sound in bag.,B,B|b|buh,easy,1,0,1
+M1-SD097,module_1,sound_drill,397,Say the first sound in bat.,B,B|b|buh,easy,1,0,1
+M1-SD098,module_1,sound_drill,398,Say the first sound in bed.,B,B|b|buh,easy,1,0,1
+M1-SD099,module_1,sound_drill,399,Say the first sound in bell.,B,B|b|buh,easy,1,0,1
+M1-SD100,module_1,sound_drill,400,Say the first sound in cat.,C,C|c|kuh|hard c,easy,1,0,1
+M1-MC001,module_1,mastery_check,401,Say the sound for A. Think of apple.,A,A|a|ah|short a,easy,1,1,1
+M1-MC002,module_1,mastery_check,402,Say the sound for B. Think of bag.,B,B|b|buh,easy,1,1,1
+M1-MC003,module_1,mastery_check,403,Say the sound for C. Think of cat.,C,C|c|kuh|hard c,easy,1,1,1
+M1-MC004,module_1,mastery_check,404,Say the sound for D. Think of dog.,D,D|d|duh,easy,1,1,1
+M1-MC005,module_1,mastery_check,405,Say the sound for E. Think of egg.,E,E|e|eh|short e,easy,1,1,1
+M1-MC006,module_1,mastery_check,406,Say the sound for F. Think of fan.,F,F|f|fff,easy,1,1,1
+M1-MC007,module_1,mastery_check,407,Say the sound for G. Think of goat.,G,G|g|guh|hard g,easy,1,1,1
+M1-MC008,module_1,mastery_check,408,Say the sound for H. Think of hat.,H,H|h|huh,easy,1,1,1
+M1-MC009,module_1,mastery_check,409,Say the sound for I. Think of igloo.,I,I|i|ih|short i,easy,1,1,1
+M1-MC010,module_1,mastery_check,410,Say the sound for J. Think of jam.,J,J|j|juh,easy,1,1,1
+M1-MC011,module_1,mastery_check,411,Say the sound for K. Think of kite.,K,K|k|kuh,easy,1,1,1
+M1-MC012,module_1,mastery_check,412,Say the sound for L. Think of lid.,L,L|l|luh,easy,1,1,1
+M1-MC013,module_1,mastery_check,413,Say the sound for M. Think of map.,M,M|m|mmm,easy,1,1,1
+M1-MC014,module_1,mastery_check,414,Say the sound for N. Think of net.,N,N|n|nnn,easy,1,1,1
+M1-MC015,module_1,mastery_check,415,Say the sound for O. Think of octopus.,O,O|o|ah|short o,easy,1,1,1
+M1-MC016,module_1,mastery_check,416,Say the sound for P. Think of pin.,P,P|p|puh,easy,1,1,1
+M1-MC017,module_1,mastery_check,417,Say the sound for Q. Think of queen.,Q,Q|q|kw,easy,1,1,1
+M1-MC018,module_1,mastery_check,418,Say the sound for R. Think of rat.,R,R|r|ruh,easy,1,1,1
+M1-MC019,module_1,mastery_check,419,Say the sound for S. Think of sun.,S,S|s|sss,easy,1,1,1
+M1-MC020,module_1,mastery_check,420,Say the sound for T. Think of tap.,T,T|t|tuh,easy,1,1,1
+M1-MC021,module_1,mastery_check,421,Say the sound for U. Think of up.,U,U|u|uh|short u,easy,1,1,1
+M1-MC022,module_1,mastery_check,422,Say the sound for V. Think of van.,V,V|v|vvv,easy,1,1,1
+M1-MC023,module_1,mastery_check,423,Say the sound for W. Think of web.,W,W|w|wuh,easy,1,1,1
+M1-MC024,module_1,mastery_check,424,Say the sound for X. Think of x-ray.,X,X|x|ks,easy,1,1,1
+M1-MC025,module_1,mastery_check,425,Say the sound for Y. Think of yak.,Y,Y|y|yuh,easy,1,1,1
+M1-MC026,module_1,mastery_check,426,Say the sound for Z. Think of zip.,Z,Z|z|zzz,easy,1,1,1
+M1-MC027,module_1,mastery_check,427,Say the sound for A. Think of ant.,A,A|a|ah|short a,easy,1,1,1
+M1-MC028,module_1,mastery_check,428,Say the sound for B. Think of bat.,B,B|b|buh,easy,1,1,1
+M1-MC029,module_1,mastery_check,429,Say the sound for C. Think of cup.,C,C|c|kuh|hard c,easy,1,1,1
+M1-MC030,module_1,mastery_check,430,Say the sound for D. Think of dig.,D,D|d|duh,easy,1,1,1
+M1-MC031,module_1,mastery_check,431,Say the sound for E. Think of elf.,E,E|e|eh|short e,easy,1,1,1
+M1-MC032,module_1,mastery_check,432,Say the sound for F. Think of fish.,F,F|f|fff,easy,1,1,1
+M1-MC033,module_1,mastery_check,433,Say the sound for G. Think of gum.,G,G|g|guh|hard g,easy,1,1,1
+M1-MC034,module_1,mastery_check,434,Say the sound for H. Think of hen.,H,H|h|huh,easy,1,1,1
+M1-MC035,module_1,mastery_check,435,Say the sound for I. Think of ink.,I,I|i|ih|short i,easy,1,1,1
+M1-MC036,module_1,mastery_check,436,Say the sound for J. Think of jet.,J,J|j|juh,easy,1,1,1
+M1-MC037,module_1,mastery_check,437,Say the sound for K. Think of kid.,K,K|k|kuh,easy,1,1,1
+M1-MC038,module_1,mastery_check,438,Say the sound for L. Think of lamp.,L,L|l|luh,easy,1,1,1
+M1-MC039,module_1,mastery_check,439,Say the sound for M. Think of moon.,M,M|m|mmm,easy,1,1,1
+M1-MC040,module_1,mastery_check,440,Say the sound for N. Think of nest.,N,N|n|nnn,easy,1,1,1
+M1-MC041,module_1,mastery_check,441,Say the sound for O. Think of ox.,O,O|o|ah|short o,easy,1,1,1
+M1-MC042,module_1,mastery_check,442,Say the sound for P. Think of pan.,P,P|p|puh,easy,1,1,1
+M1-MC043,module_1,mastery_check,443,Say the sound for Q. Think of quilt.,Q,Q|q|kw,easy,1,1,1
+M1-MC044,module_1,mastery_check,444,Say the sound for R. Think of red.,R,R|r|ruh,easy,1,1,1
+M1-MC045,module_1,mastery_check,445,Say the sound for S. Think of sit.,S,S|s|sss,easy,1,1,1
+M1-MC046,module_1,mastery_check,446,Say the sound for T. Think of top.,T,T|t|tuh,easy,1,1,1
+M1-MC047,module_1,mastery_check,447,Say the sound for U. Think of under.,U,U|u|uh|short u,easy,1,1,1
+M1-MC048,module_1,mastery_check,448,Say the sound for V. Think of vet.,V,V|v|vvv,easy,1,1,1
+M1-MC049,module_1,mastery_check,449,Say the sound for W. Think of win.,W,W|w|wuh,easy,1,1,1
+M1-MC050,module_1,mastery_check,450,Say the sound for X. Think of box.,X,X|x|ks,easy,1,1,1
+M1-MC051,module_1,mastery_check,451,Say the sound for Y. Think of yam.,Y,Y|y|yuh,easy,1,1,1
+M1-MC052,module_1,mastery_check,452,Say the sound for Z. Think of zoo.,Z,Z|z|zzz,easy,1,1,1
+M1-MC053,module_1,mastery_check,453,Say the sound for A. Think of ax.,A,A|a|ah|short a,easy,1,1,1
+M1-MC054,module_1,mastery_check,454,Say the sound for B. Think of bed.,B,B|b|buh,easy,1,1,1
+M1-MC055,module_1,mastery_check,455,Say the sound for C. Think of cap.,C,C|c|kuh|hard c,easy,1,1,1
+M1-MC056,module_1,mastery_check,456,Say the sound for D. Think of desk.,D,D|d|duh,easy,1,1,1
+M1-MC057,module_1,mastery_check,457,Say the sound for E. Think of end.,E,E|e|eh|short e,easy,1,1,1
+M1-MC058,module_1,mastery_check,458,Say the sound for F. Think of fog.,F,F|f|fff,easy,1,1,1
+M1-MC059,module_1,mastery_check,459,Say the sound for G. Think of gate.,G,G|g|guh|hard g,easy,1,1,1
+M1-MC060,module_1,mastery_check,460,Say the sound for H. Think of hill.,H,H|h|huh,easy,1,1,1
+M1-MC061,module_1,mastery_check,461,Say the sound for I. Think of insect.,I,I|i|ih|short i,easy,1,1,1
+M1-MC062,module_1,mastery_check,462,Say the sound for J. Think of jog.,J,J|j|juh,easy,1,1,1
+M1-MC063,module_1,mastery_check,463,Say the sound for K. Think of kit.,K,K|k|kuh,easy,1,1,1
+M1-MC064,module_1,mastery_check,464,Say the sound for L. Think of leg.,L,L|l|luh,easy,1,1,1
+M1-MC065,module_1,mastery_check,465,Say the sound for M. Think of mat.,M,M|m|mmm,easy,1,1,1
+M1-MC066,module_1,mastery_check,466,Say the sound for N. Think of nap.,N,N|n|nnn,easy,1,1,1
+M1-MC067,module_1,mastery_check,467,Say the sound for O. Think of odd.,O,O|o|ah|short o,easy,1,1,1
+M1-MC068,module_1,mastery_check,468,Say the sound for P. Think of pig.,P,P|p|puh,easy,1,1,1
+M1-MC069,module_1,mastery_check,469,Say the sound for Q. Think of quick.,Q,Q|q|kw,easy,1,1,1
+M1-MC070,module_1,mastery_check,470,Say the sound for R. Think of rock.,R,R|r|ruh,easy,1,1,1
+M1-MC071,module_1,mastery_check,471,Say the sound for S. Think of sock.,S,S|s|sss,easy,1,1,1
+M1-MC072,module_1,mastery_check,472,Say the sound for T. Think of ten.,T,T|t|tuh,easy,1,1,1
+M1-MC073,module_1,mastery_check,473,Say the sound for U. Think of uncle.,U,U|u|uh|short u,easy,1,1,1
+M1-MC074,module_1,mastery_check,474,Say the sound for V. Think of vest.,V,V|v|vvv,easy,1,1,1
+M1-MC075,module_1,mastery_check,475,Say the sound for W. Think of water.,W,W|w|wuh,easy,1,1,1
+M1-MC076,module_1,mastery_check,476,Say the sound for X. Think of fox.,X,X|x|ks,easy,1,1,1
+M1-MC077,module_1,mastery_check,477,Say the sound for Y. Think of yes.,Y,Y|y|yuh,easy,1,1,1
+M1-MC078,module_1,mastery_check,478,Say the sound for Z. Think of zero.,Z,Z|z|zzz,easy,1,1,1
+M1-MC079,module_1,mastery_check,479,Say the sound for A. Think of alligator.,A,A|a|ah|short a,easy,1,1,1
+M1-MC080,module_1,mastery_check,480,Say the sound for B. Think of bell.,B,B|b|buh,easy,1,1,1
+M1-MC081,module_1,mastery_check,481,Say the sound for C. Think of cot.,C,C|c|kuh|hard c,easy,1,1,1
+M1-MC082,module_1,mastery_check,482,Say the sound for D. Think of duck.,D,D|d|duh,easy,1,1,1
+M1-MC083,module_1,mastery_check,483,Say the sound for E. Think of engine.,E,E|e|eh|short e,easy,1,1,1
+M1-MC084,module_1,mastery_check,484,Say the sound for F. Think of foot.,F,F|f|fff,easy,1,1,1
+M1-MC085,module_1,mastery_check,485,Say the sound for G. Think of gift.,G,G|g|guh|hard g,easy,1,1,1
+M1-MC086,module_1,mastery_check,486,Say the sound for H. Think of hop.,H,H|h|huh,easy,1,1,1
+M1-MC087,module_1,mastery_check,487,Say the sound for I. Think of inch.,I,I|i|ih|short i,easy,1,1,1
+M1-MC088,module_1,mastery_check,488,Say the sound for J. Think of jug.,J,J|j|juh,easy,1,1,1
+M1-MC089,module_1,mastery_check,489,Say the sound for K. Think of king.,K,K|k|kuh,easy,1,1,1
+M1-MC090,module_1,mastery_check,490,Say the sound for L. Think of leaf.,L,L|l|luh,easy,1,1,1
+M1-MC091,module_1,mastery_check,491,Say the sound for M. Think of milk.,M,M|m|mmm,easy,1,1,1
+M1-MC092,module_1,mastery_check,492,Say the sound for N. Think of nose.,N,N|n|nnn,easy,1,1,1
+M1-MC093,module_1,mastery_check,493,Say the sound for O. Think of ostrich.,O,O|o|ah|short o,easy,1,1,1
+M1-MC094,module_1,mastery_check,494,Say the sound for P. Think of pot.,P,P|p|puh,easy,1,1,1
+M1-MC095,module_1,mastery_check,495,Say the sound for Q. Think of quiz.,Q,Q|q|kw,easy,1,1,1
+M1-MC096,module_1,mastery_check,496,Say the sound for R. Think of rain.,R,R|r|ruh,easy,1,1,1
+M1-MC097,module_1,mastery_check,497,Say the sound for S. Think of sand.,S,S|s|sss,easy,1,1,1
+M1-MC098,module_1,mastery_check,498,Say the sound for T. Think of tub.,T,T|t|tuh,easy,1,1,1
+M1-MC099,module_1,mastery_check,499,Say the sound for U. Think of umbrella.,U,U|u|uh|short u,easy,1,1,1
+M1-MC100,module_1,mastery_check,500,Say the sound for V. Think of vine.,V,V|v|vvv,easy,1,1,1

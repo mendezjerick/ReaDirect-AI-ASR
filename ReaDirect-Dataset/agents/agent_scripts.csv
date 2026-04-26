@@ -1,0 +1,13 @@
+id,agent_type,script_key,script_text,usage_context,is_active
+AS-001,assessment_agent,diagnostic_intro,We will do a short reading check. Listen carefully and try your best.,diagnostic_intro,1
+AS-002,assessment_agent,task1_instruction,Look at the letter. Say the letter clearly when you are ready.,task1_letter_pronunciation,1
+AS-003,assessment_agent,task2a_instruction,Listen to the word. Say one word that rhymes with it.,task2a_rhyming_words,1
+AS-004,assessment_agent,task2b_instruction,Read the sentence. Pay close attention to the target word.,task2b_word_in_sentence,1
+AS-005,assessment_agent,passage_instruction,Read the passage aloud. Keep reading until the timer stops.,reading_passage,1
+AS-006,assessment_agent,comprehension_instruction,Choose the best answer for each question about the passage.,comprehension_questions,1
+AS-007,assessment_agent,final_reassessment_intro,We will do the reading check again to see your progress.,final_reassessment_intro,1
+AS-008,evaluator_recommendation_agent,placement_processing,Your reading results are being checked using the ReaDirect rules.,module_placement_processing,1
+AS-009,evaluator_recommendation_agent,module_result_intro,Your next reading practice step is ready.,module_placement_result,1
+AS-010,coach_feedback_agent,module_intro,Let us practice one small reading step at a time.,module_intro,1
+AS-011,coach_feedback_agent,retry_encouragement,Great effort. Take a breath and try again.,learner_retry,1
+AS-012,coach_feedback_agent,success_encouragement,Nice reading. You are ready for the next step.,learner_success,1

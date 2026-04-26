@@ -1,0 +1,27 @@
+recent_window: 5
+top_k_default: 5
+avoid_recent_items_count: 3
+correct_streak_increase_threshold: 3
+incorrect_streak_decrease_threshold: 2
+high_recent_accuracy_threshold: 0.8
+low_recent_accuracy_threshold: 0.5
+allow_mastery_items_by_default: false
+prefer_same_module: true
+penalize_manual_review_items: true
+
+difficulty_order:
+  - very_easy
+  - easy
+  - medium
+  - hard
+  - very_hard
+
+error_focus_weights:
+  exact_match: 0
+  same_error_focus: 4
+  same_skill_signal: 3
+  same_target_phoneme: 2
+  appropriate_difficulty: 2
+  not_recently_used: 2
+  active_item: 3
+  needs_manual_review_penalty: -5

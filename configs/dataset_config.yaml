@@ -1,0 +1,67 @@
+content_bank_path: content_bank
+cmudict_dir: external_datasets/cmudict
+audio_base_path: data/raw
+manifest_path: data/manifests/dataset_manifest.csv
+content_index_path: data/manifests/content_index.csv
+metadata_template_path: data/manifests/metadata_template.csv
+speechocean762:
+  dataset_dir: external_datasets/speechocean762/extracted
+  archive_path: external_datasets/speechocean762/raw/speechocean762.tar.gz
+  manifest_path: data/manifests/speechocean762_manifest.csv
+  active: true
+l2_arctic:
+  active: false
+  status: research_only_optional_noncommercial
+pf_star:
+  active: false
+  status: future_optional_only
+supported_audio_extensions:
+  - .wav
+  - .mp3
+  - .m4a
+  - .webm
+  - .ogg
+  - .flac
+required_manifest_columns:
+  - recording_id
+  - dataset_source
+  - learner_id_anonymized
+  - speaker_id_anonymized
+  - speaker_type
+  - age_group
+  - gender
+  - l1_language
+  - grade_level
+  - prompt_id
+  - prompt_type
+  - module_key
+  - activity_type
+  - prompt_text
+  - expected_text
+  - accepted_answers
+  - expected_phonemes
+  - initial_phoneme
+  - vowel_phonemes
+  - final_phoneme
+  - phoneme_pattern
+  - audio_path
+  - duration_seconds
+  - sentence_score
+  - word_score
+  - phoneme_score
+  - word_labels
+  - phoneme_labels
+  - timestamps
+  - manual_transcript
+  - asr_transcript
+  - normalized_transcript
+  - human_correct
+  - error_type
+  - similarity_label
+  - stt_confidence
+  - recording_condition
+  - noise_flag
+  - license_notes
+  - split
+  - notes
+  - row_status

@@ -1,0 +1,17 @@
+id,module_key,activity_type,practice_item_count,mastery_item_count,is_active
+M1-R001,module_1,hear_and_repeat,5,0,1
+M1-R002,module_1,see_letter_say_sound,5,0,1
+M1-R003,module_1,match_sound_to_letter,5,0,1
+M1-R004,module_1,sound_drill,5,0,1
+M1-R005,module_1,mastery_check,0,10,1
+M2-R001,module_2,read_word,5,0,1
+M2-R002,module_2,word_family_drill,5,0,1
+M2-R003,module_2,minimal_pair,5,0,1
+M2-R004,module_2,word_accuracy_challenge,5,0,1
+M2-R005,module_2,mastery_check,0,10,1
+M3-R001,module_3,read_sentence,5,0,1
+M3-R002,module_3,read_with_coach,5,0,1
+M3-R003,module_3,timed_sentence_reading,5,0,1
+M3-R004,module_3,pause_practice,5,0,1
+M3-R005,module_3,fluency_challenge,5,0,1
+M3-R006,module_3,mastery_check,0,10,1

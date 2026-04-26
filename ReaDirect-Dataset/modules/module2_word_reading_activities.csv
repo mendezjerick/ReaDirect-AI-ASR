@@ -1,0 +1,501 @@
+id,module_key,activity_type,sequence,prompt_text,target_word,expected_answer,accepted_answers,word_family,difficulty,points,is_mastery_item,is_active
+M2-RW001,module_2,read_word,1,Read the word cat.,cat,cat,cat,at,easy,1,0,1
+M2-RW002,module_2,read_word,2,Read the word bat.,bat,bat,bat,at,easy,1,0,1
+M2-RW003,module_2,read_word,3,Read the word hat.,hat,hat,hat,at,easy,1,0,1
+M2-RW004,module_2,read_word,4,Read the word mat.,mat,mat,mat,at,easy,1,0,1
+M2-RW005,module_2,read_word,5,Read the word rat.,rat,rat,rat,at,easy,1,0,1
+M2-RW006,module_2,read_word,6,Read the word sat.,sat,sat,sat,at,easy,1,0,1
+M2-RW007,module_2,read_word,7,Read the word pat.,pat,pat,pat,at,easy,1,0,1
+M2-RW008,module_2,read_word,8,Read the word flat.,flat,flat,flat,at,easy,1,0,1
+M2-RW009,module_2,read_word,9,Read the word can.,can,can,can,an,easy,1,0,1
+M2-RW010,module_2,read_word,10,Read the word fan.,fan,fan,fan,an,easy,1,0,1
+M2-RW011,module_2,read_word,11,Read the word man.,man,man,man,an,easy,1,0,1
+M2-RW012,module_2,read_word,12,Read the word pan.,pan,pan,pan,an,easy,1,0,1
+M2-RW013,module_2,read_word,13,Read the word ran.,ran,ran,ran,an,easy,1,0,1
+M2-RW014,module_2,read_word,14,Read the word van.,van,van,van,an,easy,1,0,1
+M2-RW015,module_2,read_word,15,Read the word tan.,tan,tan,tan,an,easy,1,0,1
+M2-RW016,module_2,read_word,16,Read the word plan.,plan,plan,plan,an,easy,1,0,1
+M2-RW017,module_2,read_word,17,Read the word cap.,cap,cap,cap,ap,easy,1,0,1
+M2-RW018,module_2,read_word,18,Read the word map.,map,map,map,ap,easy,1,0,1
+M2-RW019,module_2,read_word,19,Read the word nap.,nap,nap,nap,ap,easy,1,0,1
+M2-RW020,module_2,read_word,20,Read the word tap.,tap,tap,tap,ap,easy,1,0,1
+M2-RW021,module_2,read_word,21,Read the word lap.,lap,lap,lap,ap,easy,1,0,1
+M2-RW022,module_2,read_word,22,Read the word gap.,gap,gap,gap,ap,easy,1,0,1
+M2-RW023,module_2,read_word,23,Read the word snap.,snap,snap,snap,ap,easy,1,0,1
+M2-RW024,module_2,read_word,24,Read the word clap.,clap,clap,clap,ap,easy,1,0,1
+M2-RW025,module_2,read_word,25,Read the word ham.,ham,ham,ham,am,easy,1,0,1
+M2-RW026,module_2,read_word,26,Read the word jam.,jam,jam,jam,am,easy,1,0,1
+M2-RW027,module_2,read_word,27,Read the word ram.,ram,ram,ram,am,easy,1,0,1
+M2-RW028,module_2,read_word,28,Read the word yam.,yam,yam,yam,am,easy,1,0,1
+M2-RW029,module_2,read_word,29,Read the word dam.,dam,dam,dam,am,easy,1,0,1
+M2-RW030,module_2,read_word,30,Read the word clam.,clam,clam,clam,am,easy,1,0,1
+M2-RW031,module_2,read_word,31,Read the word slam.,slam,slam,slam,am,easy,1,0,1
+M2-RW032,module_2,read_word,32,Read the word gram.,gram,gram,gram,am,easy,1,0,1
+M2-RW033,module_2,read_word,33,Read the word bag.,bag,bag,bag,ag,easy,1,0,1
+M2-RW034,module_2,read_word,34,Read the word tag.,tag,tag,tag,ag,easy,1,0,1
+M2-RW035,module_2,read_word,35,Read the word wag.,wag,wag,wag,ag,easy,1,0,1
+M2-RW036,module_2,read_word,36,Read the word rag.,rag,rag,rag,ag,easy,1,0,1
+M2-RW037,module_2,read_word,37,Read the word flag.,flag,flag,flag,ag,easy,1,0,1
+M2-RW038,module_2,read_word,38,Read the word drag.,drag,drag,drag,ag,easy,1,0,1
+M2-RW039,module_2,read_word,39,Read the word snag.,snag,snag,snag,ag,easy,1,0,1
+M2-RW040,module_2,read_word,40,Read the word brag.,brag,brag,brag,ag,easy,1,0,1
+M2-RW041,module_2,read_word,41,Read the word dad.,dad,dad,dad,ad,easy,1,0,1
+M2-RW042,module_2,read_word,42,Read the word sad.,sad,sad,sad,ad,easy,1,0,1
+M2-RW043,module_2,read_word,43,Read the word mad.,mad,mad,mad,ad,easy,1,0,1
+M2-RW044,module_2,read_word,44,Read the word pad.,pad,pad,pad,ad,easy,1,0,1
+M2-RW045,module_2,read_word,45,Read the word had.,had,had,had,ad,easy,1,0,1
+M2-RW046,module_2,read_word,46,Read the word glad.,glad,glad,glad,ad,easy,1,0,1
+M2-RW047,module_2,read_word,47,Read the word clad.,clad,clad,clad,ad,easy,1,0,1
+M2-RW048,module_2,read_word,48,Read the word bad.,bad,bad,bad,ad,easy,1,0,1
+M2-RW049,module_2,read_word,49,Read the word bed.,bed,bed,bed,ed,easy,1,0,1
+M2-RW050,module_2,read_word,50,Read the word red.,red,red,red,ed,easy,1,0,1
+M2-RW051,module_2,read_word,51,Read the word fed.,fed,fed,fed,ed,easy,1,0,1
+M2-RW052,module_2,read_word,52,Read the word led.,led,led,led,ed,easy,1,0,1
+M2-RW053,module_2,read_word,53,Read the word wed.,wed,wed,wed,ed,easy,1,0,1
+M2-RW054,module_2,read_word,54,Read the word shed.,shed,shed,shed,ed,easy,1,0,1
+M2-RW055,module_2,read_word,55,Read the word sled.,sled,sled,sled,ed,easy,1,0,1
+M2-RW056,module_2,read_word,56,Read the word sped.,sped,sped,sped,ed,easy,1,0,1
+M2-RW057,module_2,read_word,57,Read the word hen.,hen,hen,hen,en,easy,1,0,1
+M2-RW058,module_2,read_word,58,Read the word pen.,pen,pen,pen,en,easy,1,0,1
+M2-RW059,module_2,read_word,59,Read the word ten.,ten,ten,ten,en,easy,1,0,1
+M2-RW060,module_2,read_word,60,Read the word men.,men,men,men,en,easy,1,0,1
+M2-RW061,module_2,read_word,61,Read the word den.,den,den,den,en,easy,1,0,1
+M2-RW062,module_2,read_word,62,Read the word then.,then,then,then,en,easy,1,0,1
+M2-RW063,module_2,read_word,63,Read the word when.,when,when,when,en,easy,1,0,1
+M2-RW064,module_2,read_word,64,Read the word wren.,wren,wren,wren,en,easy,1,0,1
+M2-RW065,module_2,read_word,65,Read the word jet.,jet,jet,jet,et,easy,1,0,1
+M2-RW066,module_2,read_word,66,Read the word pet.,pet,pet,pet,et,easy,1,0,1
+M2-RW067,module_2,read_word,67,Read the word net.,net,net,net,et,easy,1,0,1
+M2-RW068,module_2,read_word,68,Read the word wet.,wet,wet,wet,et,easy,1,0,1
+M2-RW069,module_2,read_word,69,Read the word set.,set,set,set,et,easy,1,0,1
+M2-RW070,module_2,read_word,70,Read the word get.,get,get,get,et,easy,1,0,1
+M2-RW071,module_2,read_word,71,Read the word let.,let,let,let,et,easy,1,0,1
+M2-RW072,module_2,read_word,72,Read the word met.,met,met,met,et,easy,1,0,1
+M2-RW073,module_2,read_word,73,Read the word pin.,pin,pin,pin,in,easy,1,0,1
+M2-RW074,module_2,read_word,74,Read the word bin.,bin,bin,bin,in,easy,1,0,1
+M2-RW075,module_2,read_word,75,Read the word fin.,fin,fin,fin,in,easy,1,0,1
+M2-RW076,module_2,read_word,76,Read the word win.,win,win,win,in,easy,1,0,1
+M2-RW077,module_2,read_word,77,Read the word tin.,tin,tin,tin,in,easy,1,0,1
+M2-RW078,module_2,read_word,78,Read the word chin.,chin,chin,chin,in,easy,1,0,1
+M2-RW079,module_2,read_word,79,Read the word thin.,thin,thin,thin,in,easy,1,0,1
+M2-RW080,module_2,read_word,80,Read the word spin.,spin,spin,spin,in,easy,1,0,1
+M2-RW081,module_2,read_word,81,Read the word lip.,lip,lip,lip,ip,easy,1,0,1
+M2-RW082,module_2,read_word,82,Read the word sip.,sip,sip,sip,ip,easy,1,0,1
+M2-RW083,module_2,read_word,83,Read the word dip.,dip,dip,dip,ip,easy,1,0,1
+M2-RW084,module_2,read_word,84,Read the word rip.,rip,rip,rip,ip,easy,1,0,1
+M2-RW085,module_2,read_word,85,Read the word tip.,tip,tip,tip,ip,easy,1,0,1
+M2-RW086,module_2,read_word,86,Read the word ship.,ship,ship,ship,ip,easy,1,0,1
+M2-RW087,module_2,read_word,87,Read the word chip.,chip,chip,chip,ip,easy,1,0,1
+M2-RW088,module_2,read_word,88,Read the word flip.,flip,flip,flip,ip,easy,1,0,1
+M2-RW089,module_2,read_word,89,Read the word sit.,sit,sit,sit,it,easy,1,0,1
+M2-RW090,module_2,read_word,90,Read the word fit.,fit,fit,fit,it,easy,1,0,1
+M2-RW091,module_2,read_word,91,Read the word hit.,hit,hit,hit,it,easy,1,0,1
+M2-RW092,module_2,read_word,92,Read the word kit.,kit,kit,kit,it,easy,1,0,1
+M2-RW093,module_2,read_word,93,Read the word pit.,pit,pit,pit,it,easy,1,0,1
+M2-RW094,module_2,read_word,94,Read the word bit.,bit,bit,bit,it,easy,1,0,1
+M2-RW095,module_2,read_word,95,Read the word knit.,knit,knit,knit,it,easy,1,0,1
+M2-RW096,module_2,read_word,96,Read the word split.,split,split,split,it,easy,1,0,1
+M2-RW097,module_2,read_word,97,Read the word big.,big,big,big,ig,easy,1,0,1
+M2-RW098,module_2,read_word,98,Read the word dig.,dig,dig,dig,ig,easy,1,0,1
+M2-RW099,module_2,read_word,99,Read the word pig.,pig,pig,pig,ig,easy,1,0,1
+M2-RW100,module_2,read_word,100,Read the word wig.,wig,wig,wig,ig,easy,1,0,1
+M2-WF001,module_2,word_family_drill,101,Read a word in the am family: gram.,gram,gram,gram,am,easy,1,0,1
+M2-WF002,module_2,word_family_drill,102,Read a word in the ag family: bag.,bag,bag,bag,ag,easy,1,0,1
+M2-WF003,module_2,word_family_drill,103,Read a word in the ag family: tag.,tag,tag,tag,ag,easy,1,0,1
+M2-WF004,module_2,word_family_drill,104,Read a word in the ag family: wag.,wag,wag,wag,ag,easy,1,0,1
+M2-WF005,module_2,word_family_drill,105,Read a word in the ag family: rag.,rag,rag,rag,ag,easy,1,0,1
+M2-WF006,module_2,word_family_drill,106,Read a word in the ag family: flag.,flag,flag,flag,ag,easy,1,0,1
+M2-WF007,module_2,word_family_drill,107,Read a word in the ag family: drag.,drag,drag,drag,ag,easy,1,0,1
+M2-WF008,module_2,word_family_drill,108,Read a word in the ag family: snag.,snag,snag,snag,ag,easy,1,0,1
+M2-WF009,module_2,word_family_drill,109,Read a word in the ag family: brag.,brag,brag,brag,ag,easy,1,0,1
+M2-WF010,module_2,word_family_drill,110,Read a word in the ad family: dad.,dad,dad,dad,ad,easy,1,0,1
+M2-WF011,module_2,word_family_drill,111,Read a word in the ad family: sad.,sad,sad,sad,ad,easy,1,0,1
+M2-WF012,module_2,word_family_drill,112,Read a word in the ad family: mad.,mad,mad,mad,ad,easy,1,0,1
+M2-WF013,module_2,word_family_drill,113,Read a word in the ad family: pad.,pad,pad,pad,ad,easy,1,0,1
+M2-WF014,module_2,word_family_drill,114,Read a word in the ad family: had.,had,had,had,ad,easy,1,0,1
+M2-WF015,module_2,word_family_drill,115,Read a word in the ad family: glad.,glad,glad,glad,ad,easy,1,0,1
+M2-WF016,module_2,word_family_drill,116,Read a word in the ad family: clad.,clad,clad,clad,ad,easy,1,0,1
+M2-WF017,module_2,word_family_drill,117,Read a word in the ad family: bad.,bad,bad,bad,ad,easy,1,0,1
+M2-WF018,module_2,word_family_drill,118,Read a word in the ed family: bed.,bed,bed,bed,ed,easy,1,0,1
+M2-WF019,module_2,word_family_drill,119,Read a word in the ed family: red.,red,red,red,ed,easy,1,0,1
+M2-WF020,module_2,word_family_drill,120,Read a word in the ed family: fed.,fed,fed,fed,ed,easy,1,0,1
+M2-WF021,module_2,word_family_drill,121,Read a word in the ed family: led.,led,led,led,ed,easy,1,0,1
+M2-WF022,module_2,word_family_drill,122,Read a word in the ed family: wed.,wed,wed,wed,ed,easy,1,0,1
+M2-WF023,module_2,word_family_drill,123,Read a word in the ed family: shed.,shed,shed,shed,ed,easy,1,0,1
+M2-WF024,module_2,word_family_drill,124,Read a word in the ed family: sled.,sled,sled,sled,ed,easy,1,0,1
+M2-WF025,module_2,word_family_drill,125,Read a word in the ed family: sped.,sped,sped,sped,ed,easy,1,0,1
+M2-WF026,module_2,word_family_drill,126,Read a word in the en family: hen.,hen,hen,hen,en,easy,1,0,1
+M2-WF027,module_2,word_family_drill,127,Read a word in the en family: pen.,pen,pen,pen,en,easy,1,0,1
+M2-WF028,module_2,word_family_drill,128,Read a word in the en family: ten.,ten,ten,ten,en,easy,1,0,1
+M2-WF029,module_2,word_family_drill,129,Read a word in the en family: men.,men,men,men,en,easy,1,0,1
+M2-WF030,module_2,word_family_drill,130,Read a word in the en family: den.,den,den,den,en,easy,1,0,1
+M2-WF031,module_2,word_family_drill,131,Read a word in the en family: then.,then,then,then,en,easy,1,0,1
+M2-WF032,module_2,word_family_drill,132,Read a word in the en family: when.,when,when,when,en,easy,1,0,1
+M2-WF033,module_2,word_family_drill,133,Read a word in the en family: wren.,wren,wren,wren,en,easy,1,0,1
+M2-WF034,module_2,word_family_drill,134,Read a word in the et family: jet.,jet,jet,jet,et,easy,1,0,1
+M2-WF035,module_2,word_family_drill,135,Read a word in the et family: pet.,pet,pet,pet,et,easy,1,0,1
+M2-WF036,module_2,word_family_drill,136,Read a word in the et family: net.,net,net,net,et,easy,1,0,1
+M2-WF037,module_2,word_family_drill,137,Read a word in the et family: wet.,wet,wet,wet,et,easy,1,0,1
+M2-WF038,module_2,word_family_drill,138,Read a word in the et family: set.,set,set,set,et,easy,1,0,1
+M2-WF039,module_2,word_family_drill,139,Read a word in the et family: get.,get,get,get,et,easy,1,0,1
+M2-WF040,module_2,word_family_drill,140,Read a word in the et family: let.,let,let,let,et,easy,1,0,1
+M2-WF041,module_2,word_family_drill,141,Read a word in the et family: met.,met,met,met,et,easy,1,0,1
+M2-WF042,module_2,word_family_drill,142,Read a word in the in family: pin.,pin,pin,pin,in,easy,1,0,1
+M2-WF043,module_2,word_family_drill,143,Read a word in the in family: bin.,bin,bin,bin,in,easy,1,0,1
+M2-WF044,module_2,word_family_drill,144,Read a word in the in family: fin.,fin,fin,fin,in,easy,1,0,1
+M2-WF045,module_2,word_family_drill,145,Read a word in the in family: win.,win,win,win,in,easy,1,0,1
+M2-WF046,module_2,word_family_drill,146,Read a word in the in family: tin.,tin,tin,tin,in,easy,1,0,1
+M2-WF047,module_2,word_family_drill,147,Read a word in the in family: chin.,chin,chin,chin,in,easy,1,0,1
+M2-WF048,module_2,word_family_drill,148,Read a word in the in family: thin.,thin,thin,thin,in,easy,1,0,1
+M2-WF049,module_2,word_family_drill,149,Read a word in the in family: spin.,spin,spin,spin,in,easy,1,0,1
+M2-WF050,module_2,word_family_drill,150,Read a word in the ip family: lip.,lip,lip,lip,ip,easy,1,0,1
+M2-WF051,module_2,word_family_drill,151,Read a word in the ip family: sip.,sip,sip,sip,ip,easy,1,0,1
+M2-WF052,module_2,word_family_drill,152,Read a word in the ip family: dip.,dip,dip,dip,ip,easy,1,0,1
+M2-WF053,module_2,word_family_drill,153,Read a word in the ip family: rip.,rip,rip,rip,ip,easy,1,0,1
+M2-WF054,module_2,word_family_drill,154,Read a word in the ip family: tip.,tip,tip,tip,ip,easy,1,0,1
+M2-WF055,module_2,word_family_drill,155,Read a word in the ip family: ship.,ship,ship,ship,ip,easy,1,0,1
+M2-WF056,module_2,word_family_drill,156,Read a word in the ip family: chip.,chip,chip,chip,ip,easy,1,0,1
+M2-WF057,module_2,word_family_drill,157,Read a word in the ip family: flip.,flip,flip,flip,ip,easy,1,0,1
+M2-WF058,module_2,word_family_drill,158,Read a word in the it family: sit.,sit,sit,sit,it,easy,1,0,1
+M2-WF059,module_2,word_family_drill,159,Read a word in the it family: fit.,fit,fit,fit,it,easy,1,0,1
+M2-WF060,module_2,word_family_drill,160,Read a word in the it family: hit.,hit,hit,hit,it,easy,1,0,1
+M2-WF061,module_2,word_family_drill,161,Read a word in the it family: kit.,kit,kit,kit,it,easy,1,0,1
+M2-WF062,module_2,word_family_drill,162,Read a word in the it family: pit.,pit,pit,pit,it,easy,1,0,1
+M2-WF063,module_2,word_family_drill,163,Read a word in the it family: bit.,bit,bit,bit,it,easy,1,0,1
+M2-WF064,module_2,word_family_drill,164,Read a word in the it family: knit.,knit,knit,knit,it,easy,1,0,1
+M2-WF065,module_2,word_family_drill,165,Read a word in the it family: split.,split,split,split,it,easy,1,0,1
+M2-WF066,module_2,word_family_drill,166,Read a word in the ig family: big.,big,big,big,ig,easy,1,0,1
+M2-WF067,module_2,word_family_drill,167,Read a word in the ig family: dig.,dig,dig,dig,ig,easy,1,0,1
+M2-WF068,module_2,word_family_drill,168,Read a word in the ig family: pig.,pig,pig,pig,ig,easy,1,0,1
+M2-WF069,module_2,word_family_drill,169,Read a word in the ig family: wig.,wig,wig,wig,ig,easy,1,0,1
+M2-WF070,module_2,word_family_drill,170,Read a word in the ig family: fig.,fig,fig,fig,ig,easy,1,0,1
+M2-WF071,module_2,word_family_drill,171,Read a word in the ig family: twig.,twig,twig,twig,ig,easy,1,0,1
+M2-WF072,module_2,word_family_drill,172,Read a word in the ig family: jig.,jig,jig,jig,ig,easy,1,0,1
+M2-WF073,module_2,word_family_drill,173,Read a word in the ig family: rig.,rig,rig,rig,ig,easy,1,0,1
+M2-WF074,module_2,word_family_drill,174,Read a word in the op family: hop.,hop,hop,hop,op,easy,1,0,1
+M2-WF075,module_2,word_family_drill,175,Read a word in the op family: mop.,mop,mop,mop,op,easy,1,0,1
+M2-WF076,module_2,word_family_drill,176,Read a word in the op family: top.,top,top,top,op,easy,1,0,1
+M2-WF077,module_2,word_family_drill,177,Read a word in the op family: pop.,pop,pop,pop,op,easy,1,0,1
+M2-WF078,module_2,word_family_drill,178,Read a word in the op family: cop.,cop,cop,cop,op,easy,1,0,1
+M2-WF079,module_2,word_family_drill,179,Read a word in the op family: shop.,shop,shop,shop,op,easy,1,0,1
+M2-WF080,module_2,word_family_drill,180,Read a word in the op family: stop.,stop,stop,stop,op,easy,1,0,1
+M2-WF081,module_2,word_family_drill,181,Read a word in the op family: drop.,drop,drop,drop,op,easy,1,0,1
+M2-WF082,module_2,word_family_drill,182,Read a word in the ot family: hot.,hot,hot,hot,ot,easy,1,0,1
+M2-WF083,module_2,word_family_drill,183,Read a word in the ot family: pot.,pot,pot,pot,ot,easy,1,0,1
+M2-WF084,module_2,word_family_drill,184,Read a word in the ot family: dot.,dot,dot,dot,ot,easy,1,0,1
+M2-WF085,module_2,word_family_drill,185,Read a word in the ot family: got.,got,got,got,ot,easy,1,0,1
+M2-WF086,module_2,word_family_drill,186,Read a word in the ot family: cot.,cot,cot,cot,ot,easy,1,0,1
+M2-WF087,module_2,word_family_drill,187,Read a word in the ot family: spot.,spot,spot,spot,ot,easy,1,0,1
+M2-WF088,module_2,word_family_drill,188,Read a word in the ot family: plot.,plot,plot,plot,ot,easy,1,0,1
+M2-WF089,module_2,word_family_drill,189,Read a word in the ot family: slot.,slot,slot,slot,ot,easy,1,0,1
+M2-WF090,module_2,word_family_drill,190,Read a word in the og family: dog.,dog,dog,dog,og,easy,1,0,1
+M2-WF091,module_2,word_family_drill,191,Read a word in the og family: log.,log,log,log,og,easy,1,0,1
+M2-WF092,module_2,word_family_drill,192,Read a word in the og family: fog.,fog,fog,fog,og,easy,1,0,1
+M2-WF093,module_2,word_family_drill,193,Read a word in the og family: jog.,jog,jog,jog,og,easy,1,0,1
+M2-WF094,module_2,word_family_drill,194,Read a word in the og family: hog.,hog,hog,hog,og,easy,1,0,1
+M2-WF095,module_2,word_family_drill,195,Read a word in the og family: frog.,frog,frog,frog,og,easy,1,0,1
+M2-WF096,module_2,word_family_drill,196,Read a word in the og family: clog.,clog,clog,clog,og,easy,1,0,1
+M2-WF097,module_2,word_family_drill,197,Read a word in the og family: smog.,smog,smog,smog,og,easy,1,0,1
+M2-WF098,module_2,word_family_drill,198,Read a word in the un family: sun.,sun,sun,sun,un,easy,1,0,1
+M2-WF099,module_2,word_family_drill,199,Read a word in the un family: run.,run,run,run,un,easy,1,0,1
+M2-WF100,module_2,word_family_drill,200,Read a word in the un family: fun.,fun,fun,fun,un,easy,1,0,1
+M2-MP001,module_2,minimal_pair,201,Read this word carefully: cat. It is different from cot.,cat,cat,cat,at,easy,1,0,1
+M2-MP002,module_2,minimal_pair,202,Read this word carefully: cot. It is different from cat.,cot,cot,cot,ot,easy,1,0,1
+M2-MP003,module_2,minimal_pair,203,Read this word carefully: bat. It is different from bag.,bat,bat,bat,at,easy,1,0,1
+M2-MP004,module_2,minimal_pair,204,Read this word carefully: bag. It is different from bat.,bag,bag,bag,ag,easy,1,0,1
+M2-MP005,module_2,minimal_pair,205,Read this word carefully: pin. It is different from pan.,pin,pin,pin,in,easy,1,0,1
+M2-MP006,module_2,minimal_pair,206,Read this word carefully: pan. It is different from pin.,pan,pan,pan,an,easy,1,0,1
+M2-MP007,module_2,minimal_pair,207,Read this word carefully: bit. It is different from bat.,bit,bit,bit,it,easy,1,0,1
+M2-MP008,module_2,minimal_pair,208,Read this word carefully: bat. It is different from bit.,bat,bat,bat,at,easy,1,0,1
+M2-MP009,module_2,minimal_pair,209,Read this word carefully: cap. It is different from cup.,cap,cap,cap,ap,easy,1,0,1
+M2-MP010,module_2,minimal_pair,210,Read this word carefully: cup. It is different from cap.,cup,cup,cup,up,easy,1,0,1
+M2-MP011,module_2,minimal_pair,211,Read this word carefully: hop. It is different from hip.,hop,hop,hop,op,easy,1,0,1
+M2-MP012,module_2,minimal_pair,212,Read this word carefully: hip. It is different from hop.,hip,hip,hip,ip,easy,1,0,1
+M2-MP013,module_2,minimal_pair,213,Read this word carefully: ten. It is different from tan.,ten,ten,ten,en,easy,1,0,1
+M2-MP014,module_2,minimal_pair,214,Read this word carefully: tan. It is different from ten.,tan,tan,tan,an,easy,1,0,1
+M2-MP015,module_2,minimal_pair,215,Read this word carefully: ship. It is different from shop.,ship,ship,ship,hip,easy,1,0,1
+M2-MP016,module_2,minimal_pair,216,Read this word carefully: shop. It is different from ship.,shop,shop,shop,hop,easy,1,0,1
+M2-MP017,module_2,minimal_pair,217,Read this word carefully: fan. It is different from fin.,fan,fan,fan,an,easy,1,0,1
+M2-MP018,module_2,minimal_pair,218,Read this word carefully: fin. It is different from fan.,fin,fin,fin,in,easy,1,0,1
+M2-MP019,module_2,minimal_pair,219,Read this word carefully: map. It is different from mop.,map,map,map,ap,easy,1,0,1
+M2-MP020,module_2,minimal_pair,220,Read this word carefully: mop. It is different from map.,mop,mop,mop,op,easy,1,0,1
+M2-MP021,module_2,minimal_pair,221,Read this word carefully: bed. It is different from bad.,bed,bed,bed,ed,easy,1,0,1
+M2-MP022,module_2,minimal_pair,222,Read this word carefully: bad. It is different from bed.,bad,bad,bad,ad,easy,1,0,1
+M2-MP023,module_2,minimal_pair,223,Read this word carefully: red. It is different from rid.,red,red,red,ed,easy,1,0,1
+M2-MP024,module_2,minimal_pair,224,Read this word carefully: rid. It is different from red.,rid,rid,rid,id,easy,1,0,1
+M2-MP025,module_2,minimal_pair,225,Read this word carefully: fish. It is different from fist.,fish,fish,fish,ish,easy,1,0,1
+M2-MP026,module_2,minimal_pair,226,Read this word carefully: fist. It is different from fish.,fist,fist,fist,ist,easy,1,0,1
+M2-MP027,module_2,minimal_pair,227,Read this word carefully: sun. It is different from son.,sun,sun,sun,un,easy,1,0,1
+M2-MP028,module_2,minimal_pair,228,Read this word carefully: son. It is different from sun.,son,son,son,on,easy,1,0,1
+M2-MP029,module_2,minimal_pair,229,Read this word carefully: rug. It is different from rag.,rug,rug,rug,ug,easy,1,0,1
+M2-MP030,module_2,minimal_pair,230,Read this word carefully: rag. It is different from rug.,rag,rag,rag,ag,easy,1,0,1
+M2-MP031,module_2,minimal_pair,231,Read this word carefully: pig. It is different from big.,pig,pig,pig,ig,easy,1,0,1
+M2-MP032,module_2,minimal_pair,232,Read this word carefully: big. It is different from pig.,big,big,big,ig,easy,1,0,1
+M2-MP033,module_2,minimal_pair,233,Read this word carefully: log. It is different from leg.,log,log,log,og,easy,1,0,1
+M2-MP034,module_2,minimal_pair,234,Read this word carefully: leg. It is different from log.,leg,leg,leg,eg,easy,1,0,1
+M2-MP035,module_2,minimal_pair,235,Read this word carefully: pen. It is different from pin.,pen,pen,pen,en,easy,1,0,1
+M2-MP036,module_2,minimal_pair,236,Read this word carefully: pin. It is different from pen.,pin,pin,pin,in,easy,1,0,1
+M2-MP037,module_2,minimal_pair,237,Read this word carefully: wet. It is different from wit.,wet,wet,wet,et,easy,1,0,1
+M2-MP038,module_2,minimal_pair,238,Read this word carefully: wit. It is different from wet.,wit,wit,wit,it,easy,1,0,1
+M2-MP039,module_2,minimal_pair,239,Read this word carefully: tap. It is different from top.,tap,tap,tap,ap,easy,1,0,1
+M2-MP040,module_2,minimal_pair,240,Read this word carefully: top. It is different from tap.,top,top,top,op,easy,1,0,1
+M2-MP041,module_2,minimal_pair,241,Read this word carefully: sit. It is different from sat.,sit,sit,sit,it,easy,1,0,1
+M2-MP042,module_2,minimal_pair,242,Read this word carefully: sat. It is different from sit.,sat,sat,sat,at,easy,1,0,1
+M2-MP043,module_2,minimal_pair,243,Read this word carefully: duck. It is different from dock.,duck,duck,duck,uck,easy,1,0,1
+M2-MP044,module_2,minimal_pair,244,Read this word carefully: dock. It is different from duck.,dock,dock,dock,ock,easy,1,0,1
+M2-MP045,module_2,minimal_pair,245,Read this word carefully: bell. It is different from ball.,bell,bell,bell,ell,easy,1,0,1
+M2-MP046,module_2,minimal_pair,246,Read this word carefully: ball. It is different from bell.,ball,ball,ball,all,easy,1,0,1
+M2-MP047,module_2,minimal_pair,247,Read this word carefully: hill. It is different from hall.,hill,hill,hill,ill,easy,1,0,1
+M2-MP048,module_2,minimal_pair,248,Read this word carefully: hall. It is different from hill.,hall,hall,hall,all,easy,1,0,1
+M2-MP049,module_2,minimal_pair,249,Read this word carefully: coat. It is different from cot.,coat,coat,coat,oat,easy,1,0,1
+M2-MP050,module_2,minimal_pair,250,Read this word carefully: cot. It is different from coat.,cot,cot,cot,ot,easy,1,0,1
+M2-MP051,module_2,minimal_pair,251,Read this word carefully: rain. It is different from ran.,rain,rain,rain,ain,easy,1,0,1
+M2-MP052,module_2,minimal_pair,252,Read this word carefully: ran. It is different from rain.,ran,ran,ran,an,easy,1,0,1
+M2-MP053,module_2,minimal_pair,253,Read this word carefully: cake. It is different from cage.,cake,cake,cake,ake,easy,1,0,1
+M2-MP054,module_2,minimal_pair,254,Read this word carefully: cage. It is different from cake.,cage,cage,cage,age,easy,1,0,1
+M2-MP055,module_2,minimal_pair,255,Read this word carefully: rice. It is different from race.,rice,rice,rice,ice,easy,1,0,1
+M2-MP056,module_2,minimal_pair,256,Read this word carefully: race. It is different from rice.,race,race,race,ace,easy,1,0,1
+M2-MP057,module_2,minimal_pair,257,Read this word carefully: sleep. It is different from slip.,sleep,sleep,sleep,eep,easy,1,0,1
+M2-MP058,module_2,minimal_pair,258,Read this word carefully: slip. It is different from sleep.,slip,slip,slip,lip,easy,1,0,1
+M2-MP059,module_2,minimal_pair,259,Read this word carefully: snail. It is different from nail.,snail,snail,snail,ail,easy,1,0,1
+M2-MP060,module_2,minimal_pair,260,Read this word carefully: nail. It is different from snail.,nail,nail,nail,ail,easy,1,0,1
+M2-MP061,module_2,minimal_pair,261,Read this word carefully: clap. It is different from clip.,clap,clap,clap,lap,easy,1,0,1
+M2-MP062,module_2,minimal_pair,262,Read this word carefully: clip. It is different from clap.,clip,clip,clip,lip,easy,1,0,1
+M2-MP063,module_2,minimal_pair,263,Read this word carefully: drip. It is different from drop.,drip,drip,drip,rip,easy,1,0,1
+M2-MP064,module_2,minimal_pair,264,Read this word carefully: drop. It is different from drip.,drop,drop,drop,rop,easy,1,0,1
+M2-MP065,module_2,minimal_pair,265,Read this word carefully: flag. It is different from flog.,flag,flag,flag,lag,easy,1,0,1
+M2-MP066,module_2,minimal_pair,266,Read this word carefully: flog. It is different from flag.,flog,flog,flog,log,easy,1,0,1
+M2-MP067,module_2,minimal_pair,267,Read this word carefully: train. It is different from tray.,train,train,train,ain,easy,1,0,1
+M2-MP068,module_2,minimal_pair,268,Read this word carefully: tray. It is different from train.,tray,tray,tray,ray,easy,1,0,1
+M2-MP069,module_2,minimal_pair,269,Read this word carefully: brush. It is different from blush.,brush,brush,brush,ush,easy,1,0,1
+M2-MP070,module_2,minimal_pair,270,Read this word carefully: blush. It is different from brush.,blush,blush,blush,ush,easy,1,0,1
+M2-MP071,module_2,minimal_pair,271,Read this word carefully: chair. It is different from share.,chair,chair,chair,air,easy,1,0,1
+M2-MP072,module_2,minimal_pair,272,Read this word carefully: share. It is different from chair.,share,share,share,are,easy,1,0,1
+M2-MP073,module_2,minimal_pair,273,Read this word carefully: thin. It is different from then.,thin,thin,thin,hin,easy,1,0,1
+M2-MP074,module_2,minimal_pair,274,Read this word carefully: then. It is different from thin.,then,then,then,hen,easy,1,0,1
+M2-MP075,module_2,minimal_pair,275,Read this word carefully: chip. It is different from ship.,chip,chip,chip,hip,easy,1,0,1
+M2-MP076,module_2,minimal_pair,276,Read this word carefully: ship. It is different from chip.,ship,ship,ship,hip,easy,1,0,1
+M2-MP077,module_2,minimal_pair,277,Read this word carefully: rock. It is different from lock.,rock,rock,rock,ock,easy,1,0,1
+M2-MP078,module_2,minimal_pair,278,Read this word carefully: lock. It is different from rock.,lock,lock,lock,ock,easy,1,0,1
+M2-MP079,module_2,minimal_pair,279,Read this word carefully: pack. It is different from back.,pack,pack,pack,ack,easy,1,0,1
+M2-MP080,module_2,minimal_pair,280,Read this word carefully: back. It is different from pack.,back,back,back,ack,easy,1,0,1
+M2-MP081,module_2,minimal_pair,281,Read this word carefully: mug. It is different from mud.,mug,mug,mug,ug,easy,1,0,1
+M2-MP082,module_2,minimal_pair,282,Read this word carefully: mud. It is different from mug.,mud,mud,mud,ud,easy,1,0,1
+M2-MP083,module_2,minimal_pair,283,Read this word carefully: van. It is different from fan.,van,van,van,an,easy,1,0,1
+M2-MP084,module_2,minimal_pair,284,Read this word carefully: fan. It is different from van.,fan,fan,fan,an,easy,1,0,1
+M2-MP085,module_2,minimal_pair,285,Read this word carefully: jet. It is different from get.,jet,jet,jet,et,easy,1,0,1
+M2-MP086,module_2,minimal_pair,286,Read this word carefully: get. It is different from jet.,get,get,get,et,easy,1,0,1
+M2-MP087,module_2,minimal_pair,287,Read this word carefully: gate. It is different from date.,gate,gate,gate,ate,easy,1,0,1
+M2-MP088,module_2,minimal_pair,288,Read this word carefully: date. It is different from gate.,date,date,date,ate,easy,1,0,1
+M2-MP089,module_2,minimal_pair,289,Read this word carefully: kite. It is different from kit.,kite,kite,kite,ite,easy,1,0,1
+M2-MP090,module_2,minimal_pair,290,Read this word carefully: kit. It is different from kite.,kit,kit,kit,it,easy,1,0,1
+M2-MP091,module_2,minimal_pair,291,Read this word carefully: moon. It is different from man.,moon,moon,moon,oon,easy,1,0,1
+M2-MP092,module_2,minimal_pair,292,Read this word carefully: man. It is different from moon.,man,man,man,an,easy,1,0,1
+M2-MP093,module_2,minimal_pair,293,Read this word carefully: leaf. It is different from loaf.,leaf,leaf,leaf,eaf,easy,1,0,1
+M2-MP094,module_2,minimal_pair,294,Read this word carefully: loaf. It is different from leaf.,loaf,loaf,loaf,oaf,easy,1,0,1
+M2-MP095,module_2,minimal_pair,295,Read this word carefully: seed. It is different from said.,seed,seed,seed,eed,easy,1,0,1
+M2-MP096,module_2,minimal_pair,296,Read this word carefully: said. It is different from seed.,said,said,said,aid,easy,1,0,1
+M2-MP097,module_2,minimal_pair,297,Read this word carefully: corn. It is different from card.,corn,corn,corn,orn,easy,1,0,1
+M2-MP098,module_2,minimal_pair,298,Read this word carefully: card. It is different from corn.,card,card,card,ard,easy,1,0,1
+M2-MP099,module_2,minimal_pair,299,Read this word carefully: park. It is different from bark.,park,park,park,ark,easy,1,0,1
+M2-MP100,module_2,minimal_pair,300,Read this word carefully: bark. It is different from park.,bark,bark,bark,ark,easy,1,0,1
+M2-WA001,module_2,word_accuracy_challenge,301,Read the word smoothly and clearly: chin.,chin,chin,chin,in,easy,1,0,1
+M2-WA002,module_2,word_accuracy_challenge,302,Read the word smoothly and clearly: thin.,thin,thin,thin,in,easy,1,0,1
+M2-WA003,module_2,word_accuracy_challenge,303,Read the word smoothly and clearly: spin.,spin,spin,spin,in,easy,1,0,1
+M2-WA004,module_2,word_accuracy_challenge,304,Read the word smoothly and clearly: lip.,lip,lip,lip,ip,easy,1,0,1
+M2-WA005,module_2,word_accuracy_challenge,305,Read the word smoothly and clearly: sip.,sip,sip,sip,ip,easy,1,0,1
+M2-WA006,module_2,word_accuracy_challenge,306,Read the word smoothly and clearly: dip.,dip,dip,dip,ip,easy,1,0,1
+M2-WA007,module_2,word_accuracy_challenge,307,Read the word smoothly and clearly: rip.,rip,rip,rip,ip,easy,1,0,1
+M2-WA008,module_2,word_accuracy_challenge,308,Read the word smoothly and clearly: tip.,tip,tip,tip,ip,easy,1,0,1
+M2-WA009,module_2,word_accuracy_challenge,309,Read the word smoothly and clearly: ship.,ship,ship,ship,ip,easy,1,0,1
+M2-WA010,module_2,word_accuracy_challenge,310,Read the word smoothly and clearly: chip.,chip,chip,chip,ip,easy,1,0,1
+M2-WA011,module_2,word_accuracy_challenge,311,Read the word smoothly and clearly: flip.,flip,flip,flip,ip,easy,1,0,1
+M2-WA012,module_2,word_accuracy_challenge,312,Read the word smoothly and clearly: sit.,sit,sit,sit,it,easy,1,0,1
+M2-WA013,module_2,word_accuracy_challenge,313,Read the word smoothly and clearly: fit.,fit,fit,fit,it,easy,1,0,1
+M2-WA014,module_2,word_accuracy_challenge,314,Read the word smoothly and clearly: hit.,hit,hit,hit,it,easy,1,0,1
+M2-WA015,module_2,word_accuracy_challenge,315,Read the word smoothly and clearly: kit.,kit,kit,kit,it,easy,1,0,1
+M2-WA016,module_2,word_accuracy_challenge,316,Read the word smoothly and clearly: pit.,pit,pit,pit,it,easy,1,0,1
+M2-WA017,module_2,word_accuracy_challenge,317,Read the word smoothly and clearly: bit.,bit,bit,bit,it,easy,1,0,1
+M2-WA018,module_2,word_accuracy_challenge,318,Read the word smoothly and clearly: knit.,knit,knit,knit,it,easy,1,0,1
+M2-WA019,module_2,word_accuracy_challenge,319,Read the word smoothly and clearly: split.,split,split,split,it,easy,1,0,1
+M2-WA020,module_2,word_accuracy_challenge,320,Read the word smoothly and clearly: big.,big,big,big,ig,easy,1,0,1
+M2-WA021,module_2,word_accuracy_challenge,321,Read the word smoothly and clearly: dig.,dig,dig,dig,ig,easy,1,0,1
+M2-WA022,module_2,word_accuracy_challenge,322,Read the word smoothly and clearly: pig.,pig,pig,pig,ig,easy,1,0,1
+M2-WA023,module_2,word_accuracy_challenge,323,Read the word smoothly and clearly: wig.,wig,wig,wig,ig,easy,1,0,1
+M2-WA024,module_2,word_accuracy_challenge,324,Read the word smoothly and clearly: fig.,fig,fig,fig,ig,easy,1,0,1
+M2-WA025,module_2,word_accuracy_challenge,325,Read the word smoothly and clearly: twig.,twig,twig,twig,ig,easy,1,0,1
+M2-WA026,module_2,word_accuracy_challenge,326,Read the word smoothly and clearly: jig.,jig,jig,jig,ig,easy,1,0,1
+M2-WA027,module_2,word_accuracy_challenge,327,Read the word smoothly and clearly: rig.,rig,rig,rig,ig,easy,1,0,1
+M2-WA028,module_2,word_accuracy_challenge,328,Read the word smoothly and clearly: hop.,hop,hop,hop,op,easy,1,0,1
+M2-WA029,module_2,word_accuracy_challenge,329,Read the word smoothly and clearly: mop.,mop,mop,mop,op,easy,1,0,1
+M2-WA030,module_2,word_accuracy_challenge,330,Read the word smoothly and clearly: top.,top,top,top,op,easy,1,0,1
+M2-WA031,module_2,word_accuracy_challenge,331,Read the word smoothly and clearly: pop.,pop,pop,pop,op,easy,1,0,1
+M2-WA032,module_2,word_accuracy_challenge,332,Read the word smoothly and clearly: cop.,cop,cop,cop,op,easy,1,0,1
+M2-WA033,module_2,word_accuracy_challenge,333,Read the word smoothly and clearly: shop.,shop,shop,shop,op,easy,1,0,1
+M2-WA034,module_2,word_accuracy_challenge,334,Read the word smoothly and clearly: stop.,stop,stop,stop,op,easy,1,0,1
+M2-WA035,module_2,word_accuracy_challenge,335,Read the word smoothly and clearly: drop.,drop,drop,drop,op,easy,1,0,1
+M2-WA036,module_2,word_accuracy_challenge,336,Read the word smoothly and clearly: hot.,hot,hot,hot,ot,easy,1,0,1
+M2-WA037,module_2,word_accuracy_challenge,337,Read the word smoothly and clearly: pot.,pot,pot,pot,ot,easy,1,0,1
+M2-WA038,module_2,word_accuracy_challenge,338,Read the word smoothly and clearly: dot.,dot,dot,dot,ot,easy,1,0,1
+M2-WA039,module_2,word_accuracy_challenge,339,Read the word smoothly and clearly: got.,got,got,got,ot,easy,1,0,1
+M2-WA040,module_2,word_accuracy_challenge,340,Read the word smoothly and clearly: cot.,cot,cot,cot,ot,easy,1,0,1
+M2-WA041,module_2,word_accuracy_challenge,341,Read the word smoothly and clearly: spot.,spot,spot,spot,ot,easy,1,0,1
+M2-WA042,module_2,word_accuracy_challenge,342,Read the word smoothly and clearly: plot.,plot,plot,plot,ot,easy,1,0,1
+M2-WA043,module_2,word_accuracy_challenge,343,Read the word smoothly and clearly: slot.,slot,slot,slot,ot,easy,1,0,1
+M2-WA044,module_2,word_accuracy_challenge,344,Read the word smoothly and clearly: dog.,dog,dog,dog,og,easy,1,0,1
+M2-WA045,module_2,word_accuracy_challenge,345,Read the word smoothly and clearly: log.,log,log,log,og,easy,1,0,1
+M2-WA046,module_2,word_accuracy_challenge,346,Read the word smoothly and clearly: fog.,fog,fog,fog,og,easy,1,0,1
+M2-WA047,module_2,word_accuracy_challenge,347,Read the word smoothly and clearly: jog.,jog,jog,jog,og,easy,1,0,1
+M2-WA048,module_2,word_accuracy_challenge,348,Read the word smoothly and clearly: hog.,hog,hog,hog,og,easy,1,0,1
+M2-WA049,module_2,word_accuracy_challenge,349,Read the word smoothly and clearly: frog.,frog,frog,frog,og,easy,1,0,1
+M2-WA050,module_2,word_accuracy_challenge,350,Read the word smoothly and clearly: clog.,clog,clog,clog,og,easy,1,0,1
+M2-WA051,module_2,word_accuracy_challenge,351,Read the word smoothly and clearly: smog.,smog,smog,smog,og,easy,1,0,1
+M2-WA052,module_2,word_accuracy_challenge,352,Read the word smoothly and clearly: sun.,sun,sun,sun,un,easy,1,0,1
+M2-WA053,module_2,word_accuracy_challenge,353,Read the word smoothly and clearly: run.,run,run,run,un,easy,1,0,1
+M2-WA054,module_2,word_accuracy_challenge,354,Read the word smoothly and clearly: fun.,fun,fun,fun,un,easy,1,0,1
+M2-WA055,module_2,word_accuracy_challenge,355,Read the word smoothly and clearly: bun.,bun,bun,bun,un,easy,1,0,1
+M2-WA056,module_2,word_accuracy_challenge,356,Read the word smoothly and clearly: nun.,nun,nun,nun,un,easy,1,0,1
+M2-WA057,module_2,word_accuracy_challenge,357,Read the word smoothly and clearly: spun.,spun,spun,spun,un,easy,1,0,1
+M2-WA058,module_2,word_accuracy_challenge,358,Read the word smoothly and clearly: stun.,stun,stun,stun,un,easy,1,0,1
+M2-WA059,module_2,word_accuracy_challenge,359,Read the word smoothly and clearly: pun.,pun,pun,pun,un,easy,1,0,1
+M2-WA060,module_2,word_accuracy_challenge,360,Read the word smoothly and clearly: bug.,bug,bug,bug,ug,easy,1,0,1
+M2-WA061,module_2,word_accuracy_challenge,361,Read the word smoothly and clearly: rug.,rug,rug,rug,ug,easy,1,0,1
+M2-WA062,module_2,word_accuracy_challenge,362,Read the word smoothly and clearly: hug.,hug,hug,hug,ug,easy,1,0,1
+M2-WA063,module_2,word_accuracy_challenge,363,Read the word smoothly and clearly: mug.,mug,mug,mug,ug,easy,1,0,1
+M2-WA064,module_2,word_accuracy_challenge,364,Read the word smoothly and clearly: jug.,jug,jug,jug,ug,easy,1,0,1
+M2-WA065,module_2,word_accuracy_challenge,365,Read the word smoothly and clearly: plug.,plug,plug,plug,ug,easy,1,0,1
+M2-WA066,module_2,word_accuracy_challenge,366,Read the word smoothly and clearly: slug.,slug,slug,slug,ug,easy,1,0,1
+M2-WA067,module_2,word_accuracy_challenge,367,Read the word smoothly and clearly: snug.,snug,snug,snug,ug,easy,1,0,1
+M2-WA068,module_2,word_accuracy_challenge,368,Read the word smoothly and clearly: cub.,cub,cub,cub,ub,easy,1,0,1
+M2-WA069,module_2,word_accuracy_challenge,369,Read the word smoothly and clearly: tub.,tub,tub,tub,ub,easy,1,0,1
+M2-WA070,module_2,word_accuracy_challenge,370,Read the word smoothly and clearly: rub.,rub,rub,rub,ub,easy,1,0,1
+M2-WA071,module_2,word_accuracy_challenge,371,Read the word smoothly and clearly: sub.,sub,sub,sub,ub,easy,1,0,1
+M2-WA072,module_2,word_accuracy_challenge,372,Read the word smoothly and clearly: club.,club,club,club,ub,easy,1,0,1
+M2-WA073,module_2,word_accuracy_challenge,373,Read the word smoothly and clearly: stub.,stub,stub,stub,ub,easy,1,0,1
+M2-WA074,module_2,word_accuracy_challenge,374,Read the word smoothly and clearly: scrub.,scrub,scrub,scrub,ub,easy,1,0,1
+M2-WA075,module_2,word_accuracy_challenge,375,Read the word smoothly and clearly: grub.,grub,grub,grub,ub,easy,1,0,1
+M2-WA076,module_2,word_accuracy_challenge,376,Read the word smoothly and clearly: hill.,hill,hill,hill,ill,easy,1,0,1
+M2-WA077,module_2,word_accuracy_challenge,377,Read the word smoothly and clearly: fill.,fill,fill,fill,ill,easy,1,0,1
+M2-WA078,module_2,word_accuracy_challenge,378,Read the word smoothly and clearly: will.,will,will,will,ill,easy,1,0,1
+M2-WA079,module_2,word_accuracy_challenge,379,Read the word smoothly and clearly: bill.,bill,bill,bill,ill,easy,1,0,1
+M2-WA080,module_2,word_accuracy_challenge,380,Read the word smoothly and clearly: mill.,mill,mill,mill,ill,easy,1,0,1
+M2-WA081,module_2,word_accuracy_challenge,381,Read the word smoothly and clearly: still.,still,still,still,ill,easy,1,0,1
+M2-WA082,module_2,word_accuracy_challenge,382,Read the word smoothly and clearly: spill.,spill,spill,spill,ill,easy,1,0,1
+M2-WA083,module_2,word_accuracy_challenge,383,Read the word smoothly and clearly: drill.,drill,drill,drill,ill,easy,1,0,1
+M2-WA084,module_2,word_accuracy_challenge,384,Read the word smoothly and clearly: bell.,bell,bell,bell,ell,easy,1,0,1
+M2-WA085,module_2,word_accuracy_challenge,385,Read the word smoothly and clearly: fell.,fell,fell,fell,ell,easy,1,0,1
+M2-WA086,module_2,word_accuracy_challenge,386,Read the word smoothly and clearly: tell.,tell,tell,tell,ell,easy,1,0,1
+M2-WA087,module_2,word_accuracy_challenge,387,Read the word smoothly and clearly: well.,well,well,well,ell,easy,1,0,1
+M2-WA088,module_2,word_accuracy_challenge,388,Read the word smoothly and clearly: shell.,shell,shell,shell,ell,easy,1,0,1
+M2-WA089,module_2,word_accuracy_challenge,389,Read the word smoothly and clearly: smell.,smell,smell,smell,ell,easy,1,0,1
+M2-WA090,module_2,word_accuracy_challenge,390,Read the word smoothly and clearly: dwell.,dwell,dwell,dwell,ell,easy,1,0,1
+M2-WA091,module_2,word_accuracy_challenge,391,Read the word smoothly and clearly: spell.,spell,spell,spell,ell,easy,1,0,1
+M2-WA092,module_2,word_accuracy_challenge,392,Read the word smoothly and clearly: back.,back,back,back,ack,easy,1,0,1
+M2-WA093,module_2,word_accuracy_challenge,393,Read the word smoothly and clearly: sack.,sack,sack,sack,ack,easy,1,0,1
+M2-WA094,module_2,word_accuracy_challenge,394,Read the word smoothly and clearly: pack.,pack,pack,pack,ack,easy,1,0,1
+M2-WA095,module_2,word_accuracy_challenge,395,Read the word smoothly and clearly: rack.,rack,rack,rack,ack,easy,1,0,1
+M2-WA096,module_2,word_accuracy_challenge,396,Read the word smoothly and clearly: jack.,jack,jack,jack,ack,easy,1,0,1
+M2-WA097,module_2,word_accuracy_challenge,397,Read the word smoothly and clearly: black.,black,black,black,ack,easy,1,0,1
+M2-WA098,module_2,word_accuracy_challenge,398,Read the word smoothly and clearly: track.,track,track,track,ack,easy,1,0,1
+M2-WA099,module_2,word_accuracy_challenge,399,Read the word smoothly and clearly: stack.,stack,stack,stack,ack,easy,1,0,1
+M2-WA100,module_2,word_accuracy_challenge,400,Read the word smoothly and clearly: rock.,rock,rock,rock,ock,easy,1,0,1
+M2-MC001,module_2,mastery_check,401,Read the word mug.,mug,mug,mug,ug,easy,1,1,1
+M2-MC002,module_2,mastery_check,402,Read the word jug.,jug,jug,jug,ug,easy,1,1,1
+M2-MC003,module_2,mastery_check,403,Read the word plug.,plug,plug,plug,ug,easy,1,1,1
+M2-MC004,module_2,mastery_check,404,Read the word slug.,slug,slug,slug,ug,easy,1,1,1
+M2-MC005,module_2,mastery_check,405,Read the word snug.,snug,snug,snug,ug,easy,1,1,1
+M2-MC006,module_2,mastery_check,406,Read the word cub.,cub,cub,cub,ub,easy,1,1,1
+M2-MC007,module_2,mastery_check,407,Read the word tub.,tub,tub,tub,ub,easy,1,1,1
+M2-MC008,module_2,mastery_check,408,Read the word rub.,rub,rub,rub,ub,easy,1,1,1
+M2-MC009,module_2,mastery_check,409,Read the word sub.,sub,sub,sub,ub,easy,1,1,1
+M2-MC010,module_2,mastery_check,410,Read the word club.,club,club,club,ub,easy,1,1,1
+M2-MC011,module_2,mastery_check,411,Read the word stub.,stub,stub,stub,ub,easy,1,1,1
+M2-MC012,module_2,mastery_check,412,Read the word scrub.,scrub,scrub,scrub,ub,easy,1,1,1
+M2-MC013,module_2,mastery_check,413,Read the word grub.,grub,grub,grub,ub,easy,1,1,1
+M2-MC014,module_2,mastery_check,414,Read the word hill.,hill,hill,hill,ill,easy,1,1,1
+M2-MC015,module_2,mastery_check,415,Read the word fill.,fill,fill,fill,ill,easy,1,1,1
+M2-MC016,module_2,mastery_check,416,Read the word will.,will,will,will,ill,easy,1,1,1
+M2-MC017,module_2,mastery_check,417,Read the word bill.,bill,bill,bill,ill,easy,1,1,1
+M2-MC018,module_2,mastery_check,418,Read the word mill.,mill,mill,mill,ill,easy,1,1,1
+M2-MC019,module_2,mastery_check,419,Read the word still.,still,still,still,ill,easy,1,1,1
+M2-MC020,module_2,mastery_check,420,Read the word spill.,spill,spill,spill,ill,easy,1,1,1
+M2-MC021,module_2,mastery_check,421,Read the word drill.,drill,drill,drill,ill,easy,1,1,1
+M2-MC022,module_2,mastery_check,422,Read the word bell.,bell,bell,bell,ell,easy,1,1,1
+M2-MC023,module_2,mastery_check,423,Read the word fell.,fell,fell,fell,ell,easy,1,1,1
+M2-MC024,module_2,mastery_check,424,Read the word tell.,tell,tell,tell,ell,easy,1,1,1
+M2-MC025,module_2,mastery_check,425,Read the word well.,well,well,well,ell,easy,1,1,1
+M2-MC026,module_2,mastery_check,426,Read the word shell.,shell,shell,shell,ell,easy,1,1,1
+M2-MC027,module_2,mastery_check,427,Read the word smell.,smell,smell,smell,ell,easy,1,1,1
+M2-MC028,module_2,mastery_check,428,Read the word dwell.,dwell,dwell,dwell,ell,easy,1,1,1
+M2-MC029,module_2,mastery_check,429,Read the word spell.,spell,spell,spell,ell,easy,1,1,1
+M2-MC030,module_2,mastery_check,430,Read the word back.,back,back,back,ack,easy,1,1,1
+M2-MC031,module_2,mastery_check,431,Read the word sack.,sack,sack,sack,ack,easy,1,1,1
+M2-MC032,module_2,mastery_check,432,Read the word pack.,pack,pack,pack,ack,easy,1,1,1
+M2-MC033,module_2,mastery_check,433,Read the word rack.,rack,rack,rack,ack,easy,1,1,1
+M2-MC034,module_2,mastery_check,434,Read the word jack.,jack,jack,jack,ack,easy,1,1,1
+M2-MC035,module_2,mastery_check,435,Read the word black.,black,black,black,ack,easy,1,1,1
+M2-MC036,module_2,mastery_check,436,Read the word track.,track,track,track,ack,easy,1,1,1
+M2-MC037,module_2,mastery_check,437,Read the word stack.,stack,stack,stack,ack,easy,1,1,1
+M2-MC038,module_2,mastery_check,438,Read the word rock.,rock,rock,rock,ock,easy,1,1,1
+M2-MC039,module_2,mastery_check,439,Read the word sock.,sock,sock,sock,ock,easy,1,1,1
+M2-MC040,module_2,mastery_check,440,Read the word lock.,lock,lock,lock,ock,easy,1,1,1
+M2-MC041,module_2,mastery_check,441,Read the word dock.,dock,dock,dock,ock,easy,1,1,1
+M2-MC042,module_2,mastery_check,442,Read the word clock.,clock,clock,clock,ock,easy,1,1,1
+M2-MC043,module_2,mastery_check,443,Read the word block.,block,block,block,ock,easy,1,1,1
+M2-MC044,module_2,mastery_check,444,Read the word flock.,flock,flock,flock,ock,easy,1,1,1
+M2-MC045,module_2,mastery_check,445,Read the word shock.,shock,shock,shock,ock,easy,1,1,1
+M2-MC046,module_2,mastery_check,446,Read the word fish.,fish,fish,fish,ish,easy,1,1,1
+M2-MC047,module_2,mastery_check,447,Read the word dish.,dish,dish,dish,ish,easy,1,1,1
+M2-MC048,module_2,mastery_check,448,Read the word wish.,wish,wish,wish,ish,easy,1,1,1
+M2-MC049,module_2,mastery_check,449,Read the word swish.,swish,swish,swish,ish,easy,1,1,1
+M2-MC050,module_2,mastery_check,450,Read the word finish.,finish,finish,finish,ish,easy,1,1,1
+M2-MC051,module_2,mastery_check,451,Read the word relish.,relish,relish,relish,ish,easy,1,1,1
+M2-MC052,module_2,mastery_check,452,Read the word pinkish.,pinkish,pinkish,pinkish,ish,easy,1,1,1
+M2-MC053,module_2,mastery_check,453,Read the word smallish.,smallish,smallish,smallish,ish,easy,1,1,1
+M2-MC054,module_2,mastery_check,454,Read the word cash.,cash,cash,cash,ash,easy,1,1,1
+M2-MC055,module_2,mastery_check,455,Read the word rash.,rash,rash,rash,ash,easy,1,1,1
+M2-MC056,module_2,mastery_check,456,Read the word dash.,dash,dash,dash,ash,easy,1,1,1
+M2-MC057,module_2,mastery_check,457,Read the word mash.,mash,mash,mash,ash,easy,1,1,1
+M2-MC058,module_2,mastery_check,458,Read the word splash.,splash,splash,splash,ash,easy,1,1,1
+M2-MC059,module_2,mastery_check,459,Read the word crash.,crash,crash,crash,ash,easy,1,1,1
+M2-MC060,module_2,mastery_check,460,Read the word flash.,flash,flash,flash,ash,easy,1,1,1
+M2-MC061,module_2,mastery_check,461,Read the word trash.,trash,trash,trash,ash,easy,1,1,1
+M2-MC062,module_2,mastery_check,462,Read the word ball.,ball,ball,ball,all,easy,1,1,1
+M2-MC063,module_2,mastery_check,463,Read the word call.,call,call,call,all,easy,1,1,1
+M2-MC064,module_2,mastery_check,464,Read the word fall.,fall,fall,fall,all,easy,1,1,1
+M2-MC065,module_2,mastery_check,465,Read the word wall.,wall,wall,wall,all,easy,1,1,1
+M2-MC066,module_2,mastery_check,466,Read the word tall.,tall,tall,tall,all,easy,1,1,1
+M2-MC067,module_2,mastery_check,467,Read the word small.,small,small,small,all,easy,1,1,1
+M2-MC068,module_2,mastery_check,468,Read the word stall.,stall,stall,stall,all,easy,1,1,1
+M2-MC069,module_2,mastery_check,469,Read the word hall.,hall,hall,hall,all,easy,1,1,1
+M2-MC070,module_2,mastery_check,470,Read the word mail.,mail,mail,mail,ail,easy,1,1,1
+M2-MC071,module_2,mastery_check,471,Read the word sail.,sail,sail,sail,ail,easy,1,1,1
+M2-MC072,module_2,mastery_check,472,Read the word tail.,tail,tail,tail,ail,easy,1,1,1
+M2-MC073,module_2,mastery_check,473,Read the word rail.,rail,rail,rail,ail,easy,1,1,1
+M2-MC074,module_2,mastery_check,474,Read the word pail.,pail,pail,pail,ail,easy,1,1,1
+M2-MC075,module_2,mastery_check,475,Read the word snail.,snail,snail,snail,ail,easy,1,1,1
+M2-MC076,module_2,mastery_check,476,Read the word trail.,trail,trail,trail,ail,easy,1,1,1
+M2-MC077,module_2,mastery_check,477,Read the word nail.,nail,nail,nail,ail,easy,1,1,1
+M2-MC078,module_2,mastery_check,478,Read the word rain.,rain,rain,rain,ain,easy,1,1,1
+M2-MC079,module_2,mastery_check,479,Read the word pain.,pain,pain,pain,ain,easy,1,1,1
+M2-MC080,module_2,mastery_check,480,Read the word train.,train,train,train,ain,easy,1,1,1
+M2-MC081,module_2,mastery_check,481,Read the word chain.,chain,chain,chain,ain,easy,1,1,1
+M2-MC082,module_2,mastery_check,482,Read the word brain.,brain,brain,brain,ain,easy,1,1,1
+M2-MC083,module_2,mastery_check,483,Read the word plain.,plain,plain,plain,ain,easy,1,1,1
+M2-MC084,module_2,mastery_check,484,Read the word grain.,grain,grain,grain,ain,easy,1,1,1
+M2-MC085,module_2,mastery_check,485,Read the word stain.,stain,stain,stain,ain,easy,1,1,1
+M2-MC086,module_2,mastery_check,486,Read the word cake.,cake,cake,cake,ake,easy,1,1,1
+M2-MC087,module_2,mastery_check,487,Read the word lake.,lake,lake,lake,ake,easy,1,1,1
+M2-MC088,module_2,mastery_check,488,Read the word make.,make,make,make,ake,easy,1,1,1
+M2-MC089,module_2,mastery_check,489,Read the word bake.,bake,bake,bake,ake,easy,1,1,1
+M2-MC090,module_2,mastery_check,490,Read the word rake.,rake,rake,rake,ake,easy,1,1,1
+M2-MC091,module_2,mastery_check,491,Read the word shake.,shake,shake,shake,ake,easy,1,1,1
+M2-MC092,module_2,mastery_check,492,Read the word snake.,snake,snake,snake,ake,easy,1,1,1
+M2-MC093,module_2,mastery_check,493,Read the word flake.,flake,flake,flake,ake,easy,1,1,1
+M2-MC094,module_2,mastery_check,494,Read the word nice.,nice,nice,nice,ice,easy,1,1,1
+M2-MC095,module_2,mastery_check,495,Read the word rice.,rice,rice,rice,ice,easy,1,1,1
+M2-MC096,module_2,mastery_check,496,Read the word mice.,mice,mice,mice,ice,easy,1,1,1
+M2-MC097,module_2,mastery_check,497,Read the word slice.,slice,slice,slice,ice,easy,1,1,1
+M2-MC098,module_2,mastery_check,498,Read the word price.,price,price,price,ice,easy,1,1,1
+M2-MC099,module_2,mastery_check,499,Read the word twice.,twice,twice,twice,ice,easy,1,1,1
+M2-MC100,module_2,mastery_check,500,Read the word spice.,spice,spice,spice,ice,easy,1,1,1

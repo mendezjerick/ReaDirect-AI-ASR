@@ -1,0 +1,4 @@
+recording_id,audio_path,prompt_id,learner_id_anonymized,grade_level,manual_transcript,human_correct,error_type,recording_condition,noise_flag,notes
+sample_001,data/raw/sample_001.wav,M2-RW001,L001,1,cat,1,correct,quiet,0,fake example only
+sample_002,data/raw/sample_002.wav,M1-HR001,L002,1,A,0,initial_sound_error,quiet,0,fake example only
+sample_003,data/raw/sample_003.wav,T1-L001,L003,2,A,1,correct,classroom,1,fake example only
