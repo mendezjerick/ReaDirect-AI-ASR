@@ -57,7 +57,9 @@ Laravel should send `X-ReaDirect-AI-Token`.
 
 Students should never call this service directly. Keep it private and call it server-to-server from Laravel.
 
-Fine-tuned Whisper models are not required for the API. Phase 9 only adds a decision workflow and data preparation. Keep using `mock` or `faster_whisper` provider settings until a reviewed model artifact exists.
+Fine-tuned Whisper models are not required for the API, but a reviewed fine-tuned artifact can later be configured as the ASR provider. Keep using `mock` or `faster_whisper` provider settings until a reviewed model artifact exists.
+
+The FastAPI service is the bridge from Laravel to the AI layer. Laravel remains the official scorer and progression controller. The AI service returns transcript, similarity, phoneme, error-type, feedback, and adaptive recommendation signals.
 
 ## Deployment Options
 

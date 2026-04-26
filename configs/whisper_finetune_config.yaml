@@ -1,19 +1,51 @@
-model_name_or_path: openai/whisper-base.en
-language: English
-task: transcribe
-train_jsonl: data/processed/whisper_finetune/train.jsonl
-validation_jsonl: data/processed/whisper_finetune/validation.jsonl
-test_jsonl: data/processed/whisper_finetune/test.jsonl
-output_dir: model_artifacts/readirect-whisper-base-en-v1-hf
-per_device_train_batch_size: 4
-gradient_accumulation_steps: 4
-learning_rate: 1e-5
-warmup_steps: 100
-max_steps: 1000
-fp16: true
-eval_steps: 100
-save_steps: 100
-logging_steps: 25
-generation_max_length: 225
-predict_with_generate: true
-seed: 42
+model:
+  name_or_path: openai/whisper-base.en
+  language: English
+  task: transcribe
+  forced_decoder_ids: null
+  suppress_tokens: []
+
+data:
+  train_jsonl: data/processed/whisper_finetune/train.jsonl
+  validation_jsonl: data/processed/whisper_finetune/validation.jsonl
+  test_jsonl: data/processed/whisper_finetune/test.jsonl
+  audio_column: audio
+  text_column: sentence
+  audio_loading_backend: librosa
+  sampling_rate: 16000
+  max_duration_seconds: 30.0
+  min_duration_seconds: 0.3
+
+training:
+  output_dir: model_artifacts/readirect-whisper-base-en-v1-hf
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 1.0e-5
+  warmup_steps: 100
+  max_steps: 1000
+  evaluation_strategy: "no"
+  save_strategy: "steps"
+  run_eval_during_training: false
+  eval_steps: 100
+  save_steps: 100
+  logging_steps: 25
+  save_total_limit: 2
+  fp16: true
+  gradient_checkpointing: true
+  predict_with_generate: true
+  generation_max_length: 225
+  dataloader_num_workers: 0
+  seed: 42
+  report_to:
+    - tensorboard
+
+evaluation:
+  metric: wer
+  compute_cer: true
+  compute_exact_match: true
+
+runtime:
+  require_cuda: true
+  allow_cpu_training: false
+  dry_run_default: true

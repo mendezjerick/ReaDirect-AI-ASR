@@ -84,3 +84,4 @@ The ZIP from `content_bank_enriched/import_ready` is for review. It does not mod
 - Phoneme tags are dictionary-derived, not acoustic.
 - Difficulty scoring is heuristic and should be reviewed by educators.
 
+Enriched content metadata supports the AI tutoring workflow by connecting reading items to target phonemes, error focus, difficulty, and adaptive selection fields. Generated enriched CSVs are local review artifacts unless explicitly approved for import into the main Laravel content bank.

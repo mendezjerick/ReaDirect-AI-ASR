@@ -124,6 +124,8 @@ The AI service returns a recommended next item, reason codes, a learner-safe sum
 
 Laravel remains responsible for deciding whether to follow the recommendation, enforcing module rules, saving official progress, and keeping debug fields away from students.
 
+The adaptive engine is advisory. It recommends practice focus and candidate items from AI analysis signals, enriched content metadata, and learner history, but Laravel enforces official eligibility and progression rules.
+
 ## Limitations
 
 - Recommendations are heuristic and should be reviewed with educator input.

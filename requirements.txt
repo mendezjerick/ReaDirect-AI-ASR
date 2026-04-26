@@ -12,12 +12,15 @@ uvicorn
 pytest
 httpx
 faster-whisper
+torch
+transformers
+datasets
+evaluate
+accelerate
+tensorboard
 
-# Optional future ASR/modeling dependencies. Install only when needed:
-# torch
-# transformers
-# datasets
-# evaluate
+# Optional conversion/runtime dependencies. Install only when needed:
+# ctranslate2
 # phonemizer
 # epitran
 # g2p-en

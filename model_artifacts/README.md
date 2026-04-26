@@ -5,3 +5,5 @@ Fine-tuned models, checkpoints, converted CTranslate2 exports, and downloaded mo
 Do not commit model files to Git. Share approved final artifacts through secure external storage or a private model registry.
 
 Collaborators should not need to retrain by default. They can download a reviewed final artifact later.
+
+Tracked files in this folder are limited to documentation, `.gitkeep`, and `model_registry.example.yaml`.

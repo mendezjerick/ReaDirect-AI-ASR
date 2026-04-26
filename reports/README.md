@@ -18,3 +18,10 @@ Generated reports remain ignored by Git by default except for this README.
 AI Phase 5 can generate `reports/reading_analysis_summary.md`. Generated reading-analysis reports remain ignored by Git by default.
 
 AI Phase 9 can generate `reports/finetuning_decision.md`. This decision report is generated locally and ignored by Git by default unless it has been reviewed and explicitly approved for sharing.
+
+AI Phase 10 can generate:
+
+- `reports/finetuned_whisper_eval.md`
+- `reports/finetuned_whisper_metrics.json`
+
+These are generated evaluation artifacts and remain ignored by Git.

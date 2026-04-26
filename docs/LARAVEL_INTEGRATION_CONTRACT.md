@@ -78,6 +78,8 @@ Do not send learner names, emails, school identifiers, or private metadata to th
 
 Official scoring remains in Laravel. AI fields support feedback, analysis, and future adaptive practice.
 
+The AI API should be treated as an analysis service, not as the sole scoring authority. ASR output may be imperfect, so Laravel should combine AI signals with rule-based assessment logic and administrative review tools.
+
 ## Recommend Next Contract
 
 Endpoint:

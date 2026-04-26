@@ -77,3 +77,15 @@ python training/train_whisper_skeleton.py --config configs/whisper_finetune_conf
 ```
 
 These commands do not train a model. They generate a decision report, prepare JSONL files, and preview a future training config.
+
+Phase 10 guarded Whisper fine-tuning commands:
+
+```powershell
+python scripts/check_training_environment.py
+python training/train_whisper.py --config configs/whisper_finetune_config.yaml --dry-run
+python training/train_whisper.py --config configs/whisper_finetune_config.yaml --run
+python scripts/evaluate_finetuned_whisper.py --model-dir model_artifacts/readirect-whisper-base-en-v1-hf --test-jsonl data/processed/whisper_finetune/test.jsonl --output reports/finetuned_whisper_eval.md --metrics-json reports/finetuned_whisper_metrics.json
+python scripts/convert_whisper_to_faster_whisper.py --model-dir model_artifacts/readirect-whisper-base-en-v1-hf --output-dir model_artifacts/readirect-whisper-base-en-v1-ct2 --quantization int8_float16 --dry-run
+```
+
+Training only starts on the `--run` command.

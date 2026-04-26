@@ -17,3 +17,4 @@ These are the only active datasets in the current AI/ASR pipeline.
 
 Always check dataset licenses before using data to train deployable models, run production inference, or produce client-facing evaluation results.
 
+Repository policy: public dataset archives, extracted audio, generated manifests, generated reports, and model artifacts are not committed to GitHub. Only source code, configs, documentation, tests, safe templates, and approved small resources are tracked.

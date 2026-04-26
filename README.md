@@ -1,110 +1,50 @@
-# ReaDirect AI/ASR
+# ReaDirect-AI-ASR
 
-ReaDirect-AI-ASR is the separate Python research and service repository for ReaDirect speech and reading analysis work. The main Laravel ReaDirect application remains in its own repository. This repo handles dataset preparation, ASR experiments, pronunciation and reading-error detection, expected-answer comparison, and future model/service work that Laravel can call.
+ReaDirect-AI-ASR serves as the artificial intelligence layer of the ReaDirect system. It uses automatic speech recognition, fine-tuned Whisper-based transcription, phoneme-aware answer analysis, expected-answer comparison, pronunciation-error detection, and adaptive tutoring logic to interpret learner oral reading responses. Instead of functioning as a simple quiz checker, the AI component processes learner speech, compares it with expected reading targets, identifies similarity and possible error types, and provides structured signals that the main ReaDirect system can use for feedback, intervention, and adaptive activity selection.
 
-This repository is not the Laravel app, not a content-management dashboard, and not a place to commit real learner audio, identifiable learner metadata, private data, API keys, or model checkpoints.
+This repository is separate from the main ReaDirect Laravel application. The Laravel repository remains responsible for the application interface, official scoring, database storage, authentication, and learner workflow. This Python repository provides the research, model, analysis, and FastAPI service layer that Laravel can call.
 
-## Main Pipeline
+## 1. Data Preparation
+
+Data preparation organizes public speech datasets, ReaDirect content files, manifests, phoneme resources, model-ready training files, reports, and local model artifacts. This structure allows the AI pipeline to connect each audio recording with a transcript, expected answer, prompt ID, phoneme metadata, ASR output, and evaluation result.
+
+Important folders:
+
+- `external_datasets/`: local public datasets and CMUdict resources.
+- `data/raw/`: local raw audio or dataset files, ignored by Git.
+- `data/processed/`: generated processed files, including Whisper fine-tuning JSONL files.
+- `data/manifests/`: generated dataset manifests and content indexes.
+- `content_bank/`: safe ReaDirect CSV content-bank imports.
+- `content_bank_enriched/`: generated phoneme/adaptive metadata exports.
+- `model_artifacts/`: local fine-tuned model outputs and converted model folders.
+- `reports/`: generated evaluation and readiness reports.
+
+Large datasets, generated manifests, model checkpoints, training logs, private data, and report artifacts are intentionally ignored by Git.
+
+## 2. Data Acquisition & Collection
+
+### Speechocean762
+
+Speechocean762 is the primary public speech/pronunciation dataset used in this repository for ASR baseline evaluation and fine-tuning experiments. It contains English pronunciation-assessment utterances and is stored locally under:
 
 ```text
-learner audio
--> ASR transcription
--> transcript normalization
--> expected answer comparison
--> similarity/error type detection
--> output JSON
--> Laravel ReaDirect app uses result for scoring/feedback
+external_datasets/speechocean762/
 ```
 
-## Setup
+Expected local paths:
 
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-pytest
+```text
+external_datasets/speechocean762/raw/speechocean762.tar.gz
+external_datasets/speechocean762/extracted/
 ```
 
-Copy the example environment file before running local services:
+The archive and extracted audio are not committed to GitHub because they are large dataset files.
 
-```powershell
-Copy-Item .env.example .env
-```
+### CMUdict
 
-Run the starter FastAPI service:
+CMUdict is used as the pronunciation dictionary. It provides word-to-phoneme mappings that support phoneme-aware comparison and content enrichment.
 
-```powershell
-uvicorn api.main:app --reload --port 8001
-```
-
-Health check:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8001/health
-```
-
-## Dataset Privacy Rules
-
-- Do not commit child or learner audio.
-- Do not commit identifiable learner metadata.
-- Use anonymized learner IDs.
-- Keep raw datasets local or in approved secure storage.
-- Do not commit generated audio files.
-- Do not commit model checkpoints or downloaded model weights.
-- Do not commit `.env` or API keys.
-
-## Dataset Manifest Format
-
-The expected manifest is a CSV with these columns:
-
-| Column | Purpose |
-| --- | --- |
-| `recording_id` | Stable recording identifier. |
-| `learner_id_anonymized` | Anonymized learner identifier only. |
-| `grade_level` | Learner grade level or band. |
-| `prompt_id` | Content-bank or assessment prompt identifier. |
-| `prompt_type` | Prompt type, such as letter, word, sentence, passage. |
-| `module_key` | ReaDirect module key when applicable. |
-| `activity_type` | Activity category. |
-| `expected_text` | Primary expected answer. |
-| `accepted_answers` | Alternate accepted answers, separated by `|` when stored in CSV. |
-| `audio_path` | Relative path to local audio under `data/raw` or configured base path. |
-| `duration_seconds` | Audio duration when known. |
-| `manual_transcript` | Human transcript when available. |
-| `asr_transcript` | ASR output when generated. |
-| `human_correct` | Human correctness label when available. |
-| `error_type` | Error type label when available. |
-| `notes` | Non-identifying notes only. |
-
-## Content Bank Connection
-
-Safe CSVs from the main ReaDirect content bank can be copied into `content_bank/`. These files provide expected answers, accepted answers, item IDs, module tags, activity types, and difficulty metadata. This repo uses those content files to build dataset manifests and compare ASR output against expected answers.
-
-Content-bank CSVs may be tracked only when they contain safe instructional content and no private learner data.
-
-## Current Repository Context
-
-This checkout currently includes `ReaDirect-Dataset/`, which appears to be a content-bank export with assessment, module, agent, rule, and feedback CSVs. Phase AI-1 leaves that folder unchanged and creates a separate Python ASR foundation around it.
-
-## AI Phase 2 Dataset Bridge
-
-Phase 2 connects ReaDirect content CSVs, CMUdict phoneme mappings, and future audio/transcript datasets through a unified content index and dataset manifest.
-
-Active dataset plan:
-
-- ReaDirect CSV content bank.
-- CMUdict in `external_datasets/cmudict/`.
-- Speechocean762 in `external_datasets/speechocean762/`.
-
-Future optional / research-only datasets:
-
-- L2-ARCTIC is removed from the active plan because it is CC BY-NC 4.0 / non-commercial. It must not be used for deployable model training, production inference, or commercial/government-client evaluation unless a compatible license is obtained.
-- PF-STAR is removed from the active plan because it requires access/request. It should only be considered later as optional.
-
-Expected CMUdict files:
+Expected files:
 
 ```text
 external_datasets/cmudict/cmudict.dict
@@ -112,103 +52,344 @@ external_datasets/cmudict/cmudict.phones
 external_datasets/cmudict/cmudict.symbols
 ```
 
-Inspect the current content bank:
+### ReaDirect Curated CSV Content Bank
 
-```powershell
-python scripts/inspect_content_bank.py --content-bank content_bank --cmudict external_datasets/cmudict
-```
-
-Inspect the existing local export without copying it:
-
-```powershell
-python scripts/inspect_content_bank.py --content-bank ReaDirect-Dataset --cmudict external_datasets/cmudict
-```
-
-Import a content-bank ZIP exported from the Laravel repo:
-
-```powershell
-python scripts/import_content_bank_zip.py --zip-path path/to/readirect-content-bank-export.zip
-python scripts/import_content_bank_zip.py --zip-path path/to/readirect-content-bank-export.zip --overwrite
-```
-
-Build an enriched content index:
-
-```powershell
-python scripts/build_content_index.py --content-bank content_bank --cmudict-dir external_datasets/cmudict --output data/manifests/content_index.csv
-```
-
-Build a dataset manifest from fake-template metadata:
-
-```powershell
-python scripts/build_manifest.py --metadata-csv data/manifests/metadata_template.csv --content-bank content_bank --content-index data/manifests/content_index.csv --audio-dir data/raw --output data/manifests/dataset_manifest.csv
-```
-
-Validate a dataset manifest:
-
-```powershell
-python scripts/validate_manifest.py --manifest data/manifests/dataset_manifest.csv --content-bank content_bank --audio-base data/raw
-```
-
-The manifest joins each recording to a `prompt_id`, expected answer, accepted answers, module/activity metadata, and CMUdict-derived phoneme fields. It is the bridge between audio recordings, manual transcripts, ASR transcripts, and later scoring/error analysis.
-
-Generated manifests and content indexes under `data/manifests/` are ignored by Git, except for the safe template `data/manifests/metadata_template.csv`.
-
-## AI Phase 3 Speechocean762
-
-Speechocean762 is now the active public speech/pronunciation dataset for ReaDirect AI/ASR experiments. Place the downloaded archive here:
+The ReaDirect content bank contains expected reading items, module activities, assessment items, accepted answers, and learning content. These CSVs are imported from the main ReaDirect content bank and are used to create:
 
 ```text
-external_datasets/speechocean762/raw/speechocean762.tar.gz
+data/manifests/content_index.csv
+content_bank_enriched/
 ```
 
-Inspect the archive/extracted folder:
+These CSVs represent the target reading content that the AI analysis compares against learner speech.
 
-```powershell
-python scripts/inspect_speechocean762.py --dataset-dir external_datasets/speechocean762 --print-tree
+### Removed or Excluded Datasets
+
+- L2-ARCTIC was removed from the active plan because of non-commercial licensing concerns.
+- PF-STAR was removed from the active plan because it requires access/request approval.
+
+Neither dataset is part of the deployable or commercial-facing workflow.
+
+## 3. Data Cleaning & Preprocessing
+
+The Speechocean762 archive was inspected, extracted, and converted into a unified manifest. Audio paths were validated, transcript availability was checked, durations were included, and rows were prepared for train/validation/test splits.
+
+Relevant scripts:
+
+- `scripts/inspect_speechocean762.py`
+- `scripts/extract_speechocean762.py`
+- `scripts/build_speechocean762_manifest.py`
+- `scripts/validate_manifest.py`
+- `scripts/prepare_whisper_finetune_dataset.py`
+
+Generated outputs:
+
+```text
+data/manifests/speechocean762_manifest.csv
+data/processed/whisper_finetune/train.jsonl
+data/processed/whisper_finetune/validation.jsonl
+data/processed/whisper_finetune/test.jsonl
 ```
 
-Safely extract:
+These files are generated locally when reproducing the workflow and are ignored by Git.
 
-```powershell
-python scripts/extract_speechocean762.py --archive external_datasets/speechocean762/raw/speechocean762.tar.gz --dest external_datasets/speechocean762/extracted
+## 4. AI/ASR Methodology
+
+The system follows this AI pipeline:
+
+```text
+learner audio
+-> ASR transcription
+-> transcript normalization
+-> expected-answer comparison
+-> CMUdict phoneme mapping
+-> phoneme-aware comparison
+-> error type detection
+-> feedback hint generation
+-> adaptive recommendation
 ```
 
-Build the Speechocean762 manifest:
+The architecture is hybrid:
 
-```powershell
-python scripts/build_speechocean762_manifest.py --dataset-dir external_datasets/speechocean762/extracted --cmudict-dir external_datasets/cmudict --output data/manifests/speechocean762_manifest.csv
+- Faster-Whisper / Whisper performs speech recognition.
+- Hugging Face Transformers supports Whisper fine-tuning.
+- CMUdict provides pronunciation and phoneme information.
+- Explainable heuristic rules detect reading and pronunciation-related error types.
+- FastAPI exposes the analysis service to the Laravel application.
+
+Laravel remains the official scorer and progression controller. The AI service provides analysis signals that Laravel may use for feedback, intervention, and adaptive practice.
+
+## 5. Baseline ASR Evaluation
+
+A pretrained Whisper/faster-whisper model was evaluated before fine-tuning to determine whether fine-tuning was justified.
+
+Evaluation metrics:
+
+- WER: word error rate. Lower is better.
+- CER: character error rate. Lower is better.
+- Exact match rate: percentage of normalized ASR outputs that exactly matched the reference transcript.
+- Short-word accuracy where applicable.
+
+Relevant scripts:
+
+- `scripts/run_asr_baseline.py`
+- `scripts/evaluate_asr_baseline.py`
+- `scripts/report_dataset_readiness.py`
+
+Baseline result:
+
+| Metric | Baseline |
+|---|---:|
+| WER | 0.494 |
+| CER | 0.324 |
+| Exact Match Rate | 0.340 |
+
+The baseline result showed that the pretrained model was useful but not accurate enough for the target reading-assessment workflow without additional analysis and improvement.
+
+## 6. Whisper Fine-Tuning
+
+The Phase 9 decision workflow recommended fine-tuning with high confidence. Fine-tuning was performed using Hugging Face Transformers.
+
+Training setup:
+
+- Model: `openai/whisper-base.en`
+- GPU: NVIDIA GeForce RTX 3060
+- VRAM: 12GB
+- RAM: 32GB DDR4
+- Training data: Speechocean762 JSONL files prepared from the unified manifest
+- Output folder: `model_artifacts/readirect-whisper-base-en-v1-hf/`
+
+Relevant scripts:
+
+- `training/train_whisper.py`
+- `scripts/check_training_environment.py`
+- `scripts/prepare_whisper_finetune_dataset.py`
+- `scripts/evaluate_finetuned_whisper.py`
+- `scripts/convert_whisper_to_faster_whisper.py`
+
+Training is manual and explicit. The repository contains the pipeline and configuration, but the actual model artifact is not committed to GitHub. The final model can be shared separately through private storage.
+
+## 7. Baseline vs Fine-Tuned Model Comparison
+
+| Metric | Baseline | Fine-Tuned | Interpretation |
+|---|---:|---:|---|
+| WER | 0.494 | 0.396 | Improved overall word transcription |
+| CER | 0.324 | 0.197 | Improved character-level accuracy |
+| Exact Match Rate | 0.340 | 0.304 | Slightly lower exact-match rate; strict exact matching remains challenging |
+
+Fine-tuning improved WER from 0.494 to 0.396 and CER from 0.324 to 0.197. Exact match decreased slightly from 0.340 to 0.304, which means the fine-tuned model generally produces transcripts that are closer to the reference but still does not guarantee exact answer matching.
+
+This result is important for ReaDirect: the system should not rely on exact ASR transcript matching alone. ReaDirect combines ASR with similarity scoring, phoneme-aware comparison, accepted answers, error-type detection, and fallback logic to make analysis more useful and fair.
+
+The fine-tuned model is useful as an improved ASR layer, but it should be combined with the explainable reading-analysis engine rather than used as the sole basis for learner scoring.
+
+## 8. ReaDirect Reading Analysis Engine
+
+The reading analysis engine compares ASR transcripts against expected reading targets and returns structured analysis fields.
+
+Outputs include:
+
+- `is_correct`
+- `similarity_label`
+- `character_similarity`
+- `token_similarity`
+- `expected_phonemes`
+- `actual_phonemes`
+- `phoneme_similarity`
+- `error_type`
+- `feedback_hint`
+- `skill_signal`
+- `recommended_practice_focus`
+
+Relevant modules:
+
+- `src/readirect_asr/scoring/answer_matching.py`
+- `src/readirect_asr/scoring/phoneme_comparison.py`
+- `src/readirect_asr/scoring/error_detection.py`
+- `src/readirect_asr/scoring/feedback_hints.py`
+- `src/readirect_asr/scoring/skill_signals.py`
+- `src/readirect_asr/scoring/reading_analyzer.py`
+
+Example:
+
+```text
+Expected: cat
+ASR transcript: cap
 ```
 
-Validate it:
+Result:
 
-```powershell
-python scripts/validate_manifest.py --manifest data/manifests/speechocean762_manifest.csv
+- `similarity_label`: `very_close`
+- `error_type`: `final_sound_error`
+- `skill_signal`: `final_consonant`
+- `feedback_hint`: `listen_to_final_sound`
+
+This is what allows the system to act more like an AI reading tutor instead of a simple correct/incorrect checker.
+
+## 9. Content Bank Enrichment
+
+The ReaDirect CSV content was enriched with phoneme and adaptive learning metadata. Because `content_bank/` may contain placeholders, enrichment can also use:
+
+```text
+data/manifests/content_index.csv
 ```
 
-Build the active public manifest:
+Generated enriched outputs can be created under:
 
-```powershell
-python scripts/build_public_dataset_manifest.py --speechocean-manifest data/manifests/speechocean762_manifest.csv --output data/manifests/unified_public_dataset_manifest.csv
+```text
+content_bank_enriched/
 ```
 
-Generate a readiness report:
+Enrichment fields include:
 
-```powershell
-python scripts/report_dataset_readiness.py --manifest data/manifests/speechocean762_manifest.csv --output reports/speechocean762_readiness.md
+- `expected_phonemes`
+- `initial_phoneme`
+- `vowel_phonemes`
+- `final_phoneme`
+- `phoneme_pattern`
+- `skill_tag`
+- `error_focus`
+- `target_phoneme`
+- `difficulty_level`
+- `adaptive_bucket`
+- `recommended_for_error_type`
+- `needs_manual_review`
+
+Relevant scripts:
+
+- `scripts/enrich_content_bank.py`
+- `scripts/validate_enriched_content.py`
+- `scripts/report_content_enrichment.py`
+- `scripts/export_enriched_content_zip.py`
+
+The enriched CSVs help the system recommend targeted activities based on learner weaknesses.
+
+## 10. Adaptive Tutoring and Recommendation Engine
+
+The adaptive engine uses learner history and AI analysis signals to recommend the next item or practice focus. It is advisory only; Laravel remains the official progression controller.
+
+Inputs:
+
+- `error_type`
+- `skill_signal`
+- `target_phoneme`
+- `difficulty_level`
+- recent learner history
+- candidate items from Laravel or the content repository
+
+Outputs:
+
+- `selected_item`
+- `ranked_candidates`
+- `recommended_action`
+- `difficulty_adjustment`
+- `teacher_explanation`
+- `learner_safe_summary`
+
+Relevant modules:
+
+- `src/readirect_asr/adaptive/learner_state.py`
+- `src/readirect_asr/adaptive/remediation_policy.py`
+- `src/readirect_asr/adaptive/difficulty_policy.py`
+- `src/readirect_asr/adaptive/item_selector.py`
+- `src/readirect_asr/adaptive/recommendation.py`
+- `src/readirect_asr/adaptive/explanation.py`
+
+## 11. FastAPI Service for Laravel Integration
+
+This repository exposes a FastAPI service that the main ReaDirect Laravel app can call. Students do not call this AI service directly. Laravel sends an audio path, expected answer, accepted answers, prompt ID, and relevant context. The AI service returns structured analysis signals.
+
+Endpoints:
+
+- `GET /health`
+- `GET /version`
+- `POST /analyze-text`
+- `POST /analyze-audio`
+- `POST /content-item`
+- `POST /recommend-next`
+
+Integration documents:
+
+- `docs/FASTAPI_SERVICE.md`
+- `docs/LARAVEL_INTEGRATION_CONTRACT.md`
+
+Example flow:
+
+```text
+Laravel
+-> sends audio + expected answer
+-> AI service transcribes/analyzes
+-> returns transcript, error_type, similarity, skill_signal
+-> Laravel saves result and generates feedback
 ```
 
-Speechocean762 manifest rows preserve sentence scores, word scores, phoneme scores, word labels, phoneme labels, speaker age/gender metadata, split, transcript text, audio path, duration, and CMUdict-derived expected phonemes where available.
+## 12. Repository Structure
 
-## AI Phase 4 ASR Baseline
+```text
+ReaDirect-AI-ASR/
+├── api/
+├── configs/
+├── src/readirect_asr/
+├── scripts/
+├── training/
+├── docs/
+├── tests/
+├── external_datasets/
+├── data/
+├── content_bank/
+├── content_bank_enriched/
+├── model_artifacts/
+└── reports/
+```
 
-Phase 4 measures pretrained ASR performance on Speechocean762 before any fine-tuning. The goal is to decide whether pretrained faster-whisper output is good enough for ReaDirect expected-answer comparison and pronunciation/error analysis.
+Folder summary:
 
-No model is trained or fine-tuned in this phase.
+- `api/`: FastAPI endpoints and service orchestration.
+- `configs/`: ASR, service, dataset, adaptive, and fine-tuning configs.
+- `src/readirect_asr/`: core Python package for ASR, phonemes, scoring, content, evaluation, adaptive logic, and fine-tuning.
+- `scripts/`: command-line tools for dataset preparation, evaluation, analysis, and reporting.
+- `training/`: guarded Whisper fine-tuning scripts.
+- `docs/`: supporting technical documentation.
+- `tests/`: automated tests.
+- `external_datasets/`: local public datasets and CMUdict.
+- `data/`: local raw, processed, and manifest artifacts.
+- `content_bank/`: ReaDirect content-bank imports.
+- `content_bank_enriched/`: generated enriched content outputs.
+- `model_artifacts/`: local fine-tuned or converted model artifacts.
+- `reports/`: generated evaluation and process reports.
 
-Recommended first runs:
+## 13. What Is Included in GitHub
 
-- `base.en` on CPU with `int8` compute for quick testing.
-- `small.en` only if the machine can handle the extra runtime and memory.
+The repository includes:
+
+- source code
+- FastAPI service
+- configuration files
+- dataset and evaluation scripts
+- fine-tuning pipeline code
+- tests
+- documentation
+- CMUdict files if present and license-appropriate
+- placeholder folders such as `.gitkeep`
+- safe example templates
+
+## 14. What Is Not Included in GitHub
+
+The repository intentionally excludes:
+
+- Speechocean762 archive
+- extracted Speechocean762 audio
+- generated manifests
+- generated reports
+- fine-tuned model checkpoints
+- model artifacts
+- `.env`
+- private learner data
+- real learner audio
+
+These files are excluded because of file size, licensing, privacy, data ownership, and GitHub hygiene.
+
+## 15. How to Reproduce the Workflow
 
 Install dependencies:
 
@@ -216,313 +397,94 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-`faster-whisper` can take time to install and may download model files into the local model cache when first used. Do not commit model cache files.
-
-Quick sample:
+Check GPU:
 
 ```powershell
-python scripts/run_phase4_sample.py --limit 5 --model-size base.en --device cpu --compute-type int8
+python scripts/check_training_environment.py
 ```
 
-Limited baseline:
+Extract Speechocean762:
 
 ```powershell
-python scripts/run_asr_baseline.py --manifest data/manifests/speechocean762_manifest.csv --output data/manifests/speechocean762_asr_baseline.csv --model-size base.en --device cpu --compute-type int8 --limit 50
+python scripts/extract_speechocean762.py --archive external_datasets/speechocean762/raw/speechocean762.tar.gz --dest external_datasets/speechocean762/extracted
 ```
 
-Evaluate:
+Build manifest:
+
+```powershell
+python scripts/build_speechocean762_manifest.py --dataset-dir external_datasets/speechocean762/extracted --cmudict-dir external_datasets/cmudict --output data/manifests/speechocean762_manifest.csv
+```
+
+Run baseline ASR:
+
+```powershell
+python scripts/run_asr_baseline.py --manifest data/manifests/speechocean762_manifest.csv --output data/manifests/speechocean762_asr_baseline.csv --model-size base.en --device cuda --compute-type float16
+```
+
+Evaluate baseline:
 
 ```powershell
 python scripts/evaluate_asr_baseline.py --input data/manifests/speechocean762_asr_baseline.csv --output reports/asr_baseline_summary.md --metrics-csv reports/asr_baseline_metrics.csv
 ```
 
-Interpretation:
-
-- WER measures word-level transcription error.
-- CER measures character-level transcription error, useful for short words.
-- Exact match rate approximates whether ASR output can support direct expected-answer comparison.
-- Short-word summaries matter for ReaDirect items such as `cat`, `dog`, `sun`, `pen`, `map`, `cup`, `hat`, `pig`, `run`, and `box`.
-
-Fine-tuning is likely needed later if WER/CER are high on short words, exact match is low for simple utterances, or common substitutions interfere with expected-answer scoring.
-
-## AI Phase 5 Reading Analysis
-
-Phase 5 converts an ASR transcript into ReaDirect reading-analysis signals. It is heuristic and explainable. It does not train or fine-tune a model, and it does not make Laravel's official score decision. The Laravel app remains responsible for official rule-based scoring.
-
-The AI repo provides analysis signals:
-
-- `similarity_label`
-- `error_type`
-- `feedback_hint`
-- `coach_hint_key`
-- `skill_signal`
-- transcript-derived phoneme comparison
-- recommended practice focus
-
-Analyze ASR output:
-
-```powershell
-python scripts/analyze_asr_outputs.py --input data/manifests/speechocean762_asr_baseline.csv --output data/manifests/speechocean762_reading_analysis.csv --cmudict-dir external_datasets/cmudict
-```
-
-Generate a report:
-
-```powershell
-python scripts/report_reading_analysis.py --input data/manifests/speechocean762_reading_analysis.csv --output reports/reading_analysis_summary.md
-```
-
-Run API:
-
-```powershell
-uvicorn api.main:app --reload --port 8001
-```
-
-Example `/analyze-text` request:
-
-```json
-{
-  "expected_text": "cat",
-  "actual_text": "cap",
-  "accepted_answers": ["cat"]
-}
-```
-
-Example result signals:
-
-```text
-similarity_label = very_close
-error_type = final_sound_error
-skill_signal = final_consonant
-feedback_hint = ending_sound
-```
-
-Limitations:
-
-- Actual phonemes are derived from the ASR transcript, not direct acoustic phoneme recognition.
-- ASR mistakes can affect error detection.
-- This is not yet a trained pronunciation model.
-- Speechocean annotations may later improve scoring and validation.
-
-## AI Phase 6 Content Enrichment
-
-Phase 6 enriches ReaDirect content-bank rows with phoneme tags, skill tags, target phonemes, difficulty metadata, and adaptive selection metadata. This makes module items easier to use for targeted practice, remediation, review, and mastery checks.
-
-Generated enriched files are ignored by Git by default. Review them before importing anything back into the main Laravel ReaDirect repository.
-
-Run enrichment:
-
-```powershell
-python scripts/enrich_content_bank.py --content-bank content_bank --cmudict-dir external_datasets/cmudict --output-dir content_bank_enriched
-```
-
-If `content_bank/` is empty but the Phase 2 index exists, use:
-
-```powershell
-python scripts/enrich_content_bank.py --content-bank content_bank --content-index data/manifests/content_index.csv --cmudict-dir external_datasets/cmudict --output-dir content_bank_enriched --write-import-ready
-```
-
-Validate:
-
-```powershell
-python scripts/validate_enriched_content.py --input content_bank_enriched/enriched_content_index.csv
-```
-
-Generate report:
-
-```powershell
-python scripts/report_content_enrichment.py --enriched-index content_bank_enriched/enriched_content_index.csv --output content_bank_enriched/reports/content_enrichment_report.md
-```
-
-Export review ZIP:
-
-```powershell
-python scripts/export_enriched_content_zip.py --source-dir content_bank_enriched/import_ready --output content_bank_enriched/readirect-enriched-content.zip
-```
-
-API content-item preview:
-
-```powershell
-uvicorn api.main:app --reload --port 8001
-```
-
-POST `/analyze-content-item`:
-
-```json
-{
-  "prompt_id": "M2-001",
-  "expected_text": "cat",
-  "activity_type": "read_word",
-  "module_key": "module_2"
-}
-```
-
-Limitations:
-
-- CMUdict is an American English pronunciation dictionary.
-- Some Grade 1 words, names, or local terms may be missing.
-- Phoneme tags are dictionary-derived, not acoustic.
-- Difficulty scoring is heuristic and should be reviewed by educators.
-
-## AI Phase 7 FastAPI Service
-
-Phase 7 exposes the Laravel-facing AI analysis service. Laravel sends expected-answer context and either text or an audio path. The AI service returns analysis signals only; Laravel remains the official scorer.
-
-Run locally:
-
-```powershell
-uvicorn api.main:app --reload --port 8001
-```
-
-Health:
-
-```powershell
-curl http://127.0.0.1:8001/health
-```
-
-Analyze text:
-
-```powershell
-python scripts/test_api_analysis.py --mode text --expected-text cat --actual-text cap --accepted-answer cat --debug
-```
-
-Analyze audio path:
-
-```powershell
-python scripts/test_api_analysis.py --mode audio --audio-path data/samples/sample.wav --expected-text cat --accepted-answer cat --debug
-```
-
-Local defaults use `ASR_PROVIDER=mock`, so collaborators can run the API without downloading Whisper. Set `ASR_PROVIDER=faster_whisper` only when ready for real transcription.
-
-API token protection is optional:
-
-```text
-API_AUTH_ENABLED=true
-READIRECT_AI_API_TOKEN=your-server-token
-```
-
-When enabled, Laravel must send:
-
-```text
-X-ReaDirect-AI-Token: your-server-token
-```
-
-CORS defaults allow local Laravel development at `http://127.0.0.1:8000` and `http://localhost:8000`. In production, keep the AI service private and have Laravel call it server-to-server.
-
-## AI Phase 8 Adaptive Tutoring Engine
-
-Phase 8 adds a heuristic recommendation layer that suggests the next practice item or learning action from learner history plus enriched content metadata. It uses `error_type`, `skill_signal`, phoneme tags, difficulty, module context, mastery/review flags, and recent attempts.
-
-The engine is advisory only. Laravel remains responsible for official scoring, module progression, persistence, and deciding whether to accept or override the recommendation.
-
-The adaptive engine can use candidates from:
-
-- `content_bank_enriched/enriched_content_index.csv` when available.
-- `data/manifests/content_index.csv` as fallback.
-- Request-provided `candidate_items` from Laravel as a final fallback.
-
-Recommend the next item:
-
-```json
-POST http://127.0.0.1:8001/recommend-next
-{
-  "learner_history": [
-    {
-      "prompt_id": "M2-001",
-      "expected_text": "cat",
-      "actual_text": "cap",
-      "is_correct": false,
-      "error_type": "final_sound_error",
-      "skill_signal": "final_consonant",
-      "target_phoneme": "T",
-      "difficulty_level": "easy"
-    }
-  ],
-  "candidate_items": [
-    {
-      "prompt_id": "M2-014",
-      "module_key": "module_2",
-      "activity_type": "read_word",
-      "prompt_text": "Read the word.",
-      "expected_text": "hat",
-      "error_focus": "final_consonant",
-      "target_phoneme": "T",
-      "difficulty_level": "easy",
-      "is_active": true,
-      "needs_manual_review": false
-    }
-  ],
-  "top_k": 5,
-  "debug": true
-}
-```
-
-Simulate recommendations without Laravel:
-
-```powershell
-python scripts/simulate_adaptive_tutoring.py --top-k 5
-```
-
-`/analyze-text` and `/analyze-audio` still work without learner history. If `learner_history` is included, the response also includes `adaptive_recommendation` and `learner_summary`.
-
-See `docs/ADAPTIVE_TUTORING_ENGINE.md` for the scoring policy, schema, examples, and limitations.
-
-## AI Phase 9 Fine-Tuning Decision Workflow
-
-Phase 9 does not fine-tune Whisper. It decides whether fine-tuning is justified from baseline ASR evidence and prepares Whisper-compatible JSONL datasets only if needed.
-
-The decision uses WER, CER, exact match rate, ReaDirect short-word accuracy, blank ASR output rate, and dataset readiness checks for row count, duration, transcript coverage, and audio availability.
-
-Decide whether fine-tuning is justified:
-
-```powershell
-python scripts/decide_finetuning.py --manifest data/manifests/speechocean762_manifest.csv --baseline data/manifests/speechocean762_asr_baseline.csv --output reports/finetuning_decision.md
-```
-
-Prepare a Whisper-compatible dataset after the decision supports it:
+Prepare fine-tuning dataset:
 
 ```powershell
 python scripts/prepare_whisper_finetune_dataset.py --manifest data/manifests/speechocean762_manifest.csv --output-dir data/processed/whisper_finetune
 ```
 
-Preview the future training config without training:
+Fine-tune:
 
 ```powershell
-python training/train_whisper_skeleton.py --config configs/whisper_finetune_config.yaml
+python training/train_whisper.py --config configs/whisper_finetune_config.yaml --run
 ```
 
-Collaborators do not need to retrain by default. One approved training run can later produce a reviewed model artifact outside Git, stored locally under `model_artifacts/` and shared through secure external storage.
-
-See `docs/FINETUNING_DECISION_WORKFLOW.md` and `docs/WHISPER_FINETUNING_PLAN.md`.
-
-## Planned Phases
-
-1. AI Phase 1: Repo setup and dataset format.
-2. AI Phase 2: Content bank import and manifest builder.
-3. AI Phase 3: Speechocean762 loader and public manifest conversion.
-4. AI Phase 4: Baseline ASR using faster-whisper on Speechocean762, WER/CER, exact match, and pronunciation-relevant summaries.
-5. AI Phase 5: ReaDirect-specific word similarity, expected-answer comparison, and pronunciation error detection using ASR outputs + CMUdict tags.
-6. AI Phase 6: Enrich ReaDirect CSV content bank with phoneme tags, skill tags, target phonemes, and adaptive item-selection metadata.
-7. AI Phase 7: FastAPI analysis service for Laravel integration.
-8. AI Phase 8: Adaptive tutoring and next-item recommendation.
-9. AI Phase 9: Fine-tuning decision workflow and dataset preparation.
-10. AI Phase 10: Optional guarded Whisper fine-tuning implementation if Phase 9 recommends it.
-
-## Useful Commands
-
-Inspect a manifest:
+Evaluate fine-tuned model:
 
 ```powershell
-python scripts/inspect_dataset.py --manifest data/manifests/dataset_manifest.csv
+python scripts/evaluate_finetuned_whisper.py --model-dir model_artifacts/readirect-whisper-base-en-v1-hf --test-jsonl data/processed/whisper_finetune/test.jsonl --output reports/finetuned_whisper_eval.md --metrics-json reports/finetuned_whisper_metrics.json
 ```
 
-Build a starter manifest from local audio:
+Run FastAPI:
 
 ```powershell
-python scripts/build_manifest.py --audio-dir data/raw --output data/manifests/dataset_manifest.csv
+uvicorn api.main:app --reload --port 8001
 ```
 
-Validate a manifest:
+Run tests:
 
 ```powershell
-python scripts/validate_manifest.py --manifest data/manifests/dataset_manifest.csv
+pytest
 ```
+
+## 16. Current Results and Interpretation
+
+| Metric | Baseline | Fine-Tuned |
+|---|---:|---:|
+| WER | 0.494 | 0.396 |
+| CER | 0.324 | 0.197 |
+| Exact Match Rate | 0.340 | 0.304 |
+
+Fine-tuning improved WER and CER, which means the fine-tuned model generally transcribes closer to the reference than the pretrained baseline. Exact match remains challenging, especially for short reading responses and strict answer matching.
+
+For this reason, ReaDirect uses a hybrid AI architecture instead of relying only on exact transcription. ASR output is combined with expected-answer matching, accepted-answer handling, phoneme-aware comparison, feedback hints, error types, and adaptive tutoring signals.
+
+## 17. Limitations
+
+- The fine-tuned model was trained and evaluated on Speechocean762, not actual ReaDirect learner recordings.
+- ASR may still mishear short words.
+- Phoneme comparison is transcript-derived, not direct acoustic phoneme recognition.
+- Exact match is not reliable enough as the only scoring mechanism.
+- Teacher/admin review and Laravel rule-based scoring remain important.
+- Further improvements may require consented real learner recordings, better preprocessing, or more training data.
+
+## 18. Next Steps
+
+- Import reviewed enriched CSVs into the main Laravel repository.
+- Integrate the FastAPI service into the main ReaDirect Laravel app.
+- Add a Laravel `AIAnalysisService` client.
+- Store transcript, `error_type`, similarity, and skill-signal fields in the database.
+- Add an admin debug view for AI results.
+- Use adaptive recommendations with Laravel eligibility rules.
+- Optionally convert the fine-tuned model to faster-whisper/CTranslate2 format.
+- Evaluate the model on real pilot data later with consent.

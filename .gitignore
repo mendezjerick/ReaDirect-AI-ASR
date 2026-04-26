@@ -23,6 +23,7 @@ models/*
 model_artifacts/*
 !model_artifacts/.gitkeep
 !model_artifacts/README.md
+!model_artifacts/model_registry.example.yaml
 
 reports/*
 !reports/.gitkeep
@@ -84,6 +85,9 @@ external_datasets/**/*.TextGrid
 *.sql
 *.dump
 *.backup
+wandb/
+runs/
+lightning_logs/
 
 content_bank_enriched/**/*.csv
 content_bank_enriched/**/*.json

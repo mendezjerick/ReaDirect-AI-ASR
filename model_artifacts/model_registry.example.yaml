@@ -1,0 +1,8 @@
+models:
+  readirect-whisper-base-en-v1:
+    format: huggingface
+    local_path: model_artifacts/readirect-whisper-base-en-v1-hf
+    base_model: openai/whisper-base.en
+    dataset: speechocean762
+    status: local_only
+    notes: Fine-tuned model artifact; do not commit actual files.
