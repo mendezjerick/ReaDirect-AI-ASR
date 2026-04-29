@@ -18,9 +18,9 @@ asr:
   ct2_model_path: model_artifacts/readirect-whisper-base-en-v1-ct2
   pretrained_model_size: base.en
   model_size: base.en
-  device: cuda
-  compute_type: float16
-  use_fp16: true
+  device: cpu
+  compute_type: int8
+  use_fp16: false
   language: en
   task: transcribe
   timeout_seconds: 60

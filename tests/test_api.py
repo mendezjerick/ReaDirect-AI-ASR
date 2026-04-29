@@ -1,6 +1,9 @@
+import os
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+
+os.environ["ASR_PROVIDER"] = "mock"
 
 from api.main import app
 
@@ -40,4 +43,3 @@ def test_analyze_audio_endpoint_uses_mock_asr(tmp_path: Path) -> None:
     assert body["error_type"] == "correct"
     assert body["confidence"] is None
     assert body["provider"] == "mock"
-
