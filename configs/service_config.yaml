@@ -13,7 +13,7 @@ analysis:
   prefer_enriched_content: true
 
 asr:
-  provider: mock
+  provider: hf_whisper_local
   hf_model_path: model_artifacts/readirect-whisper-base-en-v1-hf
   ct2_model_path: model_artifacts/readirect-whisper-base-en-v1-ct2
   pretrained_model_size: base.en

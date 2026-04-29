@@ -4,6 +4,8 @@ import os
 import sys
 from pathlib import Path
 
+import yaml
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -16,10 +18,12 @@ def main() -> int:
     checks: list[str] = []
     warnings: list[str] = []
     errors: list[str] = []
-    provider = os.getenv("ASR_PROVIDER", "mock")
-    device = os.getenv("ASR_DEVICE", "cpu")
-    hf_model = Path(os.getenv("ASR_HF_MODEL_PATH", "model_artifacts/readirect-whisper-base-en-v1-hf"))
-    ct2_model = Path(os.getenv("ASR_CT2_MODEL_PATH", "model_artifacts/readirect-whisper-base-en-v1-ct2"))
+    service_config = _load_service_config()
+    asr_config = service_config.get("asr", {})
+    provider = os.getenv("ASR_PROVIDER", str(asr_config.get("provider", "mock")))
+    device = os.getenv("ASR_DEVICE", str(asr_config.get("device", "cpu")))
+    hf_model = Path(os.getenv("ASR_HF_MODEL_PATH", str(asr_config.get("hf_model_path", "model_artifacts/readirect-whisper-base-en-v1-hf"))))
+    ct2_model = Path(os.getenv("ASR_CT2_MODEL_PATH", str(asr_config.get("ct2_model_path", "model_artifacts/readirect-whisper-base-en-v1-ct2"))))
     checks.append(f"Selected provider: {provider}")
     if provider not in VALID_PROVIDERS:
         errors.append(f"invalid ASR_PROVIDER: {provider}")
@@ -77,6 +81,14 @@ def main() -> int:
         return 1
     print("PASS: AI service runtime checks passed.")
     return 0
+
+
+def _load_service_config() -> dict:
+    path = Path("configs/service_config.yaml")
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as file:
+        return yaml.safe_load(file) or {}
 
 
 if __name__ == "__main__":
