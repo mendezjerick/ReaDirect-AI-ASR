@@ -27,6 +27,7 @@ def get_config() -> dict[str, Any]:
     config.setdefault("api", {})
     config.setdefault("analysis", {})
     config.setdefault("asr", {})
+    config.setdefault("transcript_normalization", {})
     adaptive_config_path = os.getenv("ADAPTIVE_CONFIG_PATH", "configs/adaptive_config.yaml")
     config["adaptive"] = {**_load_yaml(adaptive_config_path), **config.get("adaptive", {})}
     config["api"]["debug"] = os.getenv("API_DEBUG", str(config["api"].get("debug", True))).lower() in {"1", "true", "yes"}
@@ -47,6 +48,13 @@ def get_config() -> dict[str, Any]:
     config["asr"]["language"] = os.getenv("ASR_LANGUAGE", config["asr"].get("language", "en"))
     config["asr"]["task"] = os.getenv("ASR_TASK", config["asr"].get("task", "transcribe"))
     config["asr"]["beam_size"] = int(os.getenv("ASR_BEAM_SIZE", str(config["asr"].get("beam_size", 1))))
+    normalization = config["transcript_normalization"]
+    normalization["phonetic_accept_threshold"] = float(os.getenv("PHONETIC_ACCEPT_THRESHOLD", str(normalization.get("phonetic_accept_threshold", normalization.get("high_similarity_threshold", 0.88)))))
+    normalization["phonetic_strict_word_threshold"] = float(os.getenv("PHONETIC_STRICT_WORD_THRESHOLD", str(normalization.get("phonetic_strict_word_threshold", normalization.get("strict_word_threshold", 0.90)))))
+    normalization["phonetic_single_letter_threshold"] = float(os.getenv("PHONETIC_SINGLE_LETTER_THRESHOLD", str(normalization.get("phonetic_single_letter_threshold", normalization.get("single_letter_threshold", 0.85)))))
+    normalization["phonetic_known_confusion_threshold"] = float(os.getenv("PHONETIC_KNOWN_CONFUSION_THRESHOLD", str(normalization.get("phonetic_known_confusion_threshold", normalization.get("known_confusion_threshold", 0.82)))))
+    normalization["low_confidence_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_THRESHOLD", str(normalization.get("low_confidence_threshold", 0.50))))
+    normalization["low_confidence_similarity_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_SIMILARITY_THRESHOLD", str(normalization.get("low_confidence_similarity_threshold", 0.95))))
     return config
 
 

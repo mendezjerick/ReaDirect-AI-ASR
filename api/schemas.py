@@ -62,6 +62,18 @@ class AnalysisResponse(BaseModel):
     accepted_answers: list[str] = Field(default_factory=list)
     transcript: str = ""
     normalized_transcript: str = ""
+    raw_transcript: str = ""
+    corrected_transcript: str = ""
+    displayed_transcript: str = ""
+    raw_wer: float = 0.0
+    corrected_wer: float = 0.0
+    phonetic_similarity_score: float = 0.0
+    normalization_applied: bool = False
+    normalization_reason: str = ""
+    correction_strategy_used: str = "none"
+    accepted_by_phonetic_threshold: bool = False
+    threshold_used: float = 0.0
+    confidence_or_threshold_used: float = 0.0
     confidence: Optional[float] = None
     is_correct: bool = False
     is_exact: bool = False

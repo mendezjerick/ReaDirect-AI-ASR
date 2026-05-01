@@ -19,6 +19,18 @@ EXPECTED_FIELDS = {
     "accepted_answers",
     "transcript",
     "normalized_transcript",
+    "raw_transcript",
+    "corrected_transcript",
+    "displayed_transcript",
+    "raw_wer",
+    "corrected_wer",
+    "phonetic_similarity_score",
+    "normalization_applied",
+    "normalization_reason",
+    "correction_strategy_used",
+    "accepted_by_phonetic_threshold",
+    "threshold_used",
+    "confidence_or_threshold_used",
     "confidence",
     "is_correct",
     "is_exact",
@@ -55,4 +67,3 @@ def test_laravel_contract_fields_and_json_serializable() -> None:
     assert EXPECTED_FIELDS.issubset(body.keys())
     json.dumps(body)
     assert body["debug_info"] is not None
-

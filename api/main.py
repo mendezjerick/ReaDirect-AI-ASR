@@ -73,6 +73,7 @@ def version() -> VersionResponse:
                 "content_index_loaded": service.content_repository.is_loaded(),
                 "content_index_path": str(service.content_repository.loaded_path) if service.content_repository.loaded_path else "",
             },
+            "transcript_normalization": config.get("transcript_normalization", {}),
         },
     )
 

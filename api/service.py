@@ -21,10 +21,12 @@ from readirect_asr.asr.mock_asr import MockASR
 from readirect_asr.asr.result import ASRResult
 from readirect_asr.content.content_repository import ContentRepository
 from readirect_asr.content.enricher import ContentEnricher
+from readirect_asr.evaluation.asr_metrics import compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.answer_matching import parse_accepted_answers
 from readirect_asr.scoring.reading_analyzer import analyze_reading_response
 from readirect_asr.text.normalization import normalize_transcript
+from readirect_asr.text.transcript_normalizer import TranscriptNormalizationResult, normalize_asr_transcript
 
 logger = logging.getLogger("readirect_ai_asr")
 
@@ -128,7 +130,16 @@ class AIAnalysisService:
                 warnings.append("transcription_failed")
                 return self._error_response("audio", request_id, "transcription_failed", asr.error, started, warnings, debug_info=asr.to_dict() if request.debug else None)
 
-            analysis = self.run_reading_analysis(expected_text, asr.transcript, context["accepted_answers"], context["content_metadata"])
+            normalization = normalize_asr_transcript(
+                raw_transcript=asr.transcript,
+                expected_text=expected_text,
+                activity_type=request.activity_type or context["content_metadata"].get("activity_type"),
+                prompt_type=request.task_type or context["content_metadata"].get("task_type"),
+                asr_confidence=asr.confidence,
+                cmudict_loader=self.cmudict_loader,
+                config=self.config.get("transcript_normalization", {}),
+            )
+            analysis = self.run_reading_analysis(expected_text, normalization.corrected_transcript, context["accepted_answers"], context["content_metadata"])
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
             return self.build_response(
                 request_id=request_id,
@@ -137,7 +148,8 @@ class AIAnalysisService:
                 expected_text=expected_text,
                 accepted_answers=context["accepted_answers"],
                 transcript=asr.transcript,
-                normalized_transcript=asr.normalized_transcript or normalize_transcript(asr.transcript),
+                normalized_transcript=normalize_transcript(normalization.corrected_transcript),
+                normalization=normalization,
                 confidence=asr.confidence,
                 analysis=analysis,
                 content_metadata=context["content_metadata"],
@@ -145,7 +157,12 @@ class AIAnalysisService:
                 warnings=warnings,
                 started=started,
                 debug=request.debug,
-                debug_info={"asr": asr.to_dict(), "learner_response_id": request.learner_response_id, "attempt_id": request.attempt_id},
+                debug_info={
+                    "asr": asr.to_dict(),
+                    "transcript_normalization": normalization.to_dict(),
+                    "learner_response_id": request.learner_response_id,
+                    "attempt_id": request.attempt_id,
+                },
                 adaptive=adaptive,
             )
         except Exception as exc:
@@ -280,6 +297,7 @@ class AIAnalysisService:
         warnings: list[str],
         started: float,
         debug: bool,
+        normalization: TranscriptNormalizationResult | None = None,
         confidence: float | None = None,
         debug_info: dict[str, Any] | None = None,
         adaptive: dict[str, Any] | None = None,
@@ -291,6 +309,21 @@ class AIAnalysisService:
                 "asr_provider": self.provider_name,
             }
         merged_enrichment = {**enrichment_metadata}
+        transcript_meta = normalization.to_dict() if normalization else {
+            "raw_transcript": transcript,
+            "corrected_transcript": normalized_transcript or transcript,
+            "displayed_transcript": normalized_transcript or transcript,
+            "expected_text": expected_text,
+            "raw_wer": compute_wer(expected_text, transcript),
+            "corrected_wer": compute_wer(expected_text, normalized_transcript or transcript),
+            "phonetic_similarity_score": float(analysis.get("phoneme_similarity", 0.0) or 0.0),
+            "normalization_applied": False,
+            "normalization_reason": "No ASR transcript correction applied",
+            "correction_strategy_used": "none",
+            "accepted_by_phonetic_threshold": False,
+            "threshold_used": 0.0,
+            "confidence_or_threshold_used": 0.0,
+        }
         response = AnalysisResponse(
             ok=True,
             request_id=request_id,
@@ -302,6 +335,18 @@ class AIAnalysisService:
             accepted_answers=accepted_answers,
             transcript=transcript,
             normalized_transcript=normalized_transcript,
+            raw_transcript=str(transcript_meta.get("raw_transcript", transcript)),
+            corrected_transcript=str(transcript_meta.get("corrected_transcript", normalized_transcript or transcript)),
+            displayed_transcript=str(transcript_meta.get("displayed_transcript", transcript_meta.get("corrected_transcript", normalized_transcript or transcript))),
+            raw_wer=float(transcript_meta.get("raw_wer", 0.0) or 0.0),
+            corrected_wer=float(transcript_meta.get("corrected_wer", 0.0) or 0.0),
+            phonetic_similarity_score=float(transcript_meta.get("phonetic_similarity_score", 0.0) or 0.0),
+            normalization_applied=bool(transcript_meta.get("normalization_applied", False)),
+            normalization_reason=str(transcript_meta.get("normalization_reason", "")),
+            correction_strategy_used=str(transcript_meta.get("correction_strategy_used", "none")),
+            accepted_by_phonetic_threshold=bool(transcript_meta.get("accepted_by_phonetic_threshold", False)),
+            threshold_used=float(transcript_meta.get("threshold_used", 0.0) or 0.0),
+            confidence_or_threshold_used=float(transcript_meta.get("confidence_or_threshold_used", 0.0) or 0.0),
             confidence=confidence,
             is_correct=bool(analysis.get("is_correct", False)),
             is_exact=bool(analysis.get("is_exact", False)),

@@ -27,6 +27,32 @@ def test_mock_asr_transcript_flows_into_reading_analyzer(tmp_path: Path) -> None
     assert response.error_type == "correct"
 
 
+def test_audio_analysis_scores_corrected_transcript_and_preserves_raw(tmp_path: Path) -> None:
+    audio = tmp_path / "sample.wav"
+    audio.write_bytes(b"fake")
+    response = _service(tmp_path).analyze_audio(
+        AnalyzeAudioRequest(
+            audio_path=str(audio),
+            expected_text="Red",
+            content_metadata={"mock_transcript": "Read"},
+            debug=True,
+        )
+    )
+
+    assert response.ok is True
+    assert response.transcript == "Read"
+    assert response.raw_transcript == "Read"
+    assert response.corrected_transcript == "Red"
+    assert response.displayed_transcript == "Red"
+    assert response.normalized_transcript == "red"
+    assert response.raw_wer == 1.0
+    assert response.corrected_wer == 0.0
+    assert response.is_correct is True
+    assert response.normalization_applied is True
+    assert response.accepted_by_phonetic_threshold is True
+    assert response.debug_info["transcript_normalization"]["corrected_transcript"] == "Red"
+
+
 def test_missing_audio_path_returns_safe_error(tmp_path: Path) -> None:
     response = _service(tmp_path).analyze_audio(AnalyzeAudioRequest(expected_text="cat"))
     assert response.ok is False
@@ -37,4 +63,3 @@ def test_missing_audio_file_returns_safe_error(tmp_path: Path) -> None:
     response = _service(tmp_path).analyze_audio(AnalyzeAudioRequest(audio_path=str(tmp_path / "missing.wav"), expected_text="cat"))
     assert response.ok is False
     assert response.error == "audio_file_not_found"
-

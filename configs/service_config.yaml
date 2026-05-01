@@ -24,3 +24,11 @@ asr:
   language: en
   task: transcribe
   timeout_seconds: 60
+
+transcript_normalization:
+  phonetic_accept_threshold: 0.88
+  phonetic_strict_word_threshold: 0.90
+  phonetic_single_letter_threshold: 0.85
+  phonetic_known_confusion_threshold: 0.82
+  low_confidence_threshold: 0.50
+  low_confidence_similarity_threshold: 0.95
