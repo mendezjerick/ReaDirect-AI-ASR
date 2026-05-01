@@ -35,9 +35,23 @@ For audio analysis:
 Laravel can save:
 
 - `transcript`
+- `raw_transcript`
+- `wav2vec2_transcript`
+- `corrected_transcript`
+- `displayed_transcript`
 - `normalized_transcript`
 - `provider`
+- `asr_route`
+- `model_family`
+- `model_used`
+- `prompt_type`
 - `model_size`
+- `raw_wer`
+- `corrected_wer`
+- `raw_cer`
+- `corrected_cer`
+- `composite_score`
+- `accepted`
 - `is_correct`
 - `is_exact`
 - `is_accepted`
@@ -45,6 +59,7 @@ Laravel can save:
 - `token_similarity`
 - `similarity_label`
 - `expected_phonemes`
+- `observed_phonemes`
 - `actual_phonemes`
 - `phoneme_similarity`
 - `error_type`
@@ -62,6 +77,10 @@ Laravel can save:
 - `warnings`
 - `error`
 
+`transcript` is the backward-compatible learner-facing transcript and maps to `displayed_transcript`. `raw_transcript` always preserves the direct Wav2Vec2 ASR output. Whisper runtime fields are not live; if `whisper_transcript` is present, it is `null`, and `whisper_removed=true`.
+
+For accepted letter and word prompts, `corrected_transcript` and `displayed_transcript` are the expected answer. For rejected letter and word prompts, they remain the recognized transcript. Sentence prompts are not forced to `expected_text`; they use Wav2Vec2 transcript WER/CER.
+
 ## Fallback Behavior
 
 If the AI API is offline or returns `ok=false`, Laravel should fall back to existing rule-based scoring and store the AI error/warning only for admin review.
@@ -78,7 +97,7 @@ Do not send learner names, emails, school identifiers, or private metadata to th
 
 Official scoring remains in Laravel. AI fields support feedback, analysis, and future adaptive practice.
 
-The AI API should be treated as an analysis service, not as the sole scoring authority. ASR output may be imperfect, so Laravel should combine AI signals with rule-based assessment logic and administrative review tools.
+The AI API should be treated as an analysis service, not as the sole scoring authority. ASR output may be imperfect, so Laravel should combine AI signals with rule-based assessment logic and administrative review tools. For letters and words, WER alone is not the final decision because expected-centric phonetic scoring and phoneme evidence are used.
 
 ## Recommend Next Contract
 

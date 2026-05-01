@@ -23,16 +23,27 @@ class ASRWord:
 class ASRResult:
     transcript: str = ""
     normalized_transcript: str = ""
+    raw_transcript_original: str = ""
+    wav2vec2_transcript: str = ""
+    asr_route: str = ""
+    model_family: str = ""
+    model_used: str = ""
     language: str = ""
     confidence: float | None = None
     segments: list[ASRSegment] = field(default_factory=list)
     words: list[ASRWord] | None = None
     duration_seconds: float | None = None
+    audio_sample_rate: int | None = None
     provider: str = ""
     model_size: str = ""
     processing_seconds: float | None = None
+    inference_time_ms: float | None = None
+    observed_phonemes: list[str] = field(default_factory=list)
+    phoneme_model_used: str = ""
+    phoneme_inference_time_ms: float | None = None
+    phoneme_error: str | None = None
+    debug_metadata: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-

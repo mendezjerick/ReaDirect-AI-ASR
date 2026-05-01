@@ -19,9 +19,10 @@ from api.schemas import (
 from readirect_asr.adaptive.recommendation import AdaptiveRecommendationEngine
 from readirect_asr.asr.mock_asr import MockASR
 from readirect_asr.asr.result import ASRResult
+from readirect_asr.audio.preprocessing import validate_audio_file
 from readirect_asr.content.content_repository import ContentRepository
 from readirect_asr.content.enricher import ContentEnricher
-from readirect_asr.evaluation.asr_metrics import compute_wer
+from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.answer_matching import parse_accepted_answers
 from readirect_asr.scoring.reading_analyzer import analyze_reading_response
@@ -117,13 +118,26 @@ class AIAnalysisService:
             )
             expected_text = str(context["expected_text"])
             if not expected_text:
-                return self._error_response("audio", request_id, "missing_expected_text", "Expected text was not provided and could not be resolved.", started, warnings)
+                warnings.append("missing_expected_text_using_raw_wav2vec2_transcript")
             if not request.audio_path:
                 return self._error_response("audio", request_id, "missing_audio_path", "Audio path was not provided.", started, warnings)
 
             audio_path = Path(request.audio_path)
             if not audio_path.exists():
                 return self._error_response("audio", request_id, "audio_file_not_found", "Audio file was not found.", started, warnings, debug_info={"audio_path": str(audio_path)} if request.debug else None)
+            audio_report = validate_audio_file(audio_path)
+            if not audio_report["supported_extension"]:
+                return self._error_response(
+                    "audio",
+                    request_id,
+                    "unsupported_audio_type",
+                    "Audio file type is not supported.",
+                    started,
+                    warnings,
+                    debug_info=audio_report if request.debug else None,
+                )
+            if audio_report["duration_seconds"] is None:
+                warnings.append("audio_duration_unreadable")
 
             asr = self.transcribe_audio(str(audio_path), expected_text=expected_text, content_metadata=context["content_metadata"])
             if asr.error:
@@ -138,6 +152,10 @@ class AIAnalysisService:
                 asr_confidence=asr.confidence,
                 cmudict_loader=self.cmudict_loader,
                 config=self.config.get("transcript_normalization", {}),
+                observed_phonemes=asr.observed_phonemes,
+                wav2vec2_transcript=asr.wav2vec2_transcript or asr.transcript,
+                model_used=asr.model_used or asr.model_size or "",
+                asr_route=asr.asr_route or "wav2vec2_only",
             )
             analysis = self.run_reading_analysis(expected_text, normalization.corrected_transcript, context["accepted_answers"], context["content_metadata"])
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
@@ -261,9 +279,22 @@ class AIAnalysisService:
         return ASRResult(
             transcript=transcript,
             normalized_transcript=normalize_transcript(transcript),
+            raw_transcript_original=str(result.get("raw_transcript_original", transcript)),
+            wav2vec2_transcript=str(result.get("wav2vec2_transcript", transcript)),
+            asr_route=str(result.get("asr_route", "wav2vec2_only")),
+            model_family=str(result.get("model_family", "wav2vec2")),
+            model_used=str(result.get("model_used", self.model_size or "")),
             confidence=result.get("confidence"),
+            duration_seconds=result.get("audio_duration_seconds") or result.get("duration_seconds"),
+            audio_sample_rate=result.get("audio_sample_rate"),
             provider=str(result.get("provider", self.provider_name)),
             model_size=self.model_size,
+            inference_time_ms=result.get("inference_time_ms"),
+            observed_phonemes=list(result.get("observed_phonemes", []) or []),
+            phoneme_model_used=str(result.get("phoneme_model_used", "")),
+            phoneme_inference_time_ms=result.get("phoneme_inference_time_ms"),
+            phoneme_error=result.get("phoneme_error"),
+            debug_metadata=dict(result.get("debug_metadata", {}) or {}),
             error=result.get("error"),
         )
 
@@ -314,20 +345,46 @@ class AIAnalysisService:
             "corrected_transcript": normalized_transcript or transcript,
             "displayed_transcript": normalized_transcript or transcript,
             "expected_text": expected_text,
+            "prompt_type": "unknown",
+            "asr_route": "wav2vec2_only",
+            "model_family": "wav2vec2",
+            "model_used": self.model_size or "",
+            "wav2vec2_transcript": transcript,
+            "whisper_transcript": None,
+            "whisper_removed": True,
             "raw_wer": compute_wer(expected_text, transcript),
             "corrected_wer": compute_wer(expected_text, normalized_transcript or transcript),
+            "raw_cer": compute_cer(expected_text, transcript),
+            "corrected_cer": compute_cer(expected_text, normalized_transcript or transcript),
+            "expected_phonemes": list(analysis.get("expected_phonemes", []) or []),
+            "expected_phoneme_source": "",
+            "expected_phoneme_variants": [],
+            "observed_phonemes": [],
             "phonetic_similarity_score": float(analysis.get("phoneme_similarity", 0.0) or 0.0),
+            "composite_score": float(analysis.get("phoneme_similarity", 0.0) or 0.0),
+            "accepted": bool(analysis.get("is_correct", False) or analysis.get("is_accepted", False)),
             "normalization_applied": False,
             "normalization_reason": "No ASR transcript correction applied",
             "correction_strategy_used": "none",
+            "accepted_by_letter_alias": False,
             "accepted_by_phonetic_threshold": False,
             "accepted_by_known_confusion": False,
             "accepted_by_letter_lattice": False,
             "accepted_by_letter_normalization": False,
             "accepted_by_exact_match": False,
+            "accepted_by_vowel_tail": False,
+            "accepted_by_phoneme_evidence": False,
+            "critical_phoneme": None,
+            "critical_phoneme_detected": None,
+            "critical_phoneme_expected_position": None,
+            "critical_phoneme_reason": None,
+            "critical_pair_detected": False,
+            "confidence_level": "",
             "threshold_used": 0.0,
             "confidence_or_threshold_used": 0.0,
+            "debug_metadata": {},
         }
+        displayed_transcript = str(transcript_meta.get("displayed_transcript", transcript_meta.get("corrected_transcript", normalized_transcript or transcript)))
         response = AnalysisResponse(
             ok=True,
             request_id=request_id,
@@ -337,22 +394,42 @@ class AIAnalysisService:
             prompt_id=prompt_id,
             expected_text=expected_text,
             accepted_answers=accepted_answers,
-            transcript=transcript,
+            transcript=displayed_transcript,
             normalized_transcript=normalized_transcript,
             raw_transcript=str(transcript_meta.get("raw_transcript", transcript)),
             corrected_transcript=str(transcript_meta.get("corrected_transcript", normalized_transcript or transcript)),
-            displayed_transcript=str(transcript_meta.get("displayed_transcript", transcript_meta.get("corrected_transcript", normalized_transcript or transcript))),
+            displayed_transcript=displayed_transcript,
+            prompt_type=str(transcript_meta.get("prompt_type", "unknown")),
+            asr_route=str(transcript_meta.get("asr_route", "wav2vec2_only")),
+            model_family=str(transcript_meta.get("model_family", "wav2vec2")),
+            model_used=str(transcript_meta.get("model_used", self.model_size or "")),
+            wav2vec2_transcript=str(transcript_meta.get("wav2vec2_transcript", transcript)),
+            whisper_transcript=None,
+            whisper_removed=bool(transcript_meta.get("whisper_removed", True)),
             raw_wer=float(transcript_meta.get("raw_wer", 0.0) or 0.0),
             corrected_wer=float(transcript_meta.get("corrected_wer", 0.0) or 0.0),
+            raw_cer=float(transcript_meta.get("raw_cer", 0.0) or 0.0),
+            corrected_cer=float(transcript_meta.get("corrected_cer", 0.0) or 0.0),
             phonetic_similarity_score=float(transcript_meta.get("phonetic_similarity_score", 0.0) or 0.0),
+            composite_score=float(transcript_meta.get("composite_score", 0.0) or 0.0),
+            accepted=bool(transcript_meta.get("accepted", False)),
             normalization_applied=bool(transcript_meta.get("normalization_applied", False)),
             normalization_reason=str(transcript_meta.get("normalization_reason", "")),
             correction_strategy_used=str(transcript_meta.get("correction_strategy_used", "none")),
+            accepted_by_letter_alias=bool(transcript_meta.get("accepted_by_letter_alias", False)),
             accepted_by_phonetic_threshold=bool(transcript_meta.get("accepted_by_phonetic_threshold", False)),
             accepted_by_known_confusion=bool(transcript_meta.get("accepted_by_known_confusion", False)),
             accepted_by_letter_lattice=bool(transcript_meta.get("accepted_by_letter_lattice", False)),
             accepted_by_letter_normalization=bool(transcript_meta.get("accepted_by_letter_normalization", False)),
             accepted_by_exact_match=bool(transcript_meta.get("accepted_by_exact_match", False)),
+            accepted_by_vowel_tail=bool(transcript_meta.get("accepted_by_vowel_tail", False)),
+            accepted_by_phoneme_evidence=bool(transcript_meta.get("accepted_by_phoneme_evidence", False)),
+            critical_phoneme=transcript_meta.get("critical_phoneme"),
+            critical_phoneme_detected=transcript_meta.get("critical_phoneme_detected"),
+            critical_phoneme_expected_position=transcript_meta.get("critical_phoneme_expected_position"),
+            critical_phoneme_reason=transcript_meta.get("critical_phoneme_reason"),
+            critical_pair_detected=bool(transcript_meta.get("critical_pair_detected", False)),
+            confidence_level=str(transcript_meta.get("confidence_level", "")),
             threshold_used=float(transcript_meta.get("threshold_used", 0.0) or 0.0),
             confidence_or_threshold_used=float(transcript_meta.get("confidence_or_threshold_used", 0.0) or 0.0),
             confidence=confidence,
@@ -362,7 +439,10 @@ class AIAnalysisService:
             character_similarity=float(analysis.get("character_similarity", 0.0) or 0.0),
             token_similarity=float(analysis.get("token_similarity", 0.0) or 0.0),
             similarity_label=str(analysis.get("similarity_label", "")),
-            expected_phonemes=list(analysis.get("expected_phonemes", []) or []),
+            expected_phonemes=list(transcript_meta.get("expected_phonemes", analysis.get("expected_phonemes", [])) or []),
+            expected_phoneme_source=str(transcript_meta.get("expected_phoneme_source", "")),
+            expected_phoneme_variants=list(transcript_meta.get("expected_phoneme_variants", []) or []),
+            observed_phonemes=list(transcript_meta.get("observed_phonemes", []) or []),
             actual_phonemes=list(analysis.get("actual_phonemes", []) or []),
             phoneme_similarity=float(analysis.get("phoneme_similarity", 0.0) or 0.0),
             error_type=str(analysis.get("error_type", "")),

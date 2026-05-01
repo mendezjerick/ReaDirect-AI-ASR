@@ -1,6 +1,6 @@
 # ReaDirect-AI-ASR
 
-ReaDirect-AI-ASR serves as the artificial intelligence layer of the ReaDirect system. It uses automatic speech recognition, fine-tuned Whisper-based transcription, phoneme-aware answer analysis, expected-answer comparison, pronunciation-error detection, and adaptive tutoring logic to interpret learner oral reading responses. Instead of functioning as a simple quiz checker, the AI component processes learner speech, compares it with expected reading targets, identifies similarity and possible error types, and provides structured signals that the main ReaDirect system can use for feedback, intervention, and adaptive activity selection.
+ReaDirect-AI-ASR serves as the artificial intelligence layer of the ReaDirect system. Its runtime ASR service now uses a local Wav2Vec2-only architecture: `models/wav2vec2-readirect-asr` for transcription and `models/wav2vec2-phoneme` for supporting phoneme evidence. The service combines ASR output, expected-centric acoustic-phonetic scoring, pronunciation-error detection, and adaptive tutoring logic to interpret learner oral reading responses. Instead of functioning as a simple quiz checker, the AI component processes learner speech, compares it with expected reading targets, identifies similarity and possible error types, and provides structured signals that the main ReaDirect system can use for feedback, intervention, and adaptive activity selection.
 
 This repository is separate from the main ReaDirect Laravel application. The Laravel repository remains responsible for the application interface, official scoring, database storage, authentication, and learner workflow. This Python repository provides the research, model, analysis, and FastAPI service layer that Laravel can call.
 
@@ -16,7 +16,8 @@ Important folders:
 - `data/manifests/`: generated dataset manifests and content indexes.
 - `content_bank/`: safe ReaDirect CSV content-bank imports.
 - `content_bank_enriched/`: generated phoneme/adaptive metadata exports.
-- `model_artifacts/`: local fine-tuned model outputs and converted model folders.
+- `models/`: local Wav2Vec2 ASR and phoneme model folders used by runtime.
+- `model_artifacts/`: historical or experimental model outputs and converted model folders.
 - `reports/`: generated evaluation and readiness reports.
 
 Large datasets, generated manifests, model checkpoints, training logs, private data, and report artifacts are intentionally ignored by Git.
@@ -99,8 +100,10 @@ The system follows this AI pipeline:
 
 ```text
 learner audio
--> ASR transcription
--> transcript normalization
+-> Wav2Vec2 fine-tuned ASR transcription
+-> Wav2Vec2 phoneme evidence
+-> prompt type detection
+-> expected-centric correction/scoring
 -> expected-answer comparison
 -> CMUdict phoneme mapping
 -> phoneme-aware comparison
@@ -109,13 +112,16 @@ learner audio
 -> adaptive recommendation
 ```
 
-The architecture is hybrid:
+The runtime ASR architecture is Wav2Vec2-only:
 
-- Faster-Whisper / Whisper performs speech recognition.
-- Hugging Face Transformers supports Whisper fine-tuning.
+- `models/wav2vec2-readirect-asr` performs speech recognition for letters, words, phrases, sentences, diagnostics, mastery checks, and assessments.
+- `models/wav2vec2-phoneme` provides supporting phoneme evidence for letters and short words.
+- Whisper is removed from active runtime routing and health checks.
 - CMUdict provides pronunciation and phoneme information.
 - Explainable heuristic rules detect reading and pronunciation-related error types.
 - FastAPI exposes the analysis service to the Laravel application.
+
+Letter and word prompts use expected-centric acoustic-phonetic scoring, so raw WER alone is not the final decision. Sentence prompts use the Wav2Vec2 transcript plus WER/CER and are not forced to `expected_text` by letter/word correction rules.
 
 Laravel remains the official scorer and progression controller. The AI service provides analysis signals that Laravel may use for feedback, intervention, and adaptive practice.
 

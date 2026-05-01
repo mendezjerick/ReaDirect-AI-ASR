@@ -57,7 +57,7 @@ Laravel should send `X-ReaDirect-AI-Token`.
 
 Students should never call this service directly. Keep it private and call it server-to-server from Laravel.
 
-Fine-tuned Whisper models are not required for the API, but a reviewed fine-tuned artifact can later be configured as the ASR provider. Keep using `mock` or `faster_whisper` provider settings until a reviewed model artifact exists.
+The runtime ASR architecture is Wav2Vec2-only. The active ASR model is `models/wav2vec2-readirect-asr`, with `models/wav2vec2-phoneme` used as supporting acoustic-phonetic evidence for letters and short words. Whisper is removed from runtime routing and is not required by health checks or startup validation.
 
 The FastAPI service is the bridge from Laravel to the AI layer. Laravel remains the official scorer and progression controller. The AI service returns transcript, similarity, phoneme, error-type, feedback, and adaptive recommendation signals.
 
@@ -71,16 +71,26 @@ The FastAPI service is the bridge from Laravel to the AI layer. Laravel remains 
 
 - If `/health` fails, check the uvicorn process and port.
 - If `content_index_loaded=false`, build or copy `data/manifests/content_index.csv`.
-- If real ASR fails, verify `faster-whisper` is installed and `ASR_PROVIDER=faster_whisper`.
+- If real ASR fails, verify local Wav2Vec2 folders exist, `TRANSFORMERS_OFFLINE=1`, and `ASR_PROVIDER=wav2vec2_only`.
 - If auth fails, check `API_AUTH_ENABLED`, `READIRECT_AI_API_TOKEN`, and the request header.
 
-## Final Runtime Providers
+## Final Runtime Provider
 
 Supported ASR providers:
 
 - `mock`: test/collaborator setup without model loading.
-- `faster_whisper_pretrained`: pretrained faster-whisper model such as `base.en`.
-- `faster_whisper_local`: converted CTranslate2/faster-whisper model from `model_artifacts/readirect-whisper-base-en-v1-ct2/`.
-- `hf_whisper_local`: local Hugging Face fine-tuned model from `model_artifacts/readirect-whisper-base-en-v1-hf/`.
+- `wav2vec2_only`: local Hugging Face Wav2Vec2 ASR runtime.
+
+Runtime model paths:
+
+```text
+WAV2VEC2_ASR_MODEL_PATH=models/wav2vec2-readirect-asr
+WAV2VEC2_PHONEME_MODEL_PATH=models/wav2vec2-phoneme
+WAV2VEC2_BASE_ASR_MODEL_PATH=models/wav2vec2-base-960h
+ALLOW_WAV2VEC2_BASE_FALLBACK=false
+ASR_ARCHITECTURE=wav2vec2_only
+```
+
+Letter and word prompts use expected-centric acoustic-phonetic scoring, not raw WER alone. Sentence prompts use the Wav2Vec2 transcript with WER/CER and do not force `displayed_transcript` to `expected_text`.
 
 External training datasets such as Speechocean762 are not required for runtime.

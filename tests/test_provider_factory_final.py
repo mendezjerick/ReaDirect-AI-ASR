@@ -1,7 +1,6 @@
-from readirect_asr.asr.faster_whisper_asr import FasterWhisperASR
-from readirect_asr.asr.hf_whisper_asr import HFWhisperLocalASR
 from readirect_asr.asr.mock_asr import MockASR
 from readirect_asr.asr.provider_factory import create_asr_provider
+from readirect_asr.asr.wav2vec2_asr import Wav2Vec2OnlyASR
 
 
 def test_mock_provider_loads_without_heavy_model():
@@ -9,21 +8,25 @@ def test_mock_provider_loads_without_heavy_model():
     assert isinstance(provider, MockASR)
 
 
-def test_hf_whisper_local_provider_is_lazy_with_missing_path(tmp_path):
-    provider = create_asr_provider({"provider": "hf_whisper_local", "hf_model_path": str(tmp_path / "missing")})
-    assert isinstance(provider, HFWhisperLocalASR)
+def test_wav2vec2_provider_is_lazy_with_missing_path(tmp_path):
+    provider = create_asr_provider({"provider": "wav2vec2_only", "wav2vec2_asr_model_path": str(tmp_path / "missing")})
+    assert isinstance(provider, Wav2Vec2OnlyASR)
     assert provider.is_available() is False
     assert provider._model is None
 
 
-def test_faster_whisper_local_provider_uses_ct2_path(tmp_path):
-    provider = create_asr_provider({"provider": "faster_whisper_local", "ct2_model_path": str(tmp_path / "ct2")})
-    assert isinstance(provider, FasterWhisperASR)
-    assert provider.model_size == str(tmp_path / "ct2")
-    assert provider._model is None
-
-
-def test_faster_whisper_pretrained_provider():
-    provider = create_asr_provider({"provider": "faster_whisper_pretrained", "pretrained_model_size": "base.en"})
-    assert isinstance(provider, FasterWhisperASR)
-    assert provider.model_size == "base.en"
+def test_wav2vec2_provider_uses_configured_paths(tmp_path):
+    provider = create_asr_provider(
+        {
+            "provider": "hf_wav2vec2_local",
+            "wav2vec2_asr_model_path": str(tmp_path / "asr"),
+            "wav2vec2_phoneme_model_path": str(tmp_path / "phoneme"),
+            "wav2vec2_base_asr_model_path": str(tmp_path / "base"),
+            "allow_wav2vec2_base_fallback": True,
+        }
+    )
+    assert isinstance(provider, Wav2Vec2OnlyASR)
+    assert provider.model_path == str(tmp_path / "asr")
+    assert provider.phoneme_model_path == str(tmp_path / "phoneme")
+    assert provider.base_model_path == str(tmp_path / "base")
+    assert provider.allow_base_fallback is True

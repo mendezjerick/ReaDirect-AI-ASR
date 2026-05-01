@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
+from functools import lru_cache
 from typing import Any
 
-from readirect_asr.evaluation.asr_metrics import compute_wer
+from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.phoneme_comparison import phoneme_similarity
 from readirect_asr.text.normalization import normalize_for_wer, normalize_transcript
@@ -20,32 +21,32 @@ DEFAULT_LOW_CONFIDENCE_SIMILARITY_THRESHOLD = 0.95
 
 
 LETTER_PRONUNCIATIONS = {
-    "a": {"a", "ay", "aye"},
-    "b": {"b", "bee", "be"},
-    "c": {"c", "see", "sea"},
-    "d": {"d", "dee"},
-    "e": {"e", "ee"},
-    "f": {"f", "ef"},
-    "g": {"g", "gee", "jee"},
-    "h": {"h", "aitch", "haitch"},
-    "i": {"i", "eye"},
-    "j": {"j", "jay"},
-    "k": {"k", "kay"},
-    "l": {"l", "el"},
-    "m": {"m", "em"},
-    "n": {"n", "en"},
-    "o": {"o", "oh"},
-    "p": {"p", "pee"},
-    "q": {"q", "cue", "queue"},
-    "r": {"r", "are"},
-    "s": {"s", "ess"},
-    "t": {"t", "tee", "tea"},
-    "u": {"u", "you"},
-    "v": {"v", "vee"},
-    "w": {"w", "double you", "double u", "doubleu"},
-    "x": {"x", "ex", "axe"},
-    "y": {"y", "why"},
-    "z": {"z", "zee", "zed"},
+    "a": {"a", "ay", "aye", "ai", "ey"},
+    "b": {"b", "bee", "be", "bi", "by", "bii"},
+    "c": {"c", "see", "sea", "si", "cy", "sii", "s"},
+    "d": {"d", "dee", "de", "di", "dy", "dii"},
+    "e": {"e", "ee", "i", "ii", "yi"},
+    "f": {"f", "ef", "eff"},
+    "g": {"g", "gee", "jee", "gi", "gy", "gii", "j"},
+    "h": {"h", "aitch", "haitch", "age", "each"},
+    "i": {"i", "eye", "ai", "ay"},
+    "j": {"j", "jay", "jai", "jey"},
+    "k": {"k", "kay", "kei", "key"},
+    "l": {"l", "el", "ell", "elle"},
+    "m": {"m", "em", "emm"},
+    "n": {"n", "en", "enn"},
+    "o": {"o", "oh", "owe"},
+    "p": {"p", "pee", "pi", "py", "pii"},
+    "q": {"q", "cue", "queue", "kyoo", "kyu"},
+    "r": {"r", "are", "ar"},
+    "s": {"s", "ess", "es"},
+    "t": {"t", "tee", "tea", "ti", "ty", "tii"},
+    "u": {"u", "you", "yu", "yoo"},
+    "v": {"v", "vee", "vi", "vy", "vii"},
+    "w": {"w", "double you", "double u", "doubleu", "double-u", "dubya"},
+    "x": {"x", "ex", "axe", "eks"},
+    "y": {"y", "why", "wai", "wy"},
+    "z": {"z", "zee", "zed", "zi", "zii", "zih", "zy", "zey", "ze", "zhee", "they", "the", "see"},
 }
 
 
@@ -125,6 +126,7 @@ KNOWN_ASR_CONFUSIONS = {
     "there": {"their", "theyre"},
     "their": {"there", "theyre"},
     "theyre": {"there", "their"},
+    "they're": {"there", "their"},
     "right": {"write"},
     "write": {"right"},
     "hear": {"here"},
@@ -146,6 +148,86 @@ KNOWN_ASR_CONFUSIONS = {
 }
 
 
+LETTER_PHONEMES = {
+    "A": ["EY"],
+    "B": ["B", "IY"],
+    "C": ["S", "IY"],
+    "D": ["D", "IY"],
+    "E": ["IY"],
+    "F": ["EH", "F"],
+    "G": ["JH", "IY"],
+    "H": ["EY", "CH"],
+    "I": ["AY"],
+    "J": ["JH", "EY"],
+    "K": ["K", "EY"],
+    "L": ["EH", "L"],
+    "M": ["EH", "M"],
+    "N": ["EH", "N"],
+    "O": ["OW"],
+    "P": ["P", "IY"],
+    "Q": ["K", "Y", "UW"],
+    "R": ["AA", "R"],
+    "S": ["EH", "S"],
+    "T": ["T", "IY"],
+    "U": ["Y", "UW"],
+    "V": ["V", "IY"],
+    "W": ["D", "AH", "B", "AH", "L", "Y", "UW"],
+    "X": ["EH", "K", "S"],
+    "Y": ["W", "AY"],
+    "Z": ["Z", "IY"],
+}
+
+
+WORD_PHONEME_OVERRIDES = {
+    "ten": ["T", "EH", "N"],
+    "then": ["DH", "EH", "N"],
+    "thin": ["TH", "IH", "N"],
+    "tin": ["T", "IH", "N"],
+    "tree": ["T", "R", "IY"],
+    "three": ["TH", "R", "IY"],
+    "red": ["R", "EH", "D"],
+    "read": ["R", "EH", "D"],
+    "to": ["T", "UW"],
+    "two": ["T", "UW"],
+    "too": ["T", "UW"],
+    "see": ["S", "IY"],
+    "sea": ["S", "IY"],
+    "bee": ["B", "IY"],
+    "be": ["B", "IY"],
+    "right": ["R", "AY", "T"],
+    "write": ["R", "AY", "T"],
+    "hear": ["HH", "IY", "R"],
+    "here": ["HH", "IY", "R"],
+    "one": ["W", "AH", "N"],
+    "won": ["W", "AH", "N"],
+    "four": ["F", "AO", "R"],
+    "for": ["F", "AO", "R"],
+    "ate": ["EY", "T"],
+    "eight": ["EY", "T"],
+    "sun": ["S", "AH", "N"],
+    "son": ["S", "AH", "N"],
+    "there": ["DH", "EH", "R"],
+    "their": ["DH", "EH", "R"],
+    "theyre": ["DH", "EH", "R"],
+}
+
+
+CRITICAL_PHONEME_RULES = {
+    "Q": {"pair": "U", "critical": "K", "position": "initial", "reason": "Q requires initial K before Y UW"},
+    "U": {"pair": "Q", "critical": "Y", "position": "initial", "reason": "U starts with Y UW without initial K"},
+    "C": {"pair": "Z", "critical": "S", "position": "initial", "reason": "C requires S rather than Z"},
+    "Z": {"pair": "C", "critical": "Z", "position": "initial", "reason": "Z requires Z rather than S"},
+    "B": {"pair": "V", "critical": "B", "position": "initial", "reason": "B requires B rather than V"},
+    "V": {"pair": "B", "critical": "V", "position": "initial", "reason": "V requires V rather than B"},
+    "D": {"pair": "T", "critical": "D", "position": "initial", "reason": "D requires D rather than T"},
+    "T": {"pair": "D", "critical": "T", "position": "initial", "reason": "T requires T rather than D"},
+    "M": {"pair": "N", "critical": "M", "position": "final", "reason": "M requires final M rather than N"},
+    "N": {"pair": "M", "critical": "N", "position": "final", "reason": "N requires final N rather than M"},
+    "F": {"pair": "S", "critical": "F", "position": "final", "reason": "F requires final F rather than S"},
+    "S": {"pair": "F", "critical": "S", "position": "final", "reason": "S requires final S rather than F"},
+}
+
+
 KNOWN_CONFUSION_SCORE_OVERRIDES = {
     ("d", "they"): 0.86,
     ("v", "they"): 0.86,
@@ -162,19 +244,44 @@ class TranscriptNormalizationResult:
     corrected_transcript: str
     displayed_transcript: str
     expected_text: str
+    prompt_type: str
+    asr_route: str
+    model_family: str
+    model_used: str
+    wav2vec2_transcript: str
+    whisper_transcript: None
+    whisper_removed: bool
     raw_wer: float
     corrected_wer: float
+    raw_cer: float
+    corrected_cer: float
+    expected_phonemes: list[str]
+    expected_phoneme_source: str
+    expected_phoneme_variants: list[list[str]]
+    observed_phonemes: list[str]
     phonetic_similarity_score: float
+    composite_score: float
+    accepted: bool
     normalization_applied: bool
     normalization_reason: str
     correction_strategy_used: str
+    accepted_by_letter_alias: bool
     accepted_by_phonetic_threshold: bool
     accepted_by_known_confusion: bool
     accepted_by_letter_lattice: bool
     accepted_by_letter_normalization: bool
     accepted_by_exact_match: bool
+    accepted_by_vowel_tail: bool
+    accepted_by_phoneme_evidence: bool
+    critical_phoneme: str | None
+    critical_phoneme_detected: bool | None
+    critical_phoneme_expected_position: str | None
+    critical_phoneme_reason: str | None
+    critical_pair_detected: bool
+    confidence_level: str
     threshold_used: float
     confidence_or_threshold_used: float
+    debug_metadata: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -188,13 +295,18 @@ def normalize_asr_transcript(
     asr_confidence: float | None = None,
     cmudict_loader: CMUDictLoader | None = None,
     config: dict[str, Any] | None = None,
+    observed_phonemes: list[str] | None = None,
+    wav2vec2_transcript: str | None = None,
+    model_used: str = "",
+    asr_route: str = "wav2vec2_only",
 ) -> TranscriptNormalizationResult:
-    del activity_type, prompt_type
-
     raw = str(raw_transcript or "").strip()
     expected = str(expected_text or "").strip()
     normalized_raw = normalize_for_wer(raw)
     normalized_expected = normalize_for_wer(expected)
+    detected_prompt_type = detect_prompt_type(expected, activity_type=activity_type, prompt_type=prompt_type)
+    normalized_observed_phonemes = _normalize_phonemes(observed_phonemes or [])
+    expected_phonemes, expected_phoneme_source, expected_phoneme_variants = generate_expected_phonemes(expected, cmudict_loader)
     active_config = config or {}
     default_threshold = _config_float(active_config, ["phonetic_accept_threshold", "high_similarity_threshold"], DEFAULT_PHONETIC_ACCEPT_THRESHOLD)
     strict_word_threshold = _config_float(active_config, ["phonetic_strict_word_threshold", "strict_word_threshold"], DEFAULT_STRICT_WORD_THRESHOLD)
@@ -203,8 +315,10 @@ def normalize_asr_transcript(
     lattice_threshold = _config_float(active_config, ["phonetic_lattice_threshold", "lattice_threshold"], DEFAULT_PHONETIC_LATTICE_THRESHOLD)
     low_confidence_threshold = float(active_config.get("low_confidence_threshold", DEFAULT_LOW_CONFIDENCE_THRESHOLD))
     low_confidence_similarity_threshold = float(active_config.get("low_confidence_similarity_threshold", DEFAULT_LOW_CONFIDENCE_SIMILARITY_THRESHOLD))
+    critical_required = _as_bool(active_config.get("critical_phoneme_required", True))
 
     score = phonetic_similarity_score(normalized_expected, normalized_raw, cmudict_loader)
+    phoneme_score = phoneme_similarity(expected_phonemes, normalized_observed_phonemes) if expected_phonemes and normalized_observed_phonemes else 0.0
     corrected = raw
     displayed = raw
     applied = False
@@ -214,17 +328,22 @@ def normalize_asr_transcript(
     accepted_by_letter_lattice = False
     accepted_by_letter_normalization = False
     accepted_by_exact_match = False
+    accepted_by_letter_alias = False
+    accepted_by_vowel_tail = False
+    accepted_by_phoneme_evidence = False
     threshold_used = default_threshold
     reason = "No normalization applied"
-    strategy = "none"
+    strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
+    critical = _critical_phoneme_check(normalized_expected, normalized_observed_phonemes)
+    confidence_level = "normal"
+    composite_score = max(score, phoneme_score)
 
     if not expected:
         reason = "Expected text was empty"
-    elif not raw:
-        reason = "Raw transcript was empty"
+        strategy = "none"
     else:
-        is_single_letter = _is_single_letter(normalized_expected)
-        is_single_word = _is_single_word(normalized_expected)
+        is_single_letter = detected_prompt_type == "letter"
+        is_single_word = detected_prompt_type == "word"
         is_word_level = is_single_letter or is_single_word
         threshold_used = (
             single_letter_threshold
@@ -233,41 +352,62 @@ def normalize_asr_transcript(
         )
         letter_match = _single_letter_correction(normalized_expected, normalized_raw)
         lattice_score = _letter_lattice_score(normalized_expected, normalized_raw) if is_single_letter else 0.0
+        composite_score = _composite_score(
+            text_score=score,
+            phoneme_score=phoneme_score,
+            lattice_score=lattice_score,
+            exact_match=normalize_transcript(raw) == normalize_transcript(expected),
+            letter_alias_match=letter_match,
+            known_confusion_match=_known_confusion_match(normalized_expected, normalized_raw),
+            critical=critical,
+        )
         if not is_word_level:
             reason = "Expected text is sentence-level or multi-word; word-level transcript correction was skipped"
             threshold_used = 0.0
+            strategy = "wav2vec2_sentence_wer_cer_scoring" if detected_prompt_type == "sentence" else "none"
+        elif _critical_blocks_acceptance(critical, critical_required, normalized_observed_phonemes):
+            confidence_level = "low"
+            reason = critical["critical_phoneme_reason"] or "Critical phoneme evidence contradicted expected answer"
         elif letter_match:
             corrected = expected
             displayed = expected
             score = 1.0
+            composite_score = 1.0
             applied = raw != expected
             accepted_for_display = True
             accepted_by_letter_normalization = True
+            accepted_by_letter_alias = True
+            accepted_by_letter_lattice = _letter_lattice_variant_match(normalized_expected, normalized_raw)
+            accepted_by_known_confusion = _known_confusion_match(normalized_expected, normalized_raw)
+            accepted_by_threshold = accepted_by_letter_lattice or accepted_by_known_confusion
             reason = "ASR transcript is a valid spoken form of the expected letter"
-            strategy = "letter_pronunciation_normalization"
+            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
         elif is_single_letter and lattice_score >= lattice_threshold:
             corrected = expected
             displayed = expected
             score = max(score, lattice_score)
+            composite_score = max(composite_score, lattice_score)
             applied = True
             accepted_for_display = True
             accepted_by_threshold = True
             accepted_by_letter_lattice = True
             threshold_used = lattice_threshold
             reason = f"Raw ASR output matched generated phonetic spelling variant for expected letter {expected}"
-            strategy = "expected_centric_phonetic_lattice_matching"
+            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
         elif normalize_transcript(raw) == normalize_transcript(expected):
             corrected = expected
             displayed = expected
             score = 1.0
+            composite_score = 1.0
             applied = raw != expected
             accepted_for_display = True
             accepted_by_exact_match = True
             reason = "ASR transcript already matches expected text after transcript normalization"
-            strategy = "orthographic_expected_prompt_alignment"
+            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
         elif _known_confusion_match(normalized_expected, normalized_raw):
             threshold_used = known_confusion_threshold if not is_single_letter else single_letter_threshold
             score = max(score, _known_confusion_score(normalized_expected, normalized_raw))
+            composite_score = max(composite_score, score)
             if score >= threshold_used:
                 corrected = expected
                 displayed = expected
@@ -280,21 +420,43 @@ def normalize_asr_transcript(
                     if is_single_letter
                     else "ASR transcript is a known homophone or near-homophone of expected text"
                 )
-                strategy = "letter_phonetic_threshold_alignment" if is_single_letter else "known_confusion_expected_prompt_alignment"
+                strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
             else:
                 reason = "Known ASR confusion did not meet the configured threshold"
+        elif is_single_letter and phoneme_score >= single_letter_threshold:
+            corrected = expected
+            displayed = expected
+            score = max(score, phoneme_score)
+            composite_score = max(composite_score, phoneme_score)
+            applied = True
+            accepted_for_display = True
+            accepted_by_threshold = True
+            accepted_by_phoneme_evidence = True
+            reason = "Wav2Vec2 text was ambiguous but phoneme evidence matched expected letter"
+        elif is_single_letter and not normalized_raw and phoneme_score >= single_letter_threshold:
+            corrected = expected
+            displayed = expected
+            score = max(score, phoneme_score)
+            composite_score = max(composite_score, phoneme_score)
+            applied = True
+            accepted_for_display = True
+            accepted_by_threshold = True
+            accepted_by_phoneme_evidence = True
+            reason = "Blank Wav2Vec2 text accepted from strong phoneme evidence for expected letter"
         elif is_single_letter:
             reason = "Raw transcript is not a valid spoken form of the expected letter"
         elif not _is_single_word(normalized_raw):
             reason = "Raw transcript is not a single word, so word-level correction was skipped"
-        elif _passes_phonetic_threshold(score, threshold_used, asr_confidence, low_confidence_threshold, low_confidence_similarity_threshold):
+        elif _passes_phonetic_threshold(max(score, phoneme_score), threshold_used, asr_confidence, low_confidence_threshold, low_confidence_similarity_threshold):
             corrected = expected
             displayed = expected
             applied = True
             accepted_for_display = True
             accepted_by_threshold = True
+            accepted_by_phoneme_evidence = phoneme_score >= threshold_used and phoneme_score >= score
+            composite_score = max(composite_score, score, phoneme_score)
             reason = "Raw ASR output passed word-level phonetic similarity threshold against expected CSV answer"
-            strategy = "word_phonetic_threshold_alignment"
+            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
         else:
             reason = "Phonetic similarity is too low for safe expected-prompt correction"
 
@@ -306,17 +468,41 @@ def normalize_asr_transcript(
         corrected_transcript=corrected,
         displayed_transcript=displayed,
         expected_text=expected,
+        prompt_type=detected_prompt_type,
+        asr_route=asr_route,
+        model_family="wav2vec2",
+        model_used=model_used,
+        wav2vec2_transcript=wav2vec2_transcript if wav2vec2_transcript is not None else raw,
+        whisper_transcript=None,
+        whisper_removed=True,
         raw_wer=compute_wer(expected, raw),
         corrected_wer=compute_wer(expected, corrected),
+        raw_cer=compute_cer(expected, raw),
+        corrected_cer=compute_cer(expected, corrected),
+        expected_phonemes=expected_phonemes,
+        expected_phoneme_source=expected_phoneme_source,
+        expected_phoneme_variants=expected_phoneme_variants,
+        observed_phonemes=normalized_observed_phonemes,
         phonetic_similarity_score=round(score, 6),
+        composite_score=round(composite_score, 6),
+        accepted=accepted_for_display,
         normalization_applied=applied,
         normalization_reason=reason,
         correction_strategy_used=strategy,
+        accepted_by_letter_alias=accepted_by_letter_alias,
         accepted_by_phonetic_threshold=accepted_by_threshold,
         accepted_by_known_confusion=accepted_by_known_confusion,
         accepted_by_letter_lattice=accepted_by_letter_lattice,
         accepted_by_letter_normalization=accepted_by_letter_normalization,
         accepted_by_exact_match=accepted_by_exact_match,
+        accepted_by_vowel_tail=accepted_by_vowel_tail,
+        accepted_by_phoneme_evidence=accepted_by_phoneme_evidence,
+        critical_phoneme=critical["critical_phoneme"],
+        critical_phoneme_detected=critical["critical_phoneme_detected"],
+        critical_phoneme_expected_position=critical["critical_phoneme_expected_position"],
+        critical_phoneme_reason=critical["critical_phoneme_reason"],
+        critical_pair_detected=critical["critical_pair_detected"],
+        confidence_level=confidence_level if normalized_observed_phonemes or not critical["critical_pair_detected"] else "lower_without_phoneme_evidence",
         threshold_used=round(threshold_used, 6),
         confidence_or_threshold_used=round(
             low_confidence_similarity_threshold
@@ -324,6 +510,11 @@ def normalize_asr_transcript(
             else threshold_used,
             6,
         ),
+        debug_metadata={
+            "phoneme_similarity_score": phoneme_score,
+            "prompt_type_detection": detected_prompt_type,
+            "critical_phoneme_required": critical_required,
+        },
     )
 
 
@@ -348,6 +539,140 @@ def phonetic_similarity_score(
     return 1.0 if expected_tokens == actual_tokens else 0.0
 
 
+def detect_prompt_type(expected_text: str, activity_type: str | None = None, prompt_type: str | None = None) -> str:
+    normalized = normalize_for_wer(expected_text)
+    explicit = normalize_transcript(prompt_type or activity_type or "")
+    if not normalized:
+        return "unknown"
+    if len(normalized) == 1 and normalized.isalpha():
+        return "letter"
+    tokens = normalized.split()
+    if len(tokens) == 1:
+        return "word"
+    if "letter" in explicit and len(normalized) == 1:
+        return "letter"
+    if "word" in explicit and len(tokens) == 1:
+        return "word"
+    return "sentence"
+
+
+def generate_expected_phonemes(expected_text: str, cmudict_loader: CMUDictLoader | None = None) -> tuple[list[str], str, list[list[str]]]:
+    expected = str(expected_text or "").strip()
+    normalized = normalize_for_wer(expected)
+    if len(normalized) == 1 and normalized.isalpha():
+        phones = LETTER_PHONEMES.get(normalized.upper(), [])
+        return phones, "custom_letter_dictionary", [phones] if phones else []
+    tokens = _tokens(expected)
+    if not tokens:
+        return [], "empty", []
+    if len(tokens) > 1:
+        return [], "sentence_skipped", []
+    override_phones: list[str] = []
+    all_overridden = True
+    for token in tokens:
+        phones = WORD_PHONEME_OVERRIDES.get(token.replace("'", ""))
+        if not phones:
+            all_overridden = False
+            break
+        override_phones.extend(phones)
+    if all_overridden and override_phones:
+        return override_phones, "readirect_overrides", [override_phones]
+    variants: list[list[str]] = []
+    active_loader = cmudict_loader or _default_cmudict_loader()
+    cmu_phones: list[str] = []
+    all_cmu_found = True
+    for token in tokens:
+        pronunciations = active_loader.get_pronunciations(token)
+        if pronunciations:
+            cmu_phones.extend(pronunciations[0])
+            variants.extend(pronunciations[:3])
+        else:
+            all_cmu_found = False
+            break
+    if all_cmu_found and cmu_phones:
+        return _normalize_phonemes(cmu_phones), "cmudict", [_normalize_phonemes(variant) for variant in variants]
+    try:
+        from g2p_en import G2p
+
+        g2p = G2p()
+        phones = _normalize_phonemes([part for part in g2p(expected) if str(part).strip()])
+        if phones:
+            return phones, "g2p_en", [phones]
+    except Exception:
+        pass
+    return [], "unavailable", []
+
+
+def _normalize_phonemes(phonemes: list[str]) -> list[str]:
+    normalized: list[str] = []
+    for phoneme in phonemes:
+        clean = "".join(char for char in str(phoneme or "").upper() if char.isalpha())
+        if clean:
+            normalized.append(clean)
+    return normalized
+
+
+def _critical_phoneme_check(normalized_expected: str, observed_phonemes: list[str]) -> dict[str, Any]:
+    expected = normalized_expected.upper()
+    rule = CRITICAL_PHONEME_RULES.get(expected) if len(expected) == 1 else None
+    if not rule:
+        return {
+            "critical_phoneme": None,
+            "critical_phoneme_detected": None,
+            "critical_phoneme_expected_position": None,
+            "critical_phoneme_reason": None,
+            "critical_pair_detected": False,
+        }
+    critical = str(rule["critical"])
+    position = str(rule["position"])
+    detected = None
+    if observed_phonemes:
+        if position == "initial":
+            detected = observed_phonemes[0] == critical
+        elif position == "final":
+            detected = observed_phonemes[-1] == critical
+        else:
+            detected = critical in observed_phonemes
+    return {
+        "critical_phoneme": critical,
+        "critical_phoneme_detected": detected,
+        "critical_phoneme_expected_position": position,
+        "critical_phoneme_reason": str(rule["reason"]),
+        "critical_pair_detected": True,
+    }
+
+
+def _critical_blocks_acceptance(critical: dict[str, Any], required: bool, observed_phonemes: list[str]) -> bool:
+    if not required or not critical["critical_pair_detected"] or not observed_phonemes:
+        return False
+    return critical["critical_phoneme_detected"] is False
+
+
+def _composite_score(
+    text_score: float,
+    phoneme_score: float,
+    lattice_score: float,
+    exact_match: bool,
+    letter_alias_match: bool,
+    known_confusion_match: bool,
+    critical: dict[str, Any],
+) -> float:
+    score = max(text_score, phoneme_score, lattice_score)
+    if exact_match:
+        score = max(score, 1.0)
+    if letter_alias_match:
+        score = max(score, 0.98)
+    if lattice_score >= DEFAULT_PHONETIC_LATTICE_THRESHOLD:
+        score = max(score, 0.93)
+    if known_confusion_match:
+        score = max(score, 0.90)
+    if critical["critical_phoneme_detected"] is True:
+        score = min(1.0, max(score, 0.90) + 0.05)
+    elif critical["critical_phoneme_detected"] is False:
+        score = min(score, 0.60)
+    return round(score, 6)
+
+
 def _passes_phonetic_threshold(
     score: float,
     threshold: float,
@@ -367,6 +692,12 @@ def _config_float(config: dict[str, Any], keys: list[str], default: float) -> fl
         if key in config:
             return float(config[key])
     return default
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
 
 
 def _letter_lattice_score(normalized_expected: str, normalized_raw: str) -> float:
@@ -405,6 +736,15 @@ def _letter_lattice_score(normalized_expected: str, normalized_raw: str) -> floa
         default=0.0,
     )
     return round(min(0.80, best_edit_similarity), 6)
+
+
+def _letter_lattice_variant_match(normalized_expected: str, normalized_raw: str) -> bool:
+    if not _is_single_letter(normalized_expected):
+        return False
+    expected_letter = normalized_expected.lower()
+    raw = _compact_letter_token(normalized_raw)
+    variants = {_compact_letter_token(variant) for variant in LETTER_LATTICE_VARIANTS.get(expected_letter, set())}
+    return raw in variants
 
 
 def normalize_letter_name_variant(token: str) -> str:
@@ -500,14 +840,23 @@ def _known_confusion_score(normalized_expected: str, normalized_raw: str) -> flo
 
 
 def _text_to_phonemes(tokens: list[str], cmudict_loader: CMUDictLoader | None) -> list[str]:
-    active_loader = cmudict_loader or CMUDictLoader().load()
+    active_loader = cmudict_loader or _default_cmudict_loader()
     phonemes: list[str] = []
     for token in tokens:
+        override = WORD_PHONEME_OVERRIDES.get(token.replace("'", ""))
+        if override:
+            phonemes.extend(override)
+            continue
         pronunciation = active_loader.get_primary_pronunciation(token)
         if not pronunciation:
             return []
         phonemes.extend(pronunciation)
     return phonemes
+
+
+@lru_cache(maxsize=1)
+def _default_cmudict_loader() -> CMUDictLoader:
+    return CMUDictLoader().load()
 
 
 def _tokens(text: str) -> list[str]:

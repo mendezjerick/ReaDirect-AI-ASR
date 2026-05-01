@@ -12,6 +12,22 @@ class HealthResponse(BaseModel):
     asr_provider: str
     content_index_loaded: bool
     cmudict_loaded: bool
+    service_status: str = "ok"
+    asr_architecture: str = "wav2vec2_only"
+    active_asr_model: str = "wav2vec2"
+    wav2vec2_asr_available: bool = False
+    wav2vec2_asr_model_name: str = ""
+    wav2vec2_phoneme_available: bool = False
+    wav2vec2_phoneme_model_name: str = ""
+    whisper_available: bool = False
+    whisper_removed: bool = True
+    supported_prompt_types: list[str] = Field(default_factory=lambda: ["letter", "word", "sentence"])
+    correction_layer_enabled: bool = True
+    expected_centric_scoring_enabled: bool = True
+    phoneme_evidence_enabled: bool = True
+    thresholds: dict[str, Any] = Field(default_factory=dict)
+    local_model_paths_loaded: bool = False
+    missing_model_paths: list[str] = Field(default_factory=list)
 
 
 class VersionResponse(BaseModel):
@@ -43,8 +59,8 @@ class AnalyzeAudioRequest(BaseModel):
     module_key: str | None = None
     activity_type: str | None = None
     task_type: str | None = None
-    learner_response_id: str | None = None
-    attempt_id: str | None = None
+    learner_response_id: str | int | None = None
+    attempt_id: str | int | None = None
     content_metadata: dict[str, Any] = Field(default_factory=dict)
     learner_history: list[dict[str, Any]] = Field(default_factory=list)
     candidate_items: list[dict[str, Any]] = Field(default_factory=list)
@@ -65,17 +81,37 @@ class AnalysisResponse(BaseModel):
     raw_transcript: str = ""
     corrected_transcript: str = ""
     displayed_transcript: str = ""
+    prompt_type: str = "unknown"
+    asr_route: str = "wav2vec2_only"
+    model_family: str = "wav2vec2"
+    model_used: str = ""
+    wav2vec2_transcript: str = ""
+    whisper_transcript: Optional[str] = None
+    whisper_removed: bool = True
     raw_wer: float = 0.0
     corrected_wer: float = 0.0
+    raw_cer: float = 0.0
+    corrected_cer: float = 0.0
     phonetic_similarity_score: float = 0.0
+    composite_score: float = 0.0
+    accepted: bool = False
     normalization_applied: bool = False
     normalization_reason: str = ""
     correction_strategy_used: str = "none"
+    accepted_by_letter_alias: bool = False
     accepted_by_phonetic_threshold: bool = False
     accepted_by_known_confusion: bool = False
     accepted_by_letter_lattice: bool = False
     accepted_by_letter_normalization: bool = False
     accepted_by_exact_match: bool = False
+    accepted_by_vowel_tail: bool = False
+    accepted_by_phoneme_evidence: bool = False
+    critical_phoneme: Optional[str] = None
+    critical_phoneme_detected: Optional[bool] = None
+    critical_phoneme_expected_position: Optional[str] = None
+    critical_phoneme_reason: Optional[str] = None
+    critical_pair_detected: bool = False
+    confidence_level: str = ""
     threshold_used: float = 0.0
     confidence_or_threshold_used: float = 0.0
     confidence: Optional[float] = None
@@ -86,6 +122,9 @@ class AnalysisResponse(BaseModel):
     token_similarity: float = 0.0
     similarity_label: str = "blank"
     expected_phonemes: list[str] = Field(default_factory=list)
+    expected_phoneme_source: str = ""
+    expected_phoneme_variants: list[list[str]] = Field(default_factory=list)
+    observed_phonemes: list[str] = Field(default_factory=list)
     actual_phonemes: list[str] = Field(default_factory=list)
     phoneme_similarity: float = 0.0
     error_type: str = ""

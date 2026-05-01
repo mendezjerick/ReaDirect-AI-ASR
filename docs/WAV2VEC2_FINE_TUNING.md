@@ -7,7 +7,8 @@ This workflow is training-first. Evaluation is separate, disabled by default, an
 - Fine-tune `models/wav2vec2-base-960h` for ASR.
 - Save the fine-tuned model to `models/wav2vec2-readirect-asr`.
 - Keep `models/wav2vec2-phoneme` unchanged unless a future dataset has safe phoneme-level CTC labels.
-- Keep Whisper for sentence transcription; Wav2Vec2 is for letter and word ASR evidence.
+- Runtime ASR is Wav2Vec2-only. The fine-tuned Wav2Vec2 model handles letters, words, phrases, sentences, diagnostic assessment, module mastery, and final assessment audio.
+- The phoneme model provides supporting evidence for letters and short words.
 - Fine-tuning does not replace expected-centric phonetic scoring.
 
 ## Local Folders
@@ -128,15 +129,17 @@ It is not part of the training loop.
 
 ## API Model Paths
 
-Future ASR routing can use:
+Runtime ASR routing uses:
 
 ```powershell
 WAV2VEC2_ASR_MODEL_PATH=models/wav2vec2-readirect-asr
-WAV2VEC2_BASE_ASR_MODEL_PATH=models/wav2vec2-base-960h
 WAV2VEC2_PHONEME_MODEL_PATH=models/wav2vec2-phoneme
+WAV2VEC2_BASE_ASR_MODEL_PATH=models/wav2vec2-base-960h
+ALLOW_WAV2VEC2_BASE_FALLBACK=false
+ASR_ARCHITECTURE=wav2vec2_only
 ```
 
-These are in `.env.example`. Do not hardcode absolute paths.
+These are in `.env.example`. Do not hardcode absolute paths. The base model is used only when fallback is explicitly enabled.
 
 ## Generated Artifacts
 
@@ -158,3 +161,4 @@ models/wav2vec2-readirect-asr/
 - SpeechOcean structure and license terms must be verified locally.
 - Wav2Vec2 fine-tuning does not replace expected-centric phonetic scoring.
 - Q vs U and similar letter cases still require dedicated phoneme and expected-answer logic.
+- Sentence runtime scoring uses the Wav2Vec2 transcript plus WER/CER; letter and word correction rules are not applied to full sentences.

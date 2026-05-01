@@ -11,9 +11,14 @@ def test_analyze_audio_request_validates() -> None:
     assert request.audio_path == "sample.wav"
 
 
+def test_analyze_audio_request_accepts_numeric_ids() -> None:
+    request = AnalyzeAudioRequest(audio_path="sample.wav", expected_text="cat", attempt_id=123, learner_response_id=456)
+    assert request.attempt_id == 123
+    assert request.learner_response_id == 456
+
+
 def test_analysis_response_serializes() -> None:
     response = AnalysisResponse(ok=True, request_id="r1", mode="text", provider="mock")
     data = response.model_dump()
     assert data["ok"] is True
     assert data["warnings"] == []
-

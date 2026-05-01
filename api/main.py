@@ -43,13 +43,29 @@ app.add_middleware(
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     service = get_service()
+    provider_status = service.asr_provider.status() if hasattr(service.asr_provider, "status") else {}
+    missing_paths = list(provider_status.get("missing_model_paths", []) or [])
+    architecture = str(provider_status.get("asr_architecture", "wav2vec2_only" if service.provider_name != "mock" else "mock"))
+    service_status = "ok" if service.provider_name == "mock" or not missing_paths else "degraded"
     return HealthResponse(
-        status="ok",
+        status=service_status,
+        service_status=service_status,
         service=SERVICE_NAME,
         version=SERVICE_VERSION,
         asr_provider=service.provider_name,
         content_index_loaded=service.content_repository.is_loaded(),
         cmudict_loaded=not bool(service.cmudict_loader.missing_files()),
+        asr_architecture=architecture,
+        active_asr_model=str(provider_status.get("active_asr_model", "wav2vec2" if service.provider_name != "mock" else "mock")),
+        wav2vec2_asr_available=bool(provider_status.get("wav2vec2_asr_available", service.provider_name == "mock")),
+        wav2vec2_asr_model_name=str(provider_status.get("wav2vec2_asr_model_name", config.get("asr", {}).get("wav2vec2_asr_model_path", ""))),
+        wav2vec2_phoneme_available=bool(provider_status.get("wav2vec2_phoneme_available", service.provider_name == "mock")),
+        wav2vec2_phoneme_model_name=str(provider_status.get("wav2vec2_phoneme_model_name", config.get("asr", {}).get("wav2vec2_phoneme_model_path", ""))),
+        whisper_available=False,
+        whisper_removed=True,
+        thresholds=config.get("transcript_normalization", {}),
+        local_model_paths_loaded=not missing_paths,
+        missing_model_paths=missing_paths,
     )
 
 
@@ -68,6 +84,12 @@ def version() -> VersionResponse:
             "asr": {
                 "provider": service.provider_name,
                 "model_size": service.model_size,
+                "asr_architecture": "wav2vec2_only",
+                "model_family": "wav2vec2",
+                "wav2vec2_asr_model_path": config.get("asr", {}).get("wav2vec2_asr_model_path"),
+                "wav2vec2_phoneme_model_path": config.get("asr", {}).get("wav2vec2_phoneme_model_path"),
+                "allow_wav2vec2_base_fallback": config.get("asr", {}).get("allow_wav2vec2_base_fallback"),
+                "whisper_removed": True,
             },
             "analysis": {
                 "content_index_loaded": service.content_repository.is_loaded(),

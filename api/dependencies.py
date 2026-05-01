@@ -37,11 +37,12 @@ def get_config() -> dict[str, Any]:
         config["api"]["cors_allow_origins"] = [origin.strip() for origin in origins.split(",") if origin.strip()]
     config["analysis"]["content_index_path"] = os.getenv("CONTENT_INDEX_PATH", config["analysis"].get("content_index_path", "data/manifests/content_index.csv"))
     config["analysis"]["enriched_content_index_path"] = os.getenv("ENRICHED_CONTENT_INDEX_PATH", config["analysis"].get("enriched_content_index_path", "content_bank_enriched/enriched_content_index.csv"))
-    config["asr"]["provider"] = os.getenv("ASR_PROVIDER", config["asr"].get("provider", "mock"))
-    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "base.en"))
-    config["asr"]["pretrained_model_size"] = os.getenv("ASR_PRETRAINED_MODEL_SIZE", config["asr"].get("pretrained_model_size", config["asr"].get("model_size", "base.en")))
-    config["asr"]["hf_model_path"] = os.getenv("ASR_HF_MODEL_PATH", config["asr"].get("hf_model_path", "model_artifacts/readirect-whisper-base-en-v1-hf"))
-    config["asr"]["ct2_model_path"] = os.getenv("ASR_CT2_MODEL_PATH", config["asr"].get("ct2_model_path", "model_artifacts/readirect-whisper-base-en-v1-ct2"))
+    config["asr"]["provider"] = os.getenv("ASR_PROVIDER", config["asr"].get("provider", "wav2vec2_only"))
+    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "models/wav2vec2-readirect-asr"))
+    config["asr"]["wav2vec2_asr_model_path"] = os.getenv("WAV2VEC2_ASR_MODEL_PATH", config["asr"].get("wav2vec2_asr_model_path", "models/wav2vec2-readirect-asr"))
+    config["asr"]["wav2vec2_phoneme_model_path"] = os.getenv("WAV2VEC2_PHONEME_MODEL_PATH", config["asr"].get("wav2vec2_phoneme_model_path", "models/wav2vec2-phoneme"))
+    config["asr"]["wav2vec2_base_asr_model_path"] = os.getenv("WAV2VEC2_BASE_ASR_MODEL_PATH", config["asr"].get("wav2vec2_base_asr_model_path", "models/wav2vec2-base-960h"))
+    config["asr"]["allow_wav2vec2_base_fallback"] = os.getenv("ALLOW_WAV2VEC2_BASE_FALLBACK", str(config["asr"].get("allow_wav2vec2_base_fallback", False))).lower() in {"1", "true", "yes"}
     config["asr"]["device"] = os.getenv("ASR_DEVICE", config["asr"].get("device", "cpu"))
     config["asr"]["compute_type"] = os.getenv("ASR_COMPUTE_TYPE", config["asr"].get("compute_type", "int8"))
     config["asr"]["use_fp16"] = os.getenv("ASR_USE_FP16", str(config["asr"].get("use_fp16", False))).lower() in {"1", "true", "yes"}
@@ -54,6 +55,7 @@ def get_config() -> dict[str, Any]:
     normalization["phonetic_single_letter_threshold"] = float(os.getenv("PHONETIC_SINGLE_LETTER_THRESHOLD", str(normalization.get("phonetic_single_letter_threshold", normalization.get("single_letter_threshold", 0.85)))))
     normalization["phonetic_known_confusion_threshold"] = float(os.getenv("PHONETIC_KNOWN_CONFUSION_THRESHOLD", str(normalization.get("phonetic_known_confusion_threshold", normalization.get("known_confusion_threshold", 0.82)))))
     normalization["phonetic_lattice_threshold"] = float(os.getenv("PHONETIC_LATTICE_THRESHOLD", str(normalization.get("phonetic_lattice_threshold", normalization.get("lattice_threshold", 0.85)))))
+    normalization["critical_phoneme_required"] = os.getenv("CRITICAL_PHONEME_REQUIRED", str(normalization.get("critical_phoneme_required", True))).lower() in {"1", "true", "yes"}
     normalization["low_confidence_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_THRESHOLD", str(normalization.get("low_confidence_threshold", 0.50))))
     normalization["low_confidence_similarity_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_SIMILARITY_THRESHOLD", str(normalization.get("low_confidence_similarity_threshold", 0.95))))
     return config

@@ -40,7 +40,7 @@ def test_audio_analysis_scores_corrected_transcript_and_preserves_raw(tmp_path: 
     )
 
     assert response.ok is True
-    assert response.transcript == "Read"
+    assert response.transcript == "Red"
     assert response.raw_transcript == "Read"
     assert response.corrected_transcript == "Red"
     assert response.displayed_transcript == "Red"
@@ -63,3 +63,12 @@ def test_missing_audio_file_returns_safe_error(tmp_path: Path) -> None:
     response = _service(tmp_path).analyze_audio(AnalyzeAudioRequest(audio_path=str(tmp_path / "missing.wav"), expected_text="cat"))
     assert response.ok is False
     assert response.error == "audio_file_not_found"
+
+
+def test_unsupported_audio_type_returns_safe_error(tmp_path: Path) -> None:
+    audio = tmp_path / "sample.mp4"
+    audio.write_bytes(b"fake")
+    response = _service(tmp_path).analyze_audio(AnalyzeAudioRequest(audio_path=str(audio), expected_text="cat", debug=True))
+    assert response.ok is False
+    assert response.error == "unsupported_audio_type"
+    assert response.debug_info["supported_extension"] is False
