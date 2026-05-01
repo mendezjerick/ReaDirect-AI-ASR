@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from difflib import SequenceMatcher
 from typing import Any
 
 from readirect_asr.evaluation.asr_metrics import compute_wer
@@ -13,6 +14,7 @@ DEFAULT_PHONETIC_ACCEPT_THRESHOLD = 0.88
 DEFAULT_STRICT_WORD_THRESHOLD = 0.90
 DEFAULT_SINGLE_LETTER_THRESHOLD = 0.85
 DEFAULT_KNOWN_CONFUSION_THRESHOLD = 0.82
+DEFAULT_PHONETIC_LATTICE_THRESHOLD = 0.85
 DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.50
 DEFAULT_LOW_CONFIDENCE_SIMILARITY_THRESHOLD = 0.95
 
@@ -47,16 +49,68 @@ LETTER_PRONUNCIATIONS = {
 }
 
 
+LETTER_LATTICE_VARIANTS = {
+    "a": {"ai", "ey"},
+    "b": {"bi", "by", "bii"},
+    "c": {"si", "cy", "sii"},
+    "d": {"de", "di", "dy", "dii"},
+    "e": {"i", "ii", "yi"},
+    "f": {"eff"},
+    "g": {"gi", "gy", "gii"},
+    "h": {"age", "each"},
+    "i": {"ai", "ay"},
+    "j": {"jai", "jey"},
+    "k": {"kei", "key"},
+    "l": {"ell"},
+    "m": {"emm"},
+    "n": {"enn"},
+    "o": {"owe"},
+    "p": {"pi", "py", "pii"},
+    "q": {"ku", "kyoo"},
+    "r": {"ar"},
+    "s": {"es"},
+    "t": {"ti", "ty", "tii"},
+    "u": {"yu", "yoo"},
+    "v": {"vi", "vy", "vii"},
+    "w": {"double-u", "dubya"},
+    "x": {"eks"},
+    "y": {"wai", "wy"},
+    "z": {"zi", "zii", "zih", "zy", "zey", "ze", "zhee"},
+}
+
+
+LETTER_HIGH_FRONT_VOWEL_ONSETS = {
+    "b": {"b"},
+    "c": {"c", "s"},
+    "d": {"d"},
+    "e": {"", "y"},
+    "g": {"g", "j"},
+    "p": {"p"},
+    "t": {"t"},
+    "v": {"v"},
+    "z": {"z", "zh"},
+}
+
+
+HIGH_FRONT_VOWEL_TAILS = ("ee", "ii", "ih", "ey", "e", "i", "y")
+
+
 KNOWN_ASR_CONFUSIONS = {
     "z": {"they", "the", "see", "c"},
     "c": {"see", "sea"},
+    "d": {"they"},
     "g": {"gee", "jee"},
+    "v": {"they"},
     "x": {"ex", "axe"},
     "y": {"why"},
     "u": {"you"},
     "q": {"cue", "queue"},
     "b": {"bee", "be"},
     "t": {"tea", "tee"},
+    "ten": {"then"},
+    "then": {"ten"},
+    "thin": {"tin"},
+    "tin": {"thin"},
     "red": {"read"},
     "read": {"red"},
     "tree": {"three"},
@@ -64,10 +118,10 @@ KNOWN_ASR_CONFUSIONS = {
     "to": {"two", "too"},
     "two": {"to", "too"},
     "too": {"to", "two"},
-    "see": {"sea"},
-    "sea": {"see"},
-    "bee": {"be"},
-    "be": {"bee"},
+    "see": {"sea", "c"},
+    "sea": {"see", "c"},
+    "bee": {"be", "b"},
+    "be": {"bee", "b"},
     "there": {"their", "theyre"},
     "their": {"there", "theyre"},
     "theyre": {"there", "their"},
@@ -93,6 +147,8 @@ KNOWN_ASR_CONFUSIONS = {
 
 
 KNOWN_CONFUSION_SCORE_OVERRIDES = {
+    ("d", "they"): 0.86,
+    ("v", "they"): 0.86,
     ("z", "they"): 0.90,
     ("z", "the"): 0.86,
     ("z", "see"): 0.86,
@@ -113,6 +169,10 @@ class TranscriptNormalizationResult:
     normalization_reason: str
     correction_strategy_used: str
     accepted_by_phonetic_threshold: bool
+    accepted_by_known_confusion: bool
+    accepted_by_letter_lattice: bool
+    accepted_by_letter_normalization: bool
+    accepted_by_exact_match: bool
     threshold_used: float
     confidence_or_threshold_used: float
 
@@ -140,6 +200,7 @@ def normalize_asr_transcript(
     strict_word_threshold = _config_float(active_config, ["phonetic_strict_word_threshold", "strict_word_threshold"], DEFAULT_STRICT_WORD_THRESHOLD)
     single_letter_threshold = _config_float(active_config, ["phonetic_single_letter_threshold", "single_letter_threshold"], DEFAULT_SINGLE_LETTER_THRESHOLD)
     known_confusion_threshold = _config_float(active_config, ["phonetic_known_confusion_threshold", "known_confusion_threshold"], DEFAULT_KNOWN_CONFUSION_THRESHOLD)
+    lattice_threshold = _config_float(active_config, ["phonetic_lattice_threshold", "lattice_threshold"], DEFAULT_PHONETIC_LATTICE_THRESHOLD)
     low_confidence_threshold = float(active_config.get("low_confidence_threshold", DEFAULT_LOW_CONFIDENCE_THRESHOLD))
     low_confidence_similarity_threshold = float(active_config.get("low_confidence_similarity_threshold", DEFAULT_LOW_CONFIDENCE_SIMILARITY_THRESHOLD))
 
@@ -149,6 +210,10 @@ def normalize_asr_transcript(
     applied = False
     accepted_for_display = False
     accepted_by_threshold = False
+    accepted_by_known_confusion = False
+    accepted_by_letter_lattice = False
+    accepted_by_letter_normalization = False
+    accepted_by_exact_match = False
     threshold_used = default_threshold
     reason = "No normalization applied"
     strategy = "none"
@@ -159,24 +224,47 @@ def normalize_asr_transcript(
         reason = "Raw transcript was empty"
     else:
         is_single_letter = _is_single_letter(normalized_expected)
-        threshold_used = single_letter_threshold if is_single_letter else strict_word_threshold
+        is_single_word = _is_single_word(normalized_expected)
+        is_word_level = is_single_letter or is_single_word
+        threshold_used = (
+            single_letter_threshold
+            if is_single_letter
+            else _word_threshold(normalized_expected, normalized_raw, default_threshold, strict_word_threshold)
+        )
         letter_match = _single_letter_correction(normalized_expected, normalized_raw)
-        if letter_match:
+        lattice_score = _letter_lattice_score(normalized_expected, normalized_raw) if is_single_letter else 0.0
+        if not is_word_level:
+            reason = "Expected text is sentence-level or multi-word; word-level transcript correction was skipped"
+            threshold_used = 0.0
+        elif letter_match:
             corrected = expected
             displayed = expected
             score = 1.0
             applied = raw != expected
             accepted_for_display = True
+            accepted_by_letter_normalization = True
             reason = "ASR transcript is a valid spoken form of the expected letter"
-            strategy = "letter_pronunciation_normalization" if applied else "none"
+            strategy = "letter_pronunciation_normalization"
+        elif is_single_letter and lattice_score >= lattice_threshold:
+            corrected = expected
+            displayed = expected
+            score = max(score, lattice_score)
+            applied = True
+            accepted_for_display = True
+            accepted_by_threshold = True
+            accepted_by_letter_lattice = True
+            threshold_used = lattice_threshold
+            reason = f"Raw ASR output matched generated phonetic spelling variant for expected letter {expected}"
+            strategy = "expected_centric_phonetic_lattice_matching"
         elif normalize_transcript(raw) == normalize_transcript(expected):
             corrected = expected
             displayed = expected
             score = 1.0
             applied = raw != expected
             accepted_for_display = True
+            accepted_by_exact_match = True
             reason = "ASR transcript already matches expected text after transcript normalization"
-            strategy = "orthographic_expected_prompt_alignment" if applied else "none"
+            strategy = "orthographic_expected_prompt_alignment"
         elif _known_confusion_match(normalized_expected, normalized_raw):
             threshold_used = known_confusion_threshold if not is_single_letter else single_letter_threshold
             score = max(score, _known_confusion_score(normalized_expected, normalized_raw))
@@ -186,6 +274,7 @@ def normalize_asr_transcript(
                 applied = True
                 accepted_for_display = True
                 accepted_by_threshold = True
+                accepted_by_known_confusion = True
                 reason = (
                     "ASR output passed expected-prompt phonetic similarity threshold for single-letter prompt"
                     if is_single_letter
@@ -196,14 +285,16 @@ def normalize_asr_transcript(
                 reason = "Known ASR confusion did not meet the configured threshold"
         elif is_single_letter:
             reason = "Raw transcript is not a valid spoken form of the expected letter"
+        elif not _is_single_word(normalized_raw):
+            reason = "Raw transcript is not a single word, so word-level correction was skipped"
         elif _passes_phonetic_threshold(score, threshold_used, asr_confidence, low_confidence_threshold, low_confidence_similarity_threshold):
             corrected = expected
             displayed = expected
             applied = True
             accepted_for_display = True
             accepted_by_threshold = True
-            reason = "ASR transcript is phonetically equivalent to expected text"
-            strategy = "phonetic_expected_prompt_alignment"
+            reason = "Raw ASR output passed word-level phonetic similarity threshold against expected CSV answer"
+            strategy = "word_phonetic_threshold_alignment"
         else:
             reason = "Phonetic similarity is too low for safe expected-prompt correction"
 
@@ -222,6 +313,10 @@ def normalize_asr_transcript(
         normalization_reason=reason,
         correction_strategy_used=strategy,
         accepted_by_phonetic_threshold=accepted_by_threshold,
+        accepted_by_known_confusion=accepted_by_known_confusion,
+        accepted_by_letter_lattice=accepted_by_letter_lattice,
+        accepted_by_letter_normalization=accepted_by_letter_normalization,
+        accepted_by_exact_match=accepted_by_exact_match,
         threshold_used=round(threshold_used, 6),
         confidence_or_threshold_used=round(
             low_confidence_similarity_threshold
@@ -274,6 +369,90 @@ def _config_float(config: dict[str, Any], keys: list[str], default: float) -> fl
     return default
 
 
+def _letter_lattice_score(normalized_expected: str, normalized_raw: str) -> float:
+    if not _is_single_letter(normalized_expected):
+        return 0.0
+
+    expected_letter = normalized_expected.lower()
+    raw = _compact_letter_token(normalized_raw)
+    if not raw:
+        return 0.0
+
+    core_variants = {_compact_letter_token(variant) for variant in LETTER_PRONUNCIATIONS.get(expected_letter, set())}
+    lattice_variants = {_compact_letter_token(variant) for variant in LETTER_LATTICE_VARIANTS.get(expected_letter, set())}
+
+    if raw in core_variants:
+        return 0.98
+    if raw in lattice_variants:
+        return 0.93
+
+    expected_codes = {
+        normalize_letter_name_variant(variant)
+        for variant in core_variants | lattice_variants
+        if normalize_letter_name_variant(variant)
+    }
+    raw_code = normalize_letter_name_variant(raw)
+    if raw_code and raw_code in expected_codes:
+        return 0.90
+
+    skeletons = {_consonant_skeleton(variant) for variant in core_variants | lattice_variants}
+    raw_skeleton = _consonant_skeleton(raw)
+    if raw_skeleton and raw_skeleton in skeletons and _has_similar_vowel_tail(expected_letter, raw):
+        return 0.88
+
+    best_edit_similarity = max(
+        (SequenceMatcher(a=raw, b=variant).ratio() for variant in core_variants | lattice_variants),
+        default=0.0,
+    )
+    return round(min(0.80, best_edit_similarity), 6)
+
+
+def normalize_letter_name_variant(token: str) -> str:
+    compact = _compact_letter_token(token)
+    if not compact:
+        return ""
+
+    compact = _limit_repeated_chars(compact)
+    for tail in sorted(HIGH_FRONT_VOWEL_TAILS, key=len, reverse=True):
+        if compact.endswith(tail):
+            onset = compact[: -len(tail)]
+            return f"{onset}#IY"
+
+    return compact
+
+
+def _compact_letter_token(text: str) -> str:
+    return normalize_transcript(text).replace("-", " ").replace(" ", "")
+
+
+def _limit_repeated_chars(token: str, max_repeats: int = 2) -> str:
+    compacted: list[str] = []
+    previous = ""
+    count = 0
+    for char in token:
+        if char == previous:
+            count += 1
+        else:
+            previous = char
+            count = 1
+        if count <= max_repeats:
+            compacted.append(char)
+    return "".join(compacted)
+
+
+def _consonant_skeleton(token: str) -> str:
+    compact = _compact_letter_token(token)
+    return "".join(char for char in compact if char not in {"a", "e", "i", "o", "u", "y"})
+
+
+def _has_similar_vowel_tail(expected_letter: str, raw: str) -> bool:
+    allowed_onsets = LETTER_HIGH_FRONT_VOWEL_ONSETS.get(expected_letter, set())
+    raw_code = normalize_letter_name_variant(raw)
+    if not raw_code.endswith("#IY"):
+        return False
+    return raw_code.removesuffix("#IY") in allowed_onsets
+
+
 def _single_letter_correction(normalized_expected: str, normalized_raw: str) -> bool:
     if not _is_single_letter(normalized_expected):
         return False
@@ -288,6 +467,18 @@ def _single_letter_correction(normalized_expected: str, normalized_raw: str) -> 
 
 def _is_single_letter(normalized_expected: str) -> bool:
     return len(normalized_expected) == 1 and normalized_expected.isalpha()
+
+
+def _is_single_word(normalized_text: str) -> bool:
+    return bool(normalized_text) and len(normalized_text.split()) == 1 and any(char.isalpha() for char in normalized_text)
+
+
+def _word_threshold(normalized_expected: str, normalized_raw: str, default_threshold: float, strict_word_threshold: float) -> float:
+    if not _is_single_word(normalized_raw):
+        return default_threshold
+    if normalized_expected[:1] and normalized_raw[:1] and normalized_expected[:1] != normalized_raw[:1]:
+        return strict_word_threshold
+    return default_threshold
 
 
 def _known_confusion_match(normalized_expected: str, normalized_raw: str) -> bool:

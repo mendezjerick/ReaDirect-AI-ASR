@@ -6,6 +6,16 @@ __pycache__/
 venv/
 env/
 
+external_datasets/
+!external_datasets/
+external_datasets/*
+!external_datasets/manifests/
+external_datasets/manifests/*
+!external_datasets/manifests/readirect_hard_cases.example.jsonl
+checkpoints/
+outputs/
+models/wav2vec2-readirect-asr/
+
 data/raw/*
 data/processed/*
 data/processed/whisper_finetune/*

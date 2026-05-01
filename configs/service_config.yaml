@@ -30,5 +30,6 @@ transcript_normalization:
   phonetic_strict_word_threshold: 0.90
   phonetic_single_letter_threshold: 0.85
   phonetic_known_confusion_threshold: 0.82
+  phonetic_lattice_threshold: 0.85
   low_confidence_threshold: 0.50
   low_confidence_similarity_threshold: 0.95

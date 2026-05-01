@@ -13,10 +13,12 @@ pytest
 httpx
 faster-whisper
 torch
+torchaudio
 transformers
 datasets
 evaluate
 accelerate
+scikit-learn
 tensorboard
 
 # Optional conversion/runtime dependencies. Install only when needed:

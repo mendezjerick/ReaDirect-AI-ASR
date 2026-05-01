@@ -1,0 +1,46 @@
+model:
+  base_model_path: models/wav2vec2-base-960h
+  output_model_path: models/wav2vec2-readirect-asr
+  checkpoint_dir: checkpoints/wav2vec2-readirect-asr
+
+data:
+  train_manifest: external_datasets/manifests/readirect_train_mixed.jsonl
+  valid_manifest: external_datasets/manifests/readirect_valid_mixed.jsonl
+  test_manifest: external_datasets/manifests/readirect_test_mixed.jsonl
+  sample_rate: 16000
+  max_duration_seconds: 15
+  min_duration_seconds: 0.2
+  librispeech_weight: 0.30
+  speechocean_weight: 0.70
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 2
+  learning_rate: 0.00003
+  warmup_steps: 500
+  save_steps: 500
+  logging_steps: 50
+  fp16: true_if_cuda_available
+  freeze_feature_encoder: true
+  gradient_checkpointing: true
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  seed: 42
+
+evaluation_during_training:
+  enabled: false
+  strategy: "no"
+  eval_steps: 1000
+  max_eval_samples: 100
+  early_stopping_enabled: false
+  early_stopping_patience: 3
+
+evaluation_after_training:
+  enabled: false
+  metrics:
+    - wer
+    - cer
+  hard_case_manifest: external_datasets/manifests/readirect_hard_cases.jsonl
+

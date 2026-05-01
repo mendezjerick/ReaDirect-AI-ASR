@@ -72,6 +72,10 @@ class AnalysisResponse(BaseModel):
     normalization_reason: str = ""
     correction_strategy_used: str = "none"
     accepted_by_phonetic_threshold: bool = False
+    accepted_by_known_confusion: bool = False
+    accepted_by_letter_lattice: bool = False
+    accepted_by_letter_normalization: bool = False
+    accepted_by_exact_match: bool = False
     threshold_used: float = 0.0
     confidence_or_threshold_used: float = 0.0
     confidence: Optional[float] = None

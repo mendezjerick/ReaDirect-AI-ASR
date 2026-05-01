@@ -53,6 +53,7 @@ def get_config() -> dict[str, Any]:
     normalization["phonetic_strict_word_threshold"] = float(os.getenv("PHONETIC_STRICT_WORD_THRESHOLD", str(normalization.get("phonetic_strict_word_threshold", normalization.get("strict_word_threshold", 0.90)))))
     normalization["phonetic_single_letter_threshold"] = float(os.getenv("PHONETIC_SINGLE_LETTER_THRESHOLD", str(normalization.get("phonetic_single_letter_threshold", normalization.get("single_letter_threshold", 0.85)))))
     normalization["phonetic_known_confusion_threshold"] = float(os.getenv("PHONETIC_KNOWN_CONFUSION_THRESHOLD", str(normalization.get("phonetic_known_confusion_threshold", normalization.get("known_confusion_threshold", 0.82)))))
+    normalization["phonetic_lattice_threshold"] = float(os.getenv("PHONETIC_LATTICE_THRESHOLD", str(normalization.get("phonetic_lattice_threshold", normalization.get("lattice_threshold", 0.85)))))
     normalization["low_confidence_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_THRESHOLD", str(normalization.get("low_confidence_threshold", 0.50))))
     normalization["low_confidence_similarity_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_SIMILARITY_THRESHOLD", str(normalization.get("low_confidence_similarity_threshold", 0.95))))
     return config
