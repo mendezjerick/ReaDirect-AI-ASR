@@ -13,6 +13,10 @@ from readirect_asr.content.content_repository import ContentRepository
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    return os.getenv(name, str(default)).lower() in {"1", "true", "yes"}
+
+
 def _load_yaml(path: str | Path) -> dict[str, Any]:
     config_path = Path(path)
     if not config_path.exists():
@@ -28,6 +32,7 @@ def get_config() -> dict[str, Any]:
     config.setdefault("analysis", {})
     config.setdefault("asr", {})
     config.setdefault("transcript_normalization", {})
+    config.setdefault("audio_quality", {})
     adaptive_config_path = os.getenv("ADAPTIVE_CONFIG_PATH", "configs/adaptive_config.yaml")
     config["adaptive"] = {**_load_yaml(adaptive_config_path), **config.get("adaptive", {})}
     config["api"]["debug"] = os.getenv("API_DEBUG", str(config["api"].get("debug", True))).lower() in {"1", "true", "yes"}
@@ -49,6 +54,19 @@ def get_config() -> dict[str, Any]:
     config["asr"]["language"] = os.getenv("ASR_LANGUAGE", config["asr"].get("language", "en"))
     config["asr"]["task"] = os.getenv("ASR_TASK", config["asr"].get("task", "transcribe"))
     config["asr"]["beam_size"] = int(os.getenv("ASR_BEAM_SIZE", str(config["asr"].get("beam_size", 1))))
+    audio_quality = config["audio_quality"]
+    audio_quality["min_duration_seconds"] = float(os.getenv("AUDIO_MIN_DURATION_SECONDS", str(audio_quality.get("min_duration_seconds", 1.0))))
+    audio_quality["max_duration_seconds"] = float(os.getenv("AUDIO_MAX_DURATION_SECONDS", str(audio_quality.get("max_duration_seconds", 30.0))))
+    audio_quality["low_volume_dbfs"] = float(os.getenv("AUDIO_LOW_VOLUME_DBFS", str(audio_quality.get("low_volume_dbfs", -35.0))))
+    audio_quality["silence_dbfs"] = float(os.getenv("AUDIO_SILENCE_DBFS", str(audio_quality.get("silence_dbfs", -40.0))))
+    audio_quality["mostly_silent_ratio"] = float(os.getenv("AUDIO_MOSTLY_SILENT_RATIO", str(audio_quality.get("mostly_silent_ratio", 0.85))))
+    audio_quality["clipping_threshold"] = float(os.getenv("AUDIO_CLIPPING_THRESHOLD", str(audio_quality.get("clipping_threshold", 0.98))))
+    audio_quality["clipped_ratio_threshold"] = float(os.getenv("AUDIO_CLIPPED_RATIO_THRESHOLD", str(audio_quality.get("clipped_ratio_threshold", 0.01))))
+    audio_quality["min_speech_ratio"] = float(os.getenv("AUDIO_MIN_SPEECH_RATIO", str(audio_quality.get("min_speech_ratio", 0.15))))
+    audio_quality["long_pause_seconds"] = float(os.getenv("AUDIO_LONG_PAUSE_SECONDS", str(audio_quality.get("long_pause_seconds", 1.0))))
+    audio_quality["very_long_pause_seconds"] = float(os.getenv("AUDIO_VERY_LONG_PAUSE_SECONDS", str(audio_quality.get("very_long_pause_seconds", 2.0))))
+    audio_quality["enable_quality_gate"] = _env_bool("AUDIO_ENABLE_QUALITY_GATE", bool(audio_quality.get("enable_quality_gate", True)))
+    audio_quality["retry_on_bad_quality"] = _env_bool("AUDIO_RETRY_ON_BAD_QUALITY", bool(audio_quality.get("retry_on_bad_quality", True)))
     normalization = config["transcript_normalization"]
     normalization["phonetic_accept_threshold"] = float(os.getenv("PHONETIC_ACCEPT_THRESHOLD", str(normalization.get("phonetic_accept_threshold", normalization.get("high_similarity_threshold", 0.88)))))
     normalization["phonetic_strict_word_threshold"] = float(os.getenv("PHONETIC_STRICT_WORD_THRESHOLD", str(normalization.get("phonetic_strict_word_threshold", normalization.get("strict_word_threshold", 0.90)))))

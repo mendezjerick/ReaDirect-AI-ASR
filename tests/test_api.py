@@ -23,6 +23,10 @@ def test_health_endpoint() -> None:
     assert body["reinforcement_corrections_enabled"] is True
     assert "letter-reinforcement.csv" in body["reinforcement_files_loaded"]
     assert body["reinforcement_letter_rules_count"] == 20
+    assert body["audio_quality_validation_enabled"] is True
+    assert body["pause_detection_enabled"] is True
+    assert body["uncertainty_decision_enabled"] is True
+    assert body["audio_quality_thresholds"]["min_duration_seconds"] == 1.0
 
 
 def test_analyze_audio_endpoint_uses_mock_asr(tmp_path: Path, monkeypatch) -> None:

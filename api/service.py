@@ -19,7 +19,7 @@ from api.schemas import (
 from readirect_asr.adaptive.recommendation import AdaptiveRecommendationEngine
 from readirect_asr.asr.mock_asr import MockASR
 from readirect_asr.asr.result import ASRResult
-from readirect_asr.audio.preprocessing import validate_audio_file
+from readirect_asr.audio.preprocessing import analyze_audio_quality, audio_quality_config, validate_audio_file
 from readirect_asr.content.content_repository import ContentRepository
 from readirect_asr.content.enricher import ContentEnricher
 from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
@@ -139,6 +139,30 @@ class AIAnalysisService:
             if audio_report["duration_seconds"] is None:
                 warnings.append("audio_duration_unreadable")
 
+            audio_quality = analyze_audio_quality(audio_path, self.config.get("audio_quality", {}))
+            pause_metrics = dict(audio_quality.get("pause_metrics", {}) or {})
+            for warning in audio_quality.get("warnings", []) or []:
+                if warning not in warnings:
+                    warnings.append(str(warning))
+            quality_decision = self._quality_uncertainty_decision(audio_quality, None, expected_text)
+            if quality_decision["quality_gate_failed"]:
+                analysis = self.run_reading_analysis(expected_text, "", context["accepted_answers"], context["content_metadata"])
+                return self._quality_gate_response(
+                    request_id=request_id,
+                    prompt_id=context.get("prompt_id") or request.prompt_id,
+                    expected_text=expected_text,
+                    accepted_answers=context["accepted_answers"],
+                    analysis=analysis,
+                    content_metadata=context["content_metadata"],
+                    enrichment_metadata=context["enrichment_metadata"],
+                    warnings=warnings,
+                    started=started,
+                    debug=request.debug,
+                    audio_quality=audio_quality,
+                    pause_metrics=pause_metrics,
+                    uncertainty=quality_decision,
+                )
+
             asr = self.transcribe_audio(str(audio_path), expected_text=expected_text, content_metadata=context["content_metadata"])
             if asr.error:
                 warnings.append("transcription_failed")
@@ -159,6 +183,7 @@ class AIAnalysisService:
             )
             analysis = self.run_reading_analysis(expected_text, normalization.corrected_transcript, context["accepted_answers"], context["content_metadata"])
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
+            uncertainty = self._quality_uncertainty_decision(audio_quality, asr, expected_text, normalization)
             return self.build_response(
                 request_id=request_id,
                 mode="audio",
@@ -177,11 +202,16 @@ class AIAnalysisService:
                 debug=request.debug,
                 debug_info={
                     "asr": asr.to_dict(),
+                    "audio_quality": audio_quality,
+                    "pause_metrics": pause_metrics,
                     "transcript_normalization": normalization.to_dict(),
                     "learner_response_id": request.learner_response_id,
                     "attempt_id": request.attempt_id,
                 },
                 adaptive=adaptive,
+                audio_quality=audio_quality,
+                pause_metrics=pause_metrics,
+                uncertainty=uncertainty,
             )
         except Exception as exc:
             return self._error_response("audio", request_id, "analysis_failed", "Audio analysis failed.", started, warnings, exc)
@@ -332,6 +362,9 @@ class AIAnalysisService:
         confidence: float | None = None,
         debug_info: dict[str, Any] | None = None,
         adaptive: dict[str, Any] | None = None,
+        audio_quality: dict[str, Any] | None = None,
+        pause_metrics: dict[str, Any] | None = None,
+        uncertainty: dict[str, Any] | None = None,
     ) -> AnalysisResponse:
         include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
         if include_debug and debug_info is None:
@@ -390,7 +423,16 @@ class AIAnalysisService:
             "confidence_or_threshold_used": 0.0,
             "debug_metadata": {},
         }
+        audio_quality_payload = _json_safe(audio_quality or {})
+        pause_metrics_payload = _json_safe(pause_metrics or {})
+        uncertainty_payload = uncertainty or {}
+        retry_required = bool(uncertainty_payload.get("retry_required", False))
+        raw_transcript = str(transcript_meta.get("raw_transcript", transcript))
+        corrected_transcript = str(transcript_meta.get("corrected_transcript", normalized_transcript or transcript))
         displayed_transcript = str(transcript_meta.get("displayed_transcript", transcript_meta.get("corrected_transcript", normalized_transcript or transcript)))
+        if retry_required:
+            displayed_transcript = raw_transcript
+            corrected_transcript = raw_transcript
         response = AnalysisResponse(
             ok=True,
             request_id=request_id,
@@ -402,8 +444,8 @@ class AIAnalysisService:
             accepted_answers=accepted_answers,
             transcript=displayed_transcript,
             normalized_transcript=normalized_transcript,
-            raw_transcript=str(transcript_meta.get("raw_transcript", transcript)),
-            corrected_transcript=str(transcript_meta.get("corrected_transcript", normalized_transcript or transcript)),
+            raw_transcript=raw_transcript,
+            corrected_transcript=corrected_transcript,
             displayed_transcript=displayed_transcript,
             prompt_type=str(transcript_meta.get("prompt_type", "unknown")),
             asr_route=str(transcript_meta.get("asr_route", "wav2vec2_only")),
@@ -418,7 +460,7 @@ class AIAnalysisService:
             corrected_cer=float(transcript_meta.get("corrected_cer", 0.0) or 0.0),
             phonetic_similarity_score=float(transcript_meta.get("phonetic_similarity_score", 0.0) or 0.0),
             composite_score=float(transcript_meta.get("composite_score", 0.0) or 0.0),
-            accepted=bool(transcript_meta.get("accepted", False)),
+            accepted=False if retry_required else bool(transcript_meta.get("accepted", False)),
             normalization_applied=bool(transcript_meta.get("normalization_applied", False)),
             normalization_reason=str(transcript_meta.get("normalization_reason", "")),
             correction_strategy_used=str(transcript_meta.get("correction_strategy_used", "none")),
@@ -445,9 +487,9 @@ class AIAnalysisService:
             threshold_used=float(transcript_meta.get("threshold_used", 0.0) or 0.0),
             confidence_or_threshold_used=float(transcript_meta.get("confidence_or_threshold_used", 0.0) or 0.0),
             confidence=confidence,
-            is_correct=bool(analysis.get("is_correct", False)),
-            is_exact=bool(analysis.get("is_exact", False)),
-            is_accepted=bool(analysis.get("is_accepted", False)),
+            is_correct=False if retry_required else bool(analysis.get("is_correct", False)),
+            is_exact=False if retry_required else bool(analysis.get("is_exact", False)),
+            is_accepted=False if retry_required else bool(analysis.get("is_accepted", False)),
             character_similarity=float(analysis.get("character_similarity", 0.0) or 0.0),
             token_similarity=float(analysis.get("token_similarity", 0.0) or 0.0),
             similarity_label=str(analysis.get("similarity_label", "")),
@@ -469,9 +511,18 @@ class AIAnalysisService:
             recommended_action=str(analysis.get("recommended_action", "")),
             adaptive_recommendation=_json_safe(adaptive.get("recommendation")) if adaptive else None,
             learner_summary=_json_safe(adaptive.get("learner_summary")) if adaptive else None,
+            audio_quality=audio_quality_payload,
+            pause_metrics=pause_metrics_payload,
+            uncertain=bool(uncertainty_payload.get("uncertain", False)),
+            retry_required=retry_required,
+            uncertainty_reasons=list(uncertainty_payload.get("uncertainty_reasons", []) or []),
+            quality_gate_failed=bool(uncertainty_payload.get("quality_gate_failed", False)),
+            learner_retry_message=str(uncertainty_payload.get("learner_retry_message", "")),
+            developer_quality_notes=list(uncertainty_payload.get("developer_quality_notes", []) or []),
             content_metadata=_json_safe(content_metadata),
             enrichment_metadata=_json_safe(merged_enrichment),
             analysis_source=str(analysis.get("analysis_source", "heuristic_transcript_phoneme")),
+            debug_metadata=dict(transcript_meta.get("debug_metadata", {}) or {}),
             warnings=warnings,
             debug_info=_json_safe(debug_info) if include_debug else None,
             processing_seconds=round(time.perf_counter() - started, 3),
@@ -479,6 +530,145 @@ class AIAnalysisService:
         )
         logger.info("request_id=%s endpoint=%s provider=%s prompt_id=%s ok=true", request_id, mode, self.provider_name, prompt_id)
         return response
+
+    def _quality_uncertainty_decision(
+        self,
+        audio_quality: dict[str, Any] | None,
+        asr: ASRResult | None,
+        expected_text: str,
+        normalization: TranscriptNormalizationResult | None = None,
+    ) -> dict[str, Any]:
+        qa_config = audio_quality_config(self.config.get("audio_quality", {}))
+        reasons: list[str] = []
+        notes: list[str] = []
+        quality = audio_quality or {}
+        flags = dict(quality.get("quality_flags", {}) or {})
+        reason_map = {
+            "too_short": "audio_too_short",
+            "no_speech_detected": "no_speech_detected",
+            "mostly_silent": "mostly_silent",
+            "low_volume": "low_volume",
+            "clipped": "clipped",
+        }
+        for flag, reason in reason_map.items():
+            if flags.get(flag):
+                reasons.append(reason)
+
+        if asr is not None:
+            transcript = str(asr.transcript or "").strip()
+            observed_phonemes = list(asr.observed_phonemes or [])
+            if not transcript and not observed_phonemes:
+                reasons.append("blank_asr_transcript")
+                if expected_text:
+                    reasons.append("expected_text_without_reliable_asr_evidence")
+            if asr.confidence is not None and asr.confidence < float(self.config.get("transcript_normalization", {}).get("low_confidence_threshold", 0.50)):
+                reasons.append("low_asr_confidence")
+            if normalization and str(normalization.confidence_level).lower().startswith("low"):
+                reasons.append("low_normalization_confidence")
+
+        unique_reasons = list(dict.fromkeys(reasons))
+        retry_required = bool(unique_reasons and qa_config["retry_on_bad_quality"])
+        quality_gate_failed = bool(
+            qa_config["enable_quality_gate"]
+            and qa_config["retry_on_bad_quality"]
+            and any(flags.get(flag) for flag in reason_map)
+        )
+        if quality.get("warnings"):
+            notes.extend(str(warning) for warning in quality.get("warnings", []) or [])
+        if quality_gate_failed:
+            notes.append("ASR skipped because strict audio quality gate is enabled.")
+        elif retry_required:
+            notes.append("ASR result is marked retry-required because quality or confidence was unreliable.")
+
+        return {
+            "uncertain": bool(unique_reasons),
+            "retry_required": retry_required,
+            "uncertainty_reasons": unique_reasons,
+            "quality_gate_failed": quality_gate_failed,
+            "learner_retry_message": _learner_retry_message(unique_reasons),
+            "developer_quality_notes": notes,
+        }
+
+    def _quality_gate_response(
+        self,
+        request_id: str,
+        prompt_id: str | None,
+        expected_text: str,
+        accepted_answers: list[str],
+        analysis: dict[str, Any],
+        content_metadata: dict[str, Any],
+        enrichment_metadata: dict[str, Any],
+        warnings: list[str],
+        started: float,
+        debug: bool,
+        audio_quality: dict[str, Any],
+        pause_metrics: dict[str, Any],
+        uncertainty: dict[str, Any],
+    ) -> AnalysisResponse:
+        include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
+        debug_info = {"audio_quality": audio_quality, "pause_metrics": pause_metrics} if include_debug else None
+        reason = _normalization_reason_for_quality(uncertainty.get("uncertainty_reasons", []))
+        logger.info("request_id=%s endpoint=audio provider=%s prompt_id=%s quality_gate_failed=true", request_id, self.provider_name, prompt_id)
+        return AnalysisResponse(
+            ok=True,
+            request_id=request_id,
+            mode="audio",
+            provider=self.provider_name,
+            model_size=self.model_size,
+            prompt_id=prompt_id,
+            expected_text=expected_text,
+            accepted_answers=accepted_answers,
+            transcript="",
+            normalized_transcript="",
+            raw_transcript="",
+            corrected_transcript="",
+            displayed_transcript="",
+            prompt_type="unknown",
+            asr_route="wav2vec2_only",
+            model_family="wav2vec2",
+            model_used=self.model_size or "",
+            wav2vec2_transcript="",
+            whisper_transcript=None,
+            whisper_removed=True,
+            accepted=False,
+            normalization_applied=False,
+            normalization_reason=reason,
+            correction_strategy_used="audio_quality_gate",
+            is_correct=False,
+            is_exact=False,
+            is_accepted=False,
+            character_similarity=float(analysis.get("character_similarity", 0.0) or 0.0),
+            token_similarity=float(analysis.get("token_similarity", 0.0) or 0.0),
+            similarity_label=str(analysis.get("similarity_label", "blank")),
+            expected_phonemes=list(analysis.get("expected_phonemes", []) or []),
+            actual_phonemes=list(analysis.get("actual_phonemes", []) or []),
+            phoneme_similarity=float(analysis.get("phoneme_similarity", 0.0) or 0.0),
+            error_type=str(analysis.get("error_type", "")),
+            feedback_hint=str(analysis.get("feedback_hint", "")),
+            coach_hint_key=str(analysis.get("coach_hint_key", "")),
+            learner_safe_summary=str(analysis.get("learner_safe_summary", "")),
+            skill_signal=str(analysis.get("skill_signal", "")),
+            target_phoneme=str(analysis.get("target_phoneme", "")),
+            target_position=str(analysis.get("target_position", "")),
+            recommended_practice_focus=str(analysis.get("recommended_practice_focus", "")),
+            recommended_action=str(analysis.get("recommended_action", "")),
+            audio_quality=_json_safe(audio_quality),
+            pause_metrics=_json_safe(pause_metrics),
+            uncertain=True,
+            retry_required=True,
+            uncertainty_reasons=list(uncertainty.get("uncertainty_reasons", []) or []),
+            quality_gate_failed=True,
+            learner_retry_message=str(uncertainty.get("learner_retry_message", "")),
+            developer_quality_notes=list(uncertainty.get("developer_quality_notes", []) or []),
+            content_metadata=_json_safe(content_metadata),
+            enrichment_metadata=_json_safe(enrichment_metadata),
+            analysis_source=str(analysis.get("analysis_source", "heuristic_transcript_phoneme")),
+            debug_metadata={},
+            warnings=warnings,
+            debug_info=_json_safe(debug_info) if include_debug else None,
+            processing_seconds=round(time.perf_counter() - started, 3),
+            error=None,
+        )
 
     def _maybe_recommend(
         self,
@@ -573,6 +763,34 @@ def _json_safe(value: Any) -> Any:
     if hasattr(value, "item"):
         return value.item()
     return str(value)
+
+
+def _learner_retry_message(reasons: list[str]) -> str:
+    if not reasons:
+        return ""
+    if "audio_too_short" in reasons:
+        return "Please record again. Make sure your voice is clear and at least 1 second long."
+    if "no_speech_detected" in reasons or "mostly_silent" in reasons:
+        return "Please record again. Make sure your voice is clear and close enough to the microphone."
+    if "low_volume" in reasons:
+        return "Please record again with a clearer, louder voice."
+    if "clipped" in reasons:
+        return "Please record again a little farther from the microphone."
+    return "Please record again. The audio was not reliable enough to score."
+
+
+def _normalization_reason_for_quality(reasons: list[str]) -> str:
+    if "audio_too_short" in reasons:
+        return "Audio is too short for reliable ASR."
+    if "no_speech_detected" in reasons:
+        return "No speech was detected in the recording."
+    if "mostly_silent" in reasons:
+        return "Audio is mostly silent and cannot be scored reliably."
+    if "low_volume" in reasons:
+        return "Audio volume is too low for reliable ASR."
+    if "clipped" in reasons:
+        return "Audio appears clipped or distorted."
+    return "Audio quality was not reliable enough for scoring."
 
 
 def _analysis_to_history_item(context: dict[str, Any], analysis: dict[str, Any]) -> dict[str, Any]:

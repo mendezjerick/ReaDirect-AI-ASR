@@ -54,11 +54,12 @@ class Wav2Vec2OnlyASR(ASRProvider):
             missing_paths.append(self.model_path)
         if not Path(self.phoneme_model_path).exists():
             missing_paths.append(self.phoneme_model_path)
+        active_model = (asr_path or Path(self.model_path)).as_posix()
         return {
             "asr_architecture": self.asr_route,
-            "active_asr_model": "wav2vec2",
+            "active_asr_model": active_model,
             "wav2vec2_asr_available": asr_path is not None,
-            "wav2vec2_asr_model_name": str(asr_path or self.model_path),
+            "wav2vec2_asr_model_name": active_model,
             "wav2vec2_phoneme_available": Path(self.phoneme_model_path).exists(),
             "wav2vec2_phoneme_model_name": self.phoneme_model_path,
             "base_fallback_enabled": self.allow_base_fallback,

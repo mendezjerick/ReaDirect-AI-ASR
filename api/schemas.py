@@ -34,6 +34,10 @@ class HealthResponse(BaseModel):
     reinforcement_letter_rules_count: int = 0
     reinforcement_word_rules_count: int = 0
     reinforcement_load_warnings: list[str] = Field(default_factory=list)
+    audio_quality_validation_enabled: bool = True
+    audio_quality_thresholds: dict[str, Any] = Field(default_factory=dict)
+    pause_detection_enabled: bool = True
+    uncertainty_decision_enabled: bool = True
 
 
 class VersionResponse(BaseModel):
@@ -151,9 +155,18 @@ class AnalysisResponse(BaseModel):
     recommended_action: str = ""
     adaptive_recommendation: Optional[dict[str, Any]] = None
     learner_summary: Optional[dict[str, Any]] = None
+    audio_quality: dict[str, Any] = Field(default_factory=dict)
+    pause_metrics: dict[str, Any] = Field(default_factory=dict)
+    uncertain: bool = False
+    retry_required: bool = False
+    uncertainty_reasons: list[str] = Field(default_factory=list)
+    quality_gate_failed: bool = False
+    learner_retry_message: str = ""
+    developer_quality_notes: list[str] = Field(default_factory=list)
     content_metadata: dict[str, Any] = Field(default_factory=dict)
     enrichment_metadata: dict[str, Any] = Field(default_factory=dict)
     analysis_source: str = "heuristic_transcript_phoneme"
+    debug_metadata: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     debug_info: Optional[dict[str, Any]] = None
     processing_seconds: float = 0.0

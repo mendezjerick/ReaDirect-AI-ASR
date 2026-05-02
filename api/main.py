@@ -23,6 +23,7 @@ from api.schemas import (
     VersionResponse,
 )
 from api.security import validate_api_token
+from readirect_asr.audio.preprocessing import audio_quality_config
 from readirect_asr.text.reinforcement_corrections import reinforcement_status_from_config
 
 SERVICE_NAME = "ReaDirect AI/ASR Service"
@@ -49,6 +50,7 @@ def health() -> HealthResponse:
     architecture = str(provider_status.get("asr_architecture", "wav2vec2_only" if service.provider_name != "mock" else "mock"))
     service_status = "ok" if service.provider_name == "mock" or not missing_paths else "degraded"
     reinforcement_status = reinforcement_status_from_config(config.get("transcript_normalization", {}))
+    qa_config = audio_quality_config(config.get("audio_quality", {}))
     return HealthResponse(
         status=service_status,
         service_status=service_status,
@@ -68,6 +70,17 @@ def health() -> HealthResponse:
         thresholds=config.get("transcript_normalization", {}),
         local_model_paths_loaded=not missing_paths,
         missing_model_paths=missing_paths,
+        audio_quality_validation_enabled=True,
+        audio_quality_thresholds={
+            "min_duration_seconds": qa_config["min_duration_seconds"],
+            "low_volume_dbfs": qa_config["low_volume_dbfs"],
+            "mostly_silent_ratio": qa_config["mostly_silent_ratio"],
+            "clipping_threshold": qa_config["clipping_threshold"],
+            "clipped_ratio_threshold": qa_config["clipped_ratio_threshold"],
+            "long_pause_seconds": qa_config["long_pause_seconds"],
+        },
+        pause_detection_enabled=True,
+        uncertainty_decision_enabled=True,
         **reinforcement_status,
     )
 

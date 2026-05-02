@@ -61,6 +61,8 @@ The runtime ASR architecture is Wav2Vec2-only. The active ASR model is `models/w
 
 The FastAPI service is the bridge from Laravel to the AI layer. Laravel remains the official scorer and progression controller. The AI service returns transcript, similarity, phoneme, error-type, feedback, and adaptive recommendation signals.
 
+Audio requests also run lightweight quality validation before ASR. The service reports duration, RMS dBFS, silence/speech ratio, clipping ratio, speech segments, pause metrics, uncertainty reasons, and retry-required metadata. Strict bad-quality cases such as too-short, silent, mostly silent, low-volume, or clipped recordings return `retry_required=true` and `accepted=false` instead of unfairly scoring the learner wrong. See `docs/AUDIO_QUALITY_VALIDATION.md`.
+
 ## Deployment Options
 
 - Same server, private localhost port.

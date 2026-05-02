@@ -72,6 +72,14 @@ Laravel can save:
 - `target_position`
 - `recommended_practice_focus`
 - `recommended_action`
+- `audio_quality`
+- `pause_metrics`
+- `uncertain`
+- `retry_required`
+- `uncertainty_reasons`
+- `quality_gate_failed`
+- `learner_retry_message`
+- `developer_quality_notes`
 - `content_metadata`
 - `enrichment_metadata`
 - `warnings`
@@ -80,6 +88,8 @@ Laravel can save:
 `transcript` is the backward-compatible learner-facing transcript and maps to `displayed_transcript`. `raw_transcript` always preserves the direct Wav2Vec2 ASR output. Whisper runtime fields are not live; if `whisper_transcript` is present, it is `null`, and `whisper_removed=true`.
 
 For accepted letter and word prompts, `corrected_transcript` and `displayed_transcript` are the expected answer. For rejected letter and word prompts, they remain the recognized transcript. Sentence prompts are not forced to `expected_text`; they use Wav2Vec2 transcript WER/CER.
+
+When `retry_required=true`, Laravel should prompt the learner to record again instead of treating the response as a wrong answer. The AI service sets `accepted=false`, `is_correct=false`, and avoids forcing `expected_text` into `displayed_transcript` for retry-required audio. `audio_quality` and `pause_metrics` are runtime metadata only; they do not train models or modify Wav2Vec2 weights.
 
 ## Fallback Behavior
 
