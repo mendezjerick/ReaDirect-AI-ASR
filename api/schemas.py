@@ -28,6 +28,12 @@ class HealthResponse(BaseModel):
     thresholds: dict[str, Any] = Field(default_factory=dict)
     local_model_paths_loaded: bool = False
     missing_model_paths: list[str] = Field(default_factory=list)
+    reinforcement_corrections_enabled: bool = True
+    reinforcement_corrections_dir: str = "reinforcement-learning"
+    reinforcement_files_loaded: list[str] = Field(default_factory=list)
+    reinforcement_letter_rules_count: int = 0
+    reinforcement_word_rules_count: int = 0
+    reinforcement_load_warnings: list[str] = Field(default_factory=list)
 
 
 class VersionResponse(BaseModel):
@@ -106,6 +112,12 @@ class AnalysisResponse(BaseModel):
     accepted_by_exact_match: bool = False
     accepted_by_vowel_tail: bool = False
     accepted_by_phoneme_evidence: bool = False
+    accepted_by_reinforcement_match: bool = False
+    reinforcement_source_file: str = ""
+    reinforcement_expected_label: str = ""
+    reinforcement_matched_transcript: str = ""
+    reinforcement_match_normalized: dict[str, Any] = Field(default_factory=dict)
+    reinforcement_match_original: dict[str, Any] = Field(default_factory=dict)
     critical_phoneme: Optional[str] = None
     critical_phoneme_detected: Optional[bool] = None
     critical_phoneme_expected_position: Optional[str] = None

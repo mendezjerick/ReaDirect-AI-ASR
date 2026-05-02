@@ -56,7 +56,7 @@ def test_single_letter_spoken_forms_are_corrected_to_expected_letter() -> None:
         assert result.corrected_transcript == corrected
         assert result.displayed_transcript == corrected
         assert result.normalization_applied is True
-        assert result.accepted_by_letter_normalization is True
+        assert result.accepted_by_letter_normalization is True or result.accepted_by_reinforcement_match is True
         assert result.corrected_wer == 0.0
 
 
@@ -76,9 +76,12 @@ def test_single_letter_asr_confusions_use_expected_prompt_threshold() -> None:
         assert result.displayed_transcript == corrected
         assert result.phonetic_similarity_score >= score
         assert result.normalization_applied is True
-        assert result.accepted_by_phonetic_threshold is True
+        assert result.accepted_by_phonetic_threshold is True or result.accepted_by_reinforcement_match is True
         assert result.threshold_used == 0.85
-        assert result.correction_strategy_used == "wav2vec2_expected_centric_acoustic_phonetic_scoring"
+        assert result.correction_strategy_used in {
+            "wav2vec2_expected_centric_acoustic_phonetic_scoring",
+            "reinforcement_error_transcript_match",
+        }
 
 
 def test_generated_letter_lattice_variants_are_corrected_to_expected_letter() -> None:

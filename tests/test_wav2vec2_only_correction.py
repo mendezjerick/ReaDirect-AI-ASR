@@ -52,14 +52,70 @@ def test_word_known_confusions_are_expected_centric() -> None:
         assert result.accepted_by_known_confusion is True
 
 
-def test_negative_letter_and_word_keep_raw_display() -> None:
-    letter = _normalize("Z", "banana")
-    word = _normalize("ten", "banana")
+def test_required_letter_aliases_correct_to_expected_display() -> None:
+    cases = [
+        ("L", "elle"),
+        ("L", "ell"),
+        ("L", "el"),
+        ("Z", "zy"),
+        ("Z", "zi"),
+        ("Z", "zih"),
+        ("Z", "zii"),
+        ("Z", "zee"),
+        ("B", "be"),
+        ("X", "ex"),
+        ("C", "see"),
+    ]
 
-    assert letter.accepted is False
-    assert letter.displayed_transcript == "banana"
+    for expected, raw in cases:
+        result = _normalize(expected, raw)
+
+        assert result.accepted is True, (expected, raw, result.normalization_reason)
+        assert result.corrected_transcript == expected
+        assert result.displayed_transcript == expected
+
+
+def test_required_word_confusions_correct_to_expected_display() -> None:
+    cases = [
+        ("tree", "three"),
+        ("ten", "then"),
+        ("red", "read"),
+        ("see", "sea"),
+        ("right", "write"),
+        ("hear", "here"),
+    ]
+
+    for expected, raw in cases:
+        result = _normalize(expected, raw)
+
+        assert result.accepted is True, (expected, raw, result.normalization_reason)
+        assert result.corrected_transcript == expected
+        assert result.displayed_transcript == expected
+        assert result.accepted_by_known_confusion is True
+
+
+def test_negative_letter_and_word_keep_raw_display() -> None:
+    letter_l = _normalize("L", "banana")
+    letter_z = _normalize("Z", "banana")
+    word = _normalize("tree", "banana")
+
+    assert letter_l.accepted is False
+    assert letter_l.corrected_transcript == "banana"
+    assert letter_l.displayed_transcript == "banana"
+    assert letter_z.accepted is False
+    assert letter_z.corrected_transcript == "banana"
+    assert letter_z.displayed_transcript == "banana"
     assert word.accepted is False
+    assert word.corrected_transcript == "banana"
     assert word.displayed_transcript == "banana"
+
+
+def test_homophones_are_not_rewritten_without_matching_expected_text() -> None:
+    result = _normalize("banana", "three")
+
+    assert result.accepted is False
+    assert result.corrected_transcript == "three"
+    assert result.displayed_transcript == "three"
 
 
 def test_sentence_uses_raw_wav2vec2_transcript_not_expected_replacement() -> None:

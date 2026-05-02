@@ -9,6 +9,7 @@ from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.phoneme_comparison import phoneme_similarity
 from readirect_asr.text.normalization import normalize_for_wer, normalize_transcript
+from readirect_asr.text.reinforcement_corrections import reinforcement_table_from_config
 
 
 DEFAULT_PHONETIC_ACCEPT_THRESHOLD = 0.88
@@ -273,6 +274,12 @@ class TranscriptNormalizationResult:
     accepted_by_exact_match: bool
     accepted_by_vowel_tail: bool
     accepted_by_phoneme_evidence: bool
+    accepted_by_reinforcement_match: bool
+    reinforcement_source_file: str
+    reinforcement_expected_label: str
+    reinforcement_matched_transcript: str
+    reinforcement_match_normalized: dict[str, Any]
+    reinforcement_match_original: dict[str, Any]
     critical_phoneme: str | None
     critical_phoneme_detected: bool | None
     critical_phoneme_expected_position: str | None
@@ -331,6 +338,12 @@ def normalize_asr_transcript(
     accepted_by_letter_alias = False
     accepted_by_vowel_tail = False
     accepted_by_phoneme_evidence = False
+    accepted_by_reinforcement_match = False
+    reinforcement_source_file = ""
+    reinforcement_expected_label = ""
+    reinforcement_matched_transcript = ""
+    reinforcement_match_normalized: dict[str, Any] = {}
+    reinforcement_match_original: dict[str, Any] = {}
     threshold_used = default_threshold
     reason = "No normalization applied"
     strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
@@ -352,22 +365,54 @@ def normalize_asr_transcript(
         )
         letter_match = _single_letter_correction(normalized_expected, normalized_raw)
         lattice_score = _letter_lattice_score(normalized_expected, normalized_raw) if is_single_letter else 0.0
+        exact_match = normalize_transcript(raw) == normalize_transcript(expected)
+        reinforcement_table = reinforcement_table_from_config(active_config)
+        reinforcement_match = reinforcement_table.match(expected, raw, detected_prompt_type)
         composite_score = _composite_score(
             text_score=score,
             phoneme_score=phoneme_score,
             lattice_score=lattice_score,
-            exact_match=normalize_transcript(raw) == normalize_transcript(expected),
+            exact_match=exact_match,
             letter_alias_match=letter_match,
             known_confusion_match=_known_confusion_match(normalized_expected, normalized_raw),
             critical=critical,
         )
-        if not is_word_level:
+        if exact_match:
+            corrected = expected
+            displayed = expected
+            score = 1.0
+            composite_score = 1.0
+            applied = raw != expected
+            accepted_for_display = True
+            accepted_by_exact_match = True
+            reason = "ASR transcript already matches expected text after transcript normalization"
+            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
+        elif not is_word_level:
             reason = "Expected text is sentence-level or multi-word; word-level transcript correction was skipped"
             threshold_used = 0.0
             strategy = "wav2vec2_sentence_wer_cer_scoring" if detected_prompt_type == "sentence" else "none"
         elif _critical_blocks_acceptance(critical, critical_required, normalized_observed_phonemes):
             confidence_level = "low"
             reason = critical["critical_phoneme_reason"] or "Critical phoneme evidence contradicted expected answer"
+        elif reinforcement_match:
+            match_metadata = reinforcement_match.to_metadata()
+            corrected = expected
+            displayed = expected
+            score = 1.0
+            composite_score = 1.0
+            applied = True
+            accepted_for_display = True
+            accepted_by_reinforcement_match = True
+            reinforcement_source_file = str(match_metadata["reinforcement_source_file"])
+            reinforcement_expected_label = str(match_metadata["reinforcement_expected_label"])
+            reinforcement_matched_transcript = str(match_metadata["reinforcement_matched_transcript"])
+            reinforcement_match_normalized = dict(match_metadata["reinforcement_match_normalized"])
+            reinforcement_match_original = dict(match_metadata["reinforcement_match_original"])
+            reason = (
+                "Raw transcript matched curated reinforcement correction row: "
+                f"expected {reinforcement_expected_label}, transcript-error {reinforcement_matched_transcript}"
+            )
+            strategy = "reinforcement_error_transcript_match"
         elif letter_match:
             corrected = expected
             displayed = expected
@@ -393,16 +438,6 @@ def normalize_asr_transcript(
             accepted_by_letter_lattice = True
             threshold_used = lattice_threshold
             reason = f"Raw ASR output matched generated phonetic spelling variant for expected letter {expected}"
-            strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
-        elif normalize_transcript(raw) == normalize_transcript(expected):
-            corrected = expected
-            displayed = expected
-            score = 1.0
-            composite_score = 1.0
-            applied = raw != expected
-            accepted_for_display = True
-            accepted_by_exact_match = True
-            reason = "ASR transcript already matches expected text after transcript normalization"
             strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
         elif _known_confusion_match(normalized_expected, normalized_raw):
             threshold_used = known_confusion_threshold if not is_single_letter else single_letter_threshold
@@ -497,6 +532,12 @@ def normalize_asr_transcript(
         accepted_by_exact_match=accepted_by_exact_match,
         accepted_by_vowel_tail=accepted_by_vowel_tail,
         accepted_by_phoneme_evidence=accepted_by_phoneme_evidence,
+        accepted_by_reinforcement_match=accepted_by_reinforcement_match,
+        reinforcement_source_file=reinforcement_source_file,
+        reinforcement_expected_label=reinforcement_expected_label,
+        reinforcement_matched_transcript=reinforcement_matched_transcript,
+        reinforcement_match_normalized=reinforcement_match_normalized,
+        reinforcement_match_original=reinforcement_match_original,
         critical_phoneme=critical["critical_phoneme"],
         critical_phoneme_detected=critical["critical_phoneme_detected"],
         critical_phoneme_expected_position=critical["critical_phoneme_expected_position"],
@@ -514,6 +555,7 @@ def normalize_asr_transcript(
             "phoneme_similarity_score": phoneme_score,
             "prompt_type_detection": detected_prompt_type,
             "critical_phoneme_required": critical_required,
+            "reinforcement_corrections": reinforcement_table_from_config(active_config).status(),
         },
     )
 

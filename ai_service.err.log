@@ -1,0 +1,14 @@
+[nltk_data] Downloading package averaged_perceptron_tagger to
+[nltk_data]     C:\Users\Lost\AppData\Roaming\nltk_data...
+[nltk_data]   Unzipping taggers\averaged_perceptron_tagger.zip.
+[nltk_data] Downloading package cmudict to
+[nltk_data]     C:\Users\Lost\AppData\Roaming\nltk_data...
+[nltk_data]   Unzipping corpora\cmudict.zip.
+Loading weights:   0%|          | 0/213 [00:00<?, ?it/s]Loading weights: 100%|##########| 213/213 [00:00<00:00, 7692.92it/s]
+Loading weights:   0%|          | 0/424 [00:00<?, ?it/s]Loading weights: 100%|##########| 424/424 [00:00<00:00, 38510.68it/s]
+INFO:     Will watch for changes in these directories: ['C:\\Users\\Lost\\Documents\\holder-ReaDirect\\ReaDirect-AI-ASR']
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [14404] using StatReload
+INFO:     Started server process [28724]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

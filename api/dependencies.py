@@ -58,6 +58,9 @@ def get_config() -> dict[str, Any]:
     normalization["critical_phoneme_required"] = os.getenv("CRITICAL_PHONEME_REQUIRED", str(normalization.get("critical_phoneme_required", True))).lower() in {"1", "true", "yes"}
     normalization["low_confidence_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_THRESHOLD", str(normalization.get("low_confidence_threshold", 0.50))))
     normalization["low_confidence_similarity_threshold"] = float(os.getenv("TRANSCRIPT_NORMALIZATION_LOW_CONFIDENCE_SIMILARITY_THRESHOLD", str(normalization.get("low_confidence_similarity_threshold", 0.95))))
+    normalization["reinforcement_corrections_enabled"] = os.getenv("REINFORCEMENT_CORRECTIONS_ENABLED", str(normalization.get("reinforcement_corrections_enabled", True))).lower() in {"1", "true", "yes"}
+    normalization["reinforcement_corrections_dir"] = os.getenv("REINFORCEMENT_CORRECTIONS_DIR", str(normalization.get("reinforcement_corrections_dir", "reinforcement-learning")))
+    normalization["letter_reinforcement_file"] = os.getenv("LETTER_REINFORCEMENT_FILE", str(normalization.get("letter_reinforcement_file", "letter-reinforcement.csv")))
     return config
 
 

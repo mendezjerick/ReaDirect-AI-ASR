@@ -1,0 +1,32 @@
+Using local .venv
+Python: C:\Users\Lost\Documents\holder-ReaDirect\ReaDirect-AI-ASR\.venv\Scripts\python.exe
+AI service startup validation
+Checks:
+- Selected provider: wav2vec2_only
+- FastAPI app imports successfully
+- torch installed: 2.11.0+cu126
+- CUDA available: True
+- transformers installed: 5.7.0
+- soundfile installed: 0.13.1
+- librosa installed: 0.11.0
+- torchaudio installed: 2.11.0+cu126
+- rapidfuzz installed: 3.14.5
+- g2p_en installed
+- Fine-tuned Wav2Vec2 ASR model exists: models\wav2vec2-readirect-asr
+- Wav2Vec2 phoneme model exists: models\wav2vec2-phoneme
+- ASR Wav2Vec2 processor loads locally: models\wav2vec2-readirect-asr
+- ASR Wav2Vec2 model loads locally: models\wav2vec2-readirect-asr
+- phoneme Wav2Vec2 processor loads locally: models\wav2vec2-phoneme
+- phoneme Wav2Vec2 model loads locally: models\wav2vec2-phoneme
+- CMUdict file exists: external_datasets\cmudict\cmudict.dict
+- CMUdict file exists: external_datasets\cmudict\cmudict.phones
+- CMUdict file exists: external_datasets\cmudict\cmudict.symbols
+- Content metadata exists: content_bank_enriched\enriched_content_index.csv
+- Content metadata exists: data\manifests\content_index.csv
+- Config exists: configs/service_config.yaml
+- Config exists: configs/analysis_config.yaml
+- Config exists: configs/adaptive_config.yaml
+Warnings:
+- Speechocean762 and training JSONL files are NOT required for production runtime.
+- Whisper is not required and is not validated for Wav2Vec2-only runtime.
+PASS: AI service runtime checks passed.

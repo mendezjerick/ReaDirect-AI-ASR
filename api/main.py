@@ -23,6 +23,7 @@ from api.schemas import (
     VersionResponse,
 )
 from api.security import validate_api_token
+from readirect_asr.text.reinforcement_corrections import reinforcement_status_from_config
 
 SERVICE_NAME = "ReaDirect AI/ASR Service"
 SERVICE_VERSION = "0.1.0"
@@ -47,6 +48,7 @@ def health() -> HealthResponse:
     missing_paths = list(provider_status.get("missing_model_paths", []) or [])
     architecture = str(provider_status.get("asr_architecture", "wav2vec2_only" if service.provider_name != "mock" else "mock"))
     service_status = "ok" if service.provider_name == "mock" or not missing_paths else "degraded"
+    reinforcement_status = reinforcement_status_from_config(config.get("transcript_normalization", {}))
     return HealthResponse(
         status=service_status,
         service_status=service_status,
@@ -66,6 +68,7 @@ def health() -> HealthResponse:
         thresholds=config.get("transcript_normalization", {}),
         local_model_paths_loaded=not missing_paths,
         missing_model_paths=missing_paths,
+        **reinforcement_status,
     )
 
 
