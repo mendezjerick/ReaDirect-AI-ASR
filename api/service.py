@@ -27,6 +27,7 @@ from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.answer_matching import parse_accepted_answers
 from readirect_asr.scoring.reading_analyzer import analyze_reading_response
 from readirect_asr.text.normalization import normalize_transcript
+from readirect_asr.text.reinforcement_corrections import append_developer_correction
 from readirect_asr.text.transcript_normalizer import TranscriptNormalizationResult, normalize_asr_transcript
 
 logger = logging.getLogger("readirect_ai_asr")
@@ -172,7 +173,7 @@ class AIAnalysisService:
                 raw_transcript=asr.transcript,
                 expected_text=expected_text,
                 activity_type=request.activity_type or context["content_metadata"].get("activity_type"),
-                prompt_type=request.task_type or context["content_metadata"].get("task_type"),
+                prompt_type=request.prompt_type or request.task_type or context["content_metadata"].get("task_type"),
                 asr_confidence=asr.confidence,
                 cmudict_loader=self.cmudict_loader,
                 config=self.config.get("transcript_normalization", {}),
@@ -184,6 +185,13 @@ class AIAnalysisService:
             analysis = self.run_reading_analysis(expected_text, normalization.corrected_transcript, context["accepted_answers"], context["content_metadata"])
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
             uncertainty = self._quality_uncertainty_decision(audio_quality, asr, expected_text, normalization)
+            developer_reinforcement = self._maybe_append_developer_reinforcement(
+                request=request,
+                expected_text=expected_text,
+                raw_transcript=asr.transcript,
+                normalization=normalization,
+                uncertainty=uncertainty,
+            )
             return self.build_response(
                 request_id=request_id,
                 mode="audio",
@@ -212,6 +220,7 @@ class AIAnalysisService:
                 audio_quality=audio_quality,
                 pause_metrics=pause_metrics,
                 uncertainty=uncertainty,
+                developer_reinforcement=developer_reinforcement,
             )
         except Exception as exc:
             return self._error_response("audio", request_id, "analysis_failed", "Audio analysis failed.", started, warnings, exc)
@@ -365,6 +374,7 @@ class AIAnalysisService:
         audio_quality: dict[str, Any] | None = None,
         pause_metrics: dict[str, Any] | None = None,
         uncertainty: dict[str, Any] | None = None,
+        developer_reinforcement: dict[str, Any] | None = None,
     ) -> AnalysisResponse:
         include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
         if include_debug and debug_info is None:
@@ -426,6 +436,7 @@ class AIAnalysisService:
         audio_quality_payload = _json_safe(audio_quality or {})
         pause_metrics_payload = _json_safe(pause_metrics or {})
         uncertainty_payload = uncertainty or {}
+        developer_reinforcement_payload = developer_reinforcement or {}
         retry_required = bool(uncertainty_payload.get("retry_required", False))
         raw_transcript = str(transcript_meta.get("raw_transcript", transcript))
         corrected_transcript = str(transcript_meta.get("corrected_transcript", normalized_transcript or transcript))
@@ -523,6 +534,11 @@ class AIAnalysisService:
             enrichment_metadata=_json_safe(merged_enrichment),
             analysis_source=str(analysis.get("analysis_source", "heuristic_transcript_phoneme")),
             debug_metadata=dict(transcript_meta.get("debug_metadata", {}) or {}),
+            developer_reinforcement_mode=bool(developer_reinforcement_payload.get("mode", False)),
+            reinforcement_saved=bool(developer_reinforcement_payload.get("saved", False)),
+            reinforcement_duplicate=bool(developer_reinforcement_payload.get("duplicate", False)),
+            reinforcement_target_file=str(developer_reinforcement_payload.get("target_file", "")),
+            reinforcement_reason=str(developer_reinforcement_payload.get("reason", "")),
             warnings=warnings,
             debug_info=_json_safe(debug_info) if include_debug else None,
             processing_seconds=round(time.perf_counter() - started, 3),
@@ -530,6 +546,44 @@ class AIAnalysisService:
         )
         logger.info("request_id=%s endpoint=%s provider=%s prompt_id=%s ok=true", request_id, mode, self.provider_name, prompt_id)
         return response
+
+    def _maybe_append_developer_reinforcement(
+        self,
+        request: AnalyzeAudioRequest,
+        expected_text: str,
+        raw_transcript: str,
+        normalization: TranscriptNormalizationResult,
+        uncertainty: dict[str, Any],
+    ) -> dict[str, Any]:
+        active_config = self.config.get("transcript_normalization", {})
+        enabled = bool(request.developer_reinforcement_enabled)
+        role = str(request.developer_user_role or "")
+        created_by = str(request.developer_user_id or request.developer_user_role or "")
+        if not enabled:
+            return {
+                "mode": False,
+                "saved": False,
+                "duplicate": False,
+                "target_file": "",
+                "reason": "developer reinforcement mode is off",
+            }
+        result = append_developer_correction(
+            expected_text=expected_text,
+            raw_transcript=raw_transcript,
+            prompt_type=normalization.prompt_type,
+            accepted=normalization.accepted,
+            retry_required=bool(uncertainty.get("retry_required", False)),
+            uncertain=bool(uncertainty.get("uncertain", False)),
+            correction_strategy_used=normalization.correction_strategy_used,
+            developer_reinforcement_enabled=enabled,
+            developer_user_role=role,
+            created_by=created_by,
+            corrections_dir=active_config.get("reinforcement_corrections_dir", "reinforcement-learning"),
+            letter_file=active_config.get("letter_reinforcement_file", "letter-reinforcement.csv"),
+            word_file=active_config.get("word_reinforcement_file", "word-reinforcement.csv"),
+        )
+        result["mode"] = enabled
+        return result
 
     def _quality_uncertainty_decision(
         self,

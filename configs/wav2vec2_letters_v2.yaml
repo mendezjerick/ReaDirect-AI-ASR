@@ -1,0 +1,47 @@
+model:
+  base_model_path: models/wav2vec2-readirect-asr
+  output_model_path: models/wav2vec2-readirect-asr-letters-v2
+  checkpoint_dir: checkpoints/wav2vec2-readirect-asr-letters-v2
+
+data:
+  train_manifest: external_datasets/manifests/readirect_letters_v2_train_mixed.jsonl
+  valid_manifest: external_datasets/manifests/readirect_letters_v2_valid_mixed.jsonl
+  test_manifest: external_datasets/manifests/readirect_letters_v2_test_mixed.jsonl
+  sample_rate: 16000
+  max_duration_seconds: 15
+  min_duration_seconds: 0.2
+  dataset_mix:
+    readirect_letters: 0.50
+    speechocean: 0.30
+    librispeech: 0.20
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 2
+  learning_rate: 0.00001
+  warmup_steps: 200
+  save_steps: 500
+  logging_steps: 50
+  fp16: true_if_cuda_available
+  freeze_feature_encoder: true
+  gradient_checkpointing: true
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  seed: 42
+  require_cuda: false
+
+evaluation_during_training:
+  enabled: false
+  strategy: "no"
+  max_eval_samples: 0
+  compute_metrics: false
+  run_wer: false
+  run_cer: false
+  run_hard_cases: false
+  run_model_comparison: false
+
+evaluation_after_training:
+  enabled: false
+  note: "Evaluation must be run separately after training using a separate command."

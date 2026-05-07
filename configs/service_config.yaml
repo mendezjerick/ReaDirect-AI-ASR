@@ -14,11 +14,11 @@ analysis:
 
 asr:
   provider: wav2vec2_only
-  wav2vec2_asr_model_path: models/wav2vec2-readirect-asr
+  wav2vec2_asr_model_path: models/wav2vec2-readirect-asr-letters-v2
   wav2vec2_phoneme_model_path: models/wav2vec2-phoneme
-  wav2vec2_base_asr_model_path: models/wav2vec2-base-960h
+  wav2vec2_base_asr_model_path: models/wav2vec2-readirect-asr
   allow_wav2vec2_base_fallback: false
-  model_size: models/wav2vec2-readirect-asr
+  model_size: models/wav2vec2-readirect-asr-letters-v2
   device: cpu
   language: en
   timeout_seconds: 60
@@ -49,3 +49,4 @@ transcript_normalization:
   reinforcement_corrections_enabled: true
   reinforcement_corrections_dir: reinforcement-learning
   letter_reinforcement_file: letter-reinforcement.csv
+  word_reinforcement_file: word-reinforcement.csv

@@ -43,10 +43,10 @@ def get_config() -> dict[str, Any]:
     config["analysis"]["content_index_path"] = os.getenv("CONTENT_INDEX_PATH", config["analysis"].get("content_index_path", "data/manifests/content_index.csv"))
     config["analysis"]["enriched_content_index_path"] = os.getenv("ENRICHED_CONTENT_INDEX_PATH", config["analysis"].get("enriched_content_index_path", "content_bank_enriched/enriched_content_index.csv"))
     config["asr"]["provider"] = os.getenv("ASR_PROVIDER", config["asr"].get("provider", "wav2vec2_only"))
-    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "models/wav2vec2-readirect-asr"))
-    config["asr"]["wav2vec2_asr_model_path"] = os.getenv("WAV2VEC2_ASR_MODEL_PATH", config["asr"].get("wav2vec2_asr_model_path", "models/wav2vec2-readirect-asr"))
+    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "models/wav2vec2-readirect-asr-letters-v2"))
+    config["asr"]["wav2vec2_asr_model_path"] = os.getenv("WAV2VEC2_ASR_MODEL_PATH", config["asr"].get("wav2vec2_asr_model_path", "models/wav2vec2-readirect-asr-letters-v2"))
     config["asr"]["wav2vec2_phoneme_model_path"] = os.getenv("WAV2VEC2_PHONEME_MODEL_PATH", config["asr"].get("wav2vec2_phoneme_model_path", "models/wav2vec2-phoneme"))
-    config["asr"]["wav2vec2_base_asr_model_path"] = os.getenv("WAV2VEC2_BASE_ASR_MODEL_PATH", config["asr"].get("wav2vec2_base_asr_model_path", "models/wav2vec2-base-960h"))
+    config["asr"]["wav2vec2_base_asr_model_path"] = os.getenv("WAV2VEC2_BASE_ASR_MODEL_PATH", config["asr"].get("wav2vec2_base_asr_model_path", "models/wav2vec2-readirect-asr"))
     config["asr"]["allow_wav2vec2_base_fallback"] = os.getenv("ALLOW_WAV2VEC2_BASE_FALLBACK", str(config["asr"].get("allow_wav2vec2_base_fallback", False))).lower() in {"1", "true", "yes"}
     config["asr"]["device"] = os.getenv("ASR_DEVICE", config["asr"].get("device", "cpu"))
     config["asr"]["compute_type"] = os.getenv("ASR_COMPUTE_TYPE", config["asr"].get("compute_type", "int8"))
@@ -79,6 +79,7 @@ def get_config() -> dict[str, Any]:
     normalization["reinforcement_corrections_enabled"] = os.getenv("REINFORCEMENT_CORRECTIONS_ENABLED", str(normalization.get("reinforcement_corrections_enabled", True))).lower() in {"1", "true", "yes"}
     normalization["reinforcement_corrections_dir"] = os.getenv("REINFORCEMENT_CORRECTIONS_DIR", str(normalization.get("reinforcement_corrections_dir", "reinforcement-learning")))
     normalization["letter_reinforcement_file"] = os.getenv("LETTER_REINFORCEMENT_FILE", str(normalization.get("letter_reinforcement_file", "letter-reinforcement.csv")))
+    normalization["word_reinforcement_file"] = os.getenv("WORD_REINFORCEMENT_FILE", str(normalization.get("word_reinforcement_file", "word-reinforcement.csv")))
     return config
 
 

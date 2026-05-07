@@ -15,6 +15,7 @@ external_datasets/manifests/*
 checkpoints/
 outputs/
 models/wav2vec2-readirect-asr/
+models/wav2vec2-readirect-asr-letters-v2/
 
 data/raw/*
 data/processed/*

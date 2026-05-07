@@ -1,9 +1,9 @@
 provider: wav2vec2_only
 language: en
-model_size: models/wav2vec2-readirect-asr
-wav2vec2_asr_model_path: models/wav2vec2-readirect-asr
+model_size: models/wav2vec2-readirect-asr-letters-v2
+wav2vec2_asr_model_path: models/wav2vec2-readirect-asr-letters-v2
 wav2vec2_phoneme_model_path: models/wav2vec2-phoneme
-wav2vec2_base_asr_model_path: models/wav2vec2-base-960h
+wav2vec2_base_asr_model_path: models/wav2vec2-readirect-asr
 allow_wav2vec2_base_fallback: false
 device: cpu
 asr_architecture: wav2vec2_only

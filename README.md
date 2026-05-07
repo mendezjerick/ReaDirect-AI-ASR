@@ -23,7 +23,8 @@ Core responsibilities:
 Active runtime:
 
 - Architecture: Wav2Vec2-only.
-- Active ASR model: `models/wav2vec2-readirect-asr`.
+- Active ASR model: `models/wav2vec2-readirect-asr-letters-v2`.
+- Reference/fallback ASR model: `models/wav2vec2-readirect-asr`.
 - Phoneme support model: `models/wav2vec2-phoneme`.
 - Decoding: CTC greedy decoding.
 - Whisper status: removed from runtime and deprecated for current implementation.
@@ -56,7 +57,7 @@ Folder summary:
 
 - `api/`: FastAPI app, routes, request/response handling, health/status endpoints, and service orchestration.
 - `src/readirect_asr/`: core ASR, phoneme, scoring, correction, audio validation, content, evaluation, and adaptive analysis package.
-- `models/`: local Hugging Face model folders used by runtime, including `wav2vec2-readirect-asr` and `wav2vec2-phoneme`.
+- `models/`: local Hugging Face model folders used by runtime, including `wav2vec2-readirect-asr-letters-v2`, `wav2vec2-readirect-asr`, and `wav2vec2-phoneme`.
 - `external_datasets/`: local public and custom datasets prepared for training, evaluation, and analysis.
 - `reinforcement-learning/`: human-curated correction memory tables; this is not automatic reinforcement learning or model training.
 - `configs/`: service and training configuration references.
@@ -312,6 +313,12 @@ Feature examples:
 The active ASR model is a local Wav2Vec2ForCTC model stored at:
 
 ```text
+models/wav2vec2-readirect-asr-letters-v2
+```
+
+The previous v1 ASR model remains available for fallback/reference at:
+
+```text
 models/wav2vec2-readirect-asr
 ```
 
@@ -323,17 +330,17 @@ models/wav2vec2-phoneme
 
 The phoneme model remains separate and should not be fine-tuned unless safe phoneme-level labels exist.
 
-Current model:
-
-- `models/wav2vec2-readirect-asr`
-
-Planned continued fine-tuned model:
+Current active model:
 
 - `models/wav2vec2-readirect-asr-letters-v2`
 
-The v2 model is planned but not yet active.
+Previous v1 model retained:
 
-Planned v2 training strategy:
+- `models/wav2vec2-readirect-asr`
+
+The v2 model is active for FastAPI ASR runtime. The v1 model is not deleted or overwritten.
+
+V2 training strategy:
 
 - 50% custom ReaDirect letter dataset.
 - 30% SpeechOcean.
@@ -346,11 +353,11 @@ Purpose:
 - Preserve general English ASR stability.
 - Reduce overfitting to the custom adult letter recordings.
 
-Do not overwrite v1 when preparing v2. Train v2 into a separate model folder and keep runtime pointed at v1 until v2 has been evaluated and explicitly approved.
+Do not overwrite v1 when preparing later models. Train any future model into a separate model folder and explicitly promote it through runtime configuration.
 
 ### D. Model Evaluation & Validation
 
-Evaluation should happen before switching any runtime model.
+Evaluation should happen before switching any future runtime model.
 
 Metrics and checks include:
 
@@ -363,9 +370,9 @@ Metrics and checks include:
 - Word-level evaluation.
 - Sentence-level evaluation.
 - Hard-case evaluation.
-- Model comparison against the active v1 model.
+- Model comparison against the active or reference model.
 
-The planned v2 model must not become active until it is evaluated against `models/wav2vec2-readirect-asr` and the results show it is safe to promote.
+The v2 model has been promoted to runtime. Future candidate models must not become active until they are evaluated against the current active model and explicitly approved.
 
 ## 10. Training and Fine-Tuning Workflow
 
@@ -440,6 +447,7 @@ The health/status endpoint reports runtime readiness and should reflect:
 - `wav2vec2_only` runtime status.
 - Wav2Vec2 ASR model availability.
 - Wav2Vec2 phoneme model availability.
+- Active Wav2Vec2 model path and v2 metadata.
 - Correction layer status.
 - Reinforcement correction status.
 - Audio quality validation status.
@@ -467,7 +475,7 @@ Historical Whisper files or docs may remain for archive context. They do not des
 
 - The custom ReaDirect letter dataset uses adult speakers.
 - Child-voice validation should be expanded in future work.
-- The v2 model is not active until trained, evaluated, and explicitly promoted.
+- The active v2 model still needs expanded child-voice validation.
 - Correction memory is human-curated, not automatic learning.
 - Sentence-level context/language-model decoding is not currently active unless implemented separately.
 - Short letters and short words remain challenging for ASR and require careful correction safeguards.
@@ -483,7 +491,8 @@ Large datasets, generated reports, checkpoints, private learner data, and model 
 
 Current runtime requirements:
 
-- Active ASR model folder: `models/wav2vec2-readirect-asr`.
+- Active ASR model folder: `models/wav2vec2-readirect-asr-letters-v2`.
+- Previous ASR model folder retained: `models/wav2vec2-readirect-asr`.
 - Phoneme support model folder: `models/wav2vec2-phoneme`.
 - FastAPI service code in `api/`.
 - Core analysis package in `src/readirect_asr/`.
@@ -499,7 +508,20 @@ python scripts/validate_ai_service_startup.py
 Start local development service:
 
 ```powershell
+python scripts/validate_ai_service_startup.py
 powershell -ExecutionPolicy Bypass -File scripts/start_ai_service_dev.ps1
+```
+
+The service listens on:
+
+```text
+http://127.0.0.1:8001
+```
+
+Health check:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8001/health -UseBasicParsing
 ```
 
 Contract test:

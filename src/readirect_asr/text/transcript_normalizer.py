@@ -9,7 +9,7 @@ from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.phoneme_comparison import phoneme_similarity
 from readirect_asr.text.normalization import normalize_for_wer, normalize_transcript
-from readirect_asr.text.reinforcement_corrections import reinforcement_table_from_config
+from readirect_asr.text.reinforcement_corrections import normalize_prompt_type, reinforcement_table_from_config
 
 
 DEFAULT_PHONETIC_ACCEPT_THRESHOLD = 0.88
@@ -356,7 +356,7 @@ def normalize_asr_transcript(
         strategy = "none"
     else:
         is_single_letter = detected_prompt_type == "letter"
-        is_single_word = detected_prompt_type == "word"
+        is_single_word = detected_prompt_type in {"word", "rhyme", "rhyming_word"}
         is_word_level = is_single_letter or is_single_word
         threshold_used = (
             single_letter_threshold
@@ -387,10 +387,6 @@ def normalize_asr_transcript(
             accepted_by_exact_match = True
             reason = "ASR transcript already matches expected text after transcript normalization"
             strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
-        elif not is_word_level:
-            reason = "Expected text is sentence-level or multi-word; word-level transcript correction was skipped"
-            threshold_used = 0.0
-            strategy = "wav2vec2_sentence_wer_cer_scoring" if detected_prompt_type == "sentence" else "none"
         elif _critical_blocks_acceptance(critical, critical_required, normalized_observed_phonemes):
             confidence_level = "low"
             reason = critical["critical_phoneme_reason"] or "Critical phoneme evidence contradicted expected answer"
@@ -413,6 +409,10 @@ def normalize_asr_transcript(
                 f"expected {reinforcement_expected_label}, transcript-error {reinforcement_matched_transcript}"
             )
             strategy = "reinforcement_error_transcript_match"
+        elif not is_word_level:
+            reason = "Expected text is sentence-level or multi-word; word-level transcript correction was skipped"
+            threshold_used = 0.0
+            strategy = "wav2vec2_sentence_wer_cer_scoring" if detected_prompt_type in {"sentence", "paragraph", "passage", "final_sentence", "reading_passage"} else "none"
         elif letter_match:
             corrected = expected
             displayed = expected
@@ -583,17 +583,15 @@ def phonetic_similarity_score(
 
 def detect_prompt_type(expected_text: str, activity_type: str | None = None, prompt_type: str | None = None) -> str:
     normalized = normalize_for_wer(expected_text)
-    explicit = normalize_transcript(prompt_type or activity_type or "")
+    explicit = normalize_prompt_type(prompt_type or activity_type or "")
+    if explicit in {"letter", "word", "rhyme", "rhyming_word", "sentence", "paragraph", "passage", "final_sentence", "reading_passage"}:
+        return explicit
     if not normalized:
         return "unknown"
     if len(normalized) == 1 and normalized.isalpha():
         return "letter"
     tokens = normalized.split()
     if len(tokens) == 1:
-        return "word"
-    if "letter" in explicit and len(normalized) == 1:
-        return "letter"
-    if "word" in explicit and len(tokens) == 1:
         return "word"
     return "sentence"
 

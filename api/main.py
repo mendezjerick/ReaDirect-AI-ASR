@@ -20,11 +20,13 @@ from api.schemas import (
     HealthResponse,
     RecommendNextRequest,
     RecommendNextResponse,
+    ReinforcementCorrectionRequest,
+    ReinforcementCorrectionResponse,
     VersionResponse,
 )
 from api.security import validate_api_token
 from readirect_asr.audio.preprocessing import audio_quality_config
-from readirect_asr.text.reinforcement_corrections import reinforcement_status_from_config
+from readirect_asr.text.reinforcement_corrections import append_developer_correction, reinforcement_status_from_config
 
 SERVICE_NAME = "ReaDirect AI/ASR Service"
 SERVICE_VERSION = "0.1.0"
@@ -61,12 +63,17 @@ def health() -> HealthResponse:
         cmudict_loaded=not bool(service.cmudict_loader.missing_files()),
         asr_architecture=architecture,
         active_asr_model=str(provider_status.get("active_asr_model", "wav2vec2" if service.provider_name != "mock" else "mock")),
+        active_asr_model_path=str(provider_status.get("active_asr_model_path", "")),
         wav2vec2_asr_available=bool(provider_status.get("wav2vec2_asr_available", service.provider_name == "mock")),
         wav2vec2_asr_model_name=str(provider_status.get("wav2vec2_asr_model_name", config.get("asr", {}).get("wav2vec2_asr_model_path", ""))),
         wav2vec2_phoneme_available=bool(provider_status.get("wav2vec2_phoneme_available", service.provider_name == "mock")),
         wav2vec2_phoneme_model_name=str(provider_status.get("wav2vec2_phoneme_model_name", config.get("asr", {}).get("wav2vec2_phoneme_model_path", ""))),
         whisper_available=False,
         whisper_removed=True,
+        model_version=str(provider_status.get("model_version", "")),
+        base_model=str(provider_status.get("base_model", "")),
+        training_type=str(provider_status.get("training_type", "")),
+        training_mix=str(provider_status.get("training_mix", "")),
         thresholds=config.get("transcript_normalization", {}),
         local_model_paths_loaded=not missing_paths,
         missing_model_paths=missing_paths,
@@ -124,6 +131,29 @@ def analyze_text(request: AnalyzeTextRequest) -> AnalysisResponse:
 @app.post("/analyze-audio", response_model=AnalysisResponse, dependencies=[Depends(validate_api_token)])
 def analyze_audio(request: AnalyzeAudioRequest) -> AnalysisResponse:
     return get_service().analyze_audio(request)
+
+
+@app.post("/reinforcement/corrections", response_model=ReinforcementCorrectionResponse, dependencies=[Depends(validate_api_token)])
+def reinforcement_correction(request: ReinforcementCorrectionRequest) -> ReinforcementCorrectionResponse:
+    active_config = config.get("transcript_normalization", {})
+    result = append_developer_correction(
+        expected_text=request.expected_text,
+        raw_transcript=request.raw_transcript,
+        prompt_type=request.prompt_type,
+        accepted=request.accepted,
+        retry_required=request.retry_required,
+        uncertain=request.uncertain,
+        correction_strategy_used=request.correction_strategy_used,
+        developer_reinforcement_enabled=request.developer_reinforcement_enabled,
+        developer_user_role=request.developer_user_role or request.created_by,
+        created_by=request.created_by,
+        source=request.source,
+        notes=request.notes,
+        corrections_dir=active_config.get("reinforcement_corrections_dir", "reinforcement-learning"),
+        letter_file=active_config.get("letter_reinforcement_file", "letter-reinforcement.csv"),
+        word_file=active_config.get("word_reinforcement_file", "word-reinforcement.csv"),
+    )
+    return ReinforcementCorrectionResponse(**result)
 
 
 @app.post("/content-item", response_model=ContentItemResponse, dependencies=[Depends(validate_api_token)])

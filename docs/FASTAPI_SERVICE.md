@@ -19,13 +19,30 @@ The FastAPI service is the Laravel-facing API for ReaDirect AI/ASR analysis.
 - `POST /analyze-audio`
 - `POST /content-item`
 - `POST /analyze-content-item`
+- `POST /reinforcement/corrections`
 
 `/analyze-audio-file` multipart upload is a future option. Phase 7 supports path-based audio analysis.
 
 ## Local Development
 
+Run from the `ReaDirect-AI-ASR` repository root:
+
 ```powershell
-uvicorn api.main:app --reload --port 8001
+python scripts\validate_ai_service_startup.py
+powershell -ExecutionPolicy Bypass -File scripts\start_ai_service_dev.ps1
+```
+
+The service listens on `http://127.0.0.1:8001`.
+
+Health check:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8001/health -UseBasicParsing
+```
+
+Text smoke test:
+
+```powershell
 python scripts/test_api_analysis.py --mode text --expected-text cat --actual-text cap --accepted-answer cat --debug
 ```
 
@@ -57,7 +74,7 @@ Laravel should send `X-ReaDirect-AI-Token`.
 
 Students should never call this service directly. Keep it private and call it server-to-server from Laravel.
 
-The runtime ASR architecture is Wav2Vec2-only. The active ASR model is `models/wav2vec2-readirect-asr`, with `models/wav2vec2-phoneme` used as supporting acoustic-phonetic evidence for letters and short words. Whisper is removed from runtime routing and is not required by health checks or startup validation.
+The runtime ASR architecture is Wav2Vec2-only. The active ASR model is `models/wav2vec2-readirect-asr-letters-v2`, with `models/wav2vec2-phoneme` used as supporting acoustic-phonetic evidence for letters and short words. Whisper is removed from runtime routing and is not required by health checks or startup validation.
 
 The FastAPI service is the bridge from Laravel to the AI layer. Laravel remains the official scorer and progression controller. The AI service returns transcript, similarity, phoneme, error-type, feedback, and adaptive recommendation signals.
 

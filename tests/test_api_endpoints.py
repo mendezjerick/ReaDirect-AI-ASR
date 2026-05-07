@@ -29,3 +29,35 @@ def test_analyze_audio_missing_file_safe() -> None:
     assert response.json()["ok"] is False
     assert response.json()["error"] == "audio_file_not_found"
 
+
+def test_reinforcement_corrections_endpoint(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("api.main.config", {"transcript_normalization": {"reinforcement_corrections_dir": str(tmp_path)}})
+
+    response = client.post(
+        "/reinforcement/corrections",
+        json={
+            "expected_text": "Leo",
+            "raw_transcript": "Layo",
+            "prompt_type": "word",
+            "accepted": False,
+            "created_by": "admin",
+            "source": "developer_auto",
+        },
+    )
+    duplicate = client.post(
+        "/reinforcement/corrections",
+        json={
+            "expected_text": "Leo",
+            "raw_transcript": "Layo",
+            "prompt_type": "word",
+            "accepted": False,
+            "created_by": "admin",
+            "source": "developer_auto",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["saved"] is True
+    assert response.json()["target_file"] == "word-reinforcement.csv"
+    assert duplicate.json()["saved"] is False
+    assert duplicate.json()["duplicate"] is True

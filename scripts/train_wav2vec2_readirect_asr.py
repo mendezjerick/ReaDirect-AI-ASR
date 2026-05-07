@@ -25,9 +25,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--max-train-samples", type=int, default=None)
     parser.add_argument("--resume-from-checkpoint", default=None)
-    parser.add_argument("--stage", choices=("mixed", "librispeech", "speechocean"), default="mixed")
+    parser.add_argument("--stage", choices=("mixed", "librispeech", "speechocean", "readirect_letters"), default="mixed")
     parser.add_argument("--no-eval", action="store_true")
     parser.add_argument("--enable-light-eval", action="store_true")
+    parser.add_argument("--require-cuda", action="store_true")
     return parser.parse_args()
 
 
@@ -48,6 +49,42 @@ def torch_runtime() -> dict[str, Any]:
         "gpu_name": torch.cuda.get_device_name(0) if cuda else "CPU",
         "cuda_version": torch.version.cuda,
     }
+
+
+def artifact_stem(config: dict[str, Any]) -> str:
+    output_name = Path(str(config["model"]["output_model_path"])).name
+    if output_name == "wav2vec2-readirect-asr-letters-v2":
+        return "wav2vec2_letters_v2"
+    return "wav2vec2_readirect"
+
+
+def dataset_mix(rows: list[dict[str, Any]]) -> dict[str, float]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        dataset = str(row.get("dataset", "unknown"))
+        counts[dataset] = counts.get(dataset, 0) + 1
+    total = sum(counts.values())
+    if total == 0:
+        return {}
+    return {dataset: round(count / total, 6) for dataset, count in sorted(counts.items())}
+
+
+def final_training_loss(train_metrics: dict[str, Any]) -> float | None:
+    for key in ("train_loss", "loss"):
+        value = train_metrics.get(key)
+        if value is None:
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def write_training_log(config: dict[str, Any], lines: list[str]) -> None:
+    output = resolve_repo_path(f"outputs/training/{artifact_stem(config)}_training_log.txt")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def filter_rows_for_training(rows: list[dict[str, Any]], config: dict[str, Any], stage: str) -> list[dict[str, Any]]:
@@ -215,6 +252,40 @@ def save_metadata(config: dict[str, Any], args: argparse.Namespace, rows: list[d
     for row in rows:
         dataset = str(row.get("dataset", "unknown"))
         dataset_counts[dataset] = dataset_counts.get(dataset, 0) + 1
+    output_name = Path(str(config["model"]["output_model_path"])).name
+    configured_mix = config.get("data", {}).get("dataset_mix")
+    if output_name == "wav2vec2-readirect-asr-letters-v2":
+        metadata = {
+            "model_name": "wav2vec2-readirect-asr-letters-v2",
+            "base_model_path": config["model"]["base_model_path"],
+            "output_model_path": config["model"]["output_model_path"],
+            "training_type": "continued_fine_tuning",
+            "training_mix": configured_mix
+            or {
+                "readirect_letters": 0.50,
+                "speechocean": 0.30,
+                "librispeech": 0.20,
+            },
+            "training_datasets": dataset_counts,
+            "training_date": datetime.now(timezone.utc).isoformat(),
+            "evaluation_completed": False,
+            "wer": None,
+            "cer": None,
+            "runtime_active": False,
+            "training_metrics": train_metrics,
+            "notes": [
+                "This model is a continued fine-tuned v2 model focused on isolated English letter recognition.",
+                "The v1 model was not overwritten.",
+                "The phoneme model was not fine-tuned.",
+                "Full evaluation must be run separately before making this model active.",
+            ],
+        }
+        (output_model_path / "readirect_model_metadata.json").write_text(
+            json.dumps(metadata, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return
+
     metadata = {
         "base_model_path": config["model"]["base_model_path"],
         "training_datasets": dataset_counts,
@@ -246,18 +317,42 @@ def save_training_summary(
     train_row_count: int,
     train_metrics: dict[str, Any],
     light_eval_metrics: dict[str, Any] | None,
+    start_time: datetime,
+    end_time: datetime,
+    rows: list[dict[str, Any]],
 ) -> None:
-    output = resolve_repo_path("outputs/training/wav2vec2_readirect_training_summary.json")
+    output = resolve_repo_path(f"outputs/training/{artifact_stem(config)}_training_summary.json")
     output.parent.mkdir(parents=True, exist_ok=True)
+    train_cfg = config.get("training", {})
     summary = {
+        "training_completed": True,
         "config": str(args.config),
         "stage": args.stage,
         "smoke_test": bool(args.smoke_test),
         "train_rows": train_row_count,
-        "runtime": runtime,
         "base_model_path": config["model"]["base_model_path"],
         "output_model_path": config["model"]["output_model_path"],
         "checkpoint_dir": config["model"]["checkpoint_dir"],
+        "train_manifest": config.get("data", {}).get("train_manifest"),
+        "number_of_train_rows": train_row_count,
+        "dataset_mix_target": config.get("data", {}).get("dataset_mix"),
+        "dataset_mix_actual": dataset_mix(rows),
+        "num_train_epochs": train_cfg.get("num_train_epochs"),
+        "learning_rate": train_cfg.get("learning_rate"),
+        "batch_size": train_cfg.get("per_device_train_batch_size"),
+        "gradient_accumulation_steps": train_cfg.get("gradient_accumulation_steps"),
+        "fp16_used": False if args.smoke_test else resolve_fp16(train_cfg.get("fp16", False), bool(runtime.get("cuda"))),
+        "cuda_used": bool(runtime.get("cuda")),
+        "gpu_name": runtime.get("gpu_name"),
+        "start_time": start_time.isoformat(),
+        "end_time": end_time.isoformat(),
+        "total_training_time": str(end_time - start_time),
+        "final_training_loss": final_training_loss(train_metrics),
+        "evaluation_completed": False,
+        "wer": None,
+        "cer": None,
+        "note": "Evaluation is separate and was not run during training.",
+        "runtime": runtime,
         "evaluation_during_training_enabled": bool(config.get("evaluation_during_training", {}).get("enabled", False)) and not args.no_eval,
         "light_eval_metrics": light_eval_metrics,
         "train_metrics": train_metrics,
@@ -278,8 +373,24 @@ def maybe_run_light_eval(trainer: Any, enabled: bool) -> dict[str, Any] | None:
 def main() -> int:
     args = parse_args()
     config = load_config(args.config)
+    start_time = datetime.now(timezone.utc)
+    log_lines = [
+        f"start_time={start_time.isoformat()}",
+        f"config={args.config}",
+        f"smoke_test={args.smoke_test}",
+        f"no_eval={args.no_eval}",
+    ]
     runtime = torch_runtime()
+    print(f"torch.cuda.is_available(): {runtime['cuda']}")
     print(f"Runtime device: {runtime['device']} ({runtime['gpu_name']})")
+    log_lines.append(f"torch.cuda.is_available={runtime['cuda']}")
+    log_lines.append(f"gpu_name={runtime['gpu_name']}")
+    require_cuda = bool(args.require_cuda) or bool(config.get("training", {}).get("require_cuda", False))
+    if require_cuda and not runtime["cuda"]:
+        print("CUDA is required but unavailable. Stopping before training.")
+        log_lines.append("stopped=CUDA is required but unavailable")
+        write_training_log(config, log_lines)
+        return 2
     if not runtime["cuda"]:
         print("Warning: CUDA is unavailable. CPU training is supported for smoke tests but full training will be slow.")
 
@@ -289,9 +400,13 @@ def main() -> int:
     data_cfg = config["data"]
     base_model_path = resolve_repo_path(model_cfg["base_model_path"])
     output_model_path = resolve_repo_path(model_cfg["output_model_path"])
+    if base_model_path.resolve() == output_model_path.resolve():
+        raise RuntimeError("Output model path must be separate from the base model path. Refusing to overwrite the base model.")
     output_model_path.mkdir(parents=True, exist_ok=True)
 
     train_rows = load_training_rows(config, args)
+    log_lines.append(f"train_rows={len(train_rows)}")
+    log_lines.append(f"dataset_mix_actual={dataset_mix(train_rows)}")
     eval_cfg = config.get("evaluation_during_training", {})
     run_eval_during_training = bool(eval_cfg.get("enabled", False)) and not args.no_eval
     light_eval_enabled = bool(args.enable_light_eval) and not args.no_eval
@@ -331,18 +446,28 @@ def main() -> int:
     )
     if not run_eval_during_training:
         print("Training-time evaluation is disabled. Full evaluation must be run with scripts/evaluate_wav2vec2_readirect_asr.py.")
+        log_lines.append("training_time_evaluation=disabled")
 
     train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     train_metrics = dict(train_result.metrics)
+    log_lines.append(f"train_metrics={json.dumps(train_metrics, sort_keys=True)}")
     trainer.save_model(str(output_model_path))
     processor.save_pretrained(str(output_model_path))
+    log_lines.append(f"saved_model={output_model_path.relative_to(PROJECT_ROOT)}")
     light_eval_metrics = None
     if light_eval_enabled and eval_dataset is not None:
         trainer.eval_dataset = eval_dataset
         light_eval_metrics = maybe_run_light_eval(trainer, True)
+        log_lines.append(f"light_eval_metrics={json.dumps(light_eval_metrics, sort_keys=True)}")
 
     save_metadata(config, args, train_rows, train_metrics)
-    save_training_summary(config, args, runtime, len(train_rows), train_metrics, light_eval_metrics)
+    end_time = datetime.now(timezone.utc)
+    save_training_summary(config, args, runtime, len(train_rows), train_metrics, light_eval_metrics, start_time, end_time, train_rows)
+    log_lines.append(f"end_time={end_time.isoformat()}")
+    log_lines.append("evaluation_completed=false")
+    log_lines.append("wer=null")
+    log_lines.append("cer=null")
+    write_training_log(config, log_lines)
     print(f"Training complete. Model and processor saved to {output_model_path.relative_to(PROJECT_ROOT)}")
     return 0
 

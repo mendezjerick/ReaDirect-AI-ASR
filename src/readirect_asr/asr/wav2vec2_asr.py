@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import time
 from pathlib import Path
@@ -15,9 +16,9 @@ class Wav2Vec2OnlyASR(ASRProvider):
 
     def __init__(
         self,
-        model_path: str = "models/wav2vec2-readirect-asr",
+        model_path: str = "models/wav2vec2-readirect-asr-letters-v2",
         phoneme_model_path: str = "models/wav2vec2-phoneme",
-        base_model_path: str = "models/wav2vec2-base-960h",
+        base_model_path: str = "models/wav2vec2-readirect-asr",
         allow_base_fallback: bool = False,
         device: str = "cpu",
         sampling_rate: int = 16000,
@@ -55,9 +56,11 @@ class Wav2Vec2OnlyASR(ASRProvider):
         if not Path(self.phoneme_model_path).exists():
             missing_paths.append(self.phoneme_model_path)
         active_model = (asr_path or Path(self.model_path)).as_posix()
+        metadata = _model_metadata(Path(active_model))
         return {
             "asr_architecture": self.asr_route,
-            "active_asr_model": active_model,
+            "active_asr_model": "wav2vec2",
+            "active_asr_model_path": active_model,
             "wav2vec2_asr_available": asr_path is not None,
             "wav2vec2_asr_model_name": active_model,
             "wav2vec2_phoneme_available": Path(self.phoneme_model_path).exists(),
@@ -65,6 +68,7 @@ class Wav2Vec2OnlyASR(ASRProvider):
             "base_fallback_enabled": self.allow_base_fallback,
             "using_base_fallback": asr_path == Path(self.base_model_path),
             "missing_model_paths": missing_paths,
+            **metadata,
         }
 
     def _select_asr_model_path(self, strict: bool = True) -> Path | None:
@@ -207,3 +211,46 @@ def _normalize_phoneme_output(text: str) -> list[str]:
         if phone:
             phones.append(phone)
     return phones
+
+
+def _model_metadata(model_dir: Path) -> dict[str, Any]:
+    metadata_path = model_dir / "readirect_model_metadata.json"
+    if not metadata_path.exists():
+        return {}
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    model_name = str(data.get("model_name", ""))
+    model_version = str(data.get("model_version") or "")
+    if not model_version and model_name.endswith("letters-v2"):
+        model_version = "letters-v2"
+    return {
+        "model_version": model_version,
+        "base_model": str(data.get("base_model_path") or data.get("base_model") or ""),
+        "training_type": str(data.get("training_type") or ""),
+        "training_mix": _format_training_mix(data.get("training_mix")),
+    }
+
+
+def _format_training_mix(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, dict):
+        return ""
+    labels = {
+        "readirect_letters": "ReaDirect letters",
+        "speechocean": "SpeechOcean",
+        "librispeech": "LibriSpeech",
+    }
+    parts = []
+    for key in ("readirect_letters", "speechocean", "librispeech"):
+        if key not in value:
+            continue
+        try:
+            ratio = float(value[key])
+        except (TypeError, ValueError):
+            continue
+        percent = int(round(ratio * 100)) if ratio <= 1 else int(round(ratio))
+        parts.append(f"{percent}% {labels[key]}")
+    return ", ".join(parts)

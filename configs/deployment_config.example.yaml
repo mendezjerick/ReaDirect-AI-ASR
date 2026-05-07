@@ -9,9 +9,9 @@ production_same_server:
   api_port: 8001
   auth_enabled: true
   asr_provider: wav2vec2_only
-  wav2vec2_asr_model_path: models/wav2vec2-readirect-asr
+  wav2vec2_asr_model_path: models/wav2vec2-readirect-asr-letters-v2
   wav2vec2_phoneme_model_path: models/wav2vec2-phoneme
-  wav2vec2_base_asr_model_path: models/wav2vec2-base-960h
+  wav2vec2_base_asr_model_path: models/wav2vec2-readirect-asr
   allow_wav2vec2_base_fallback: false
   laravel_base_url: http://127.0.0.1:8000
 
@@ -20,8 +20,8 @@ production_separate_ai_server:
   api_port: 8001
   auth_enabled: true
   asr_provider: wav2vec2_only
-  wav2vec2_asr_model_path: /opt/readirect-ai/models/wav2vec2-readirect-asr
+  wav2vec2_asr_model_path: /opt/readirect-ai/models/wav2vec2-readirect-asr-letters-v2
   wav2vec2_phoneme_model_path: /opt/readirect-ai/models/wav2vec2-phoneme
-  wav2vec2_base_asr_model_path: /opt/readirect-ai/models/wav2vec2-base-960h
+  wav2vec2_base_asr_model_path: /opt/readirect-ai/models/wav2vec2-readirect-asr
   allow_wav2vec2_base_fallback: false
   laravel_base_url: https://your-readirect-host.example

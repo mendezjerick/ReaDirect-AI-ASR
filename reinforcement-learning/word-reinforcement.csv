@@ -1,0 +1,20 @@
+expected_text,raw_transcript,normalized_expected,normalized_raw,prompt_type,source,created_at,created_by,notes
+cat,Cut,cat,cut,word,curated,,,migrated from older reinforcement CSV schema
+pond,PUND,pond,pund,word,curated,,,migrated from older reinforcement CSV schema
+bee,B,bee,b,word,curated,,,migrated from older reinforcement CSV schema
+sun,Son,sun,son,word,curated,,,migrated from older reinforcement CSV schema
+box,Buck's,box,buck's,word,curated,,,migrated from older reinforcement CSV schema
+box,Buckf,box,buckf,word,curated,,,migrated from older reinforcement CSV schema
+ball,Bowl,ball,bowl,word,curated,,,migrated from older reinforcement CSV schema
+ball,Bull,ball,bull,word,curated,,,migrated from older reinforcement CSV schema
+ball,Boil,ball,boil,word,curated,,,migrated from older reinforcement CSV schema
+ball,Bye,ball,bye,word,curated,,,migrated from older reinforcement CSV schema
+tree,Three,tree,three,word,curated,,,migrated from older reinforcement CSV schema
+tree,3,tree,3,word,curated,,,migrated from older reinforcement CSV schema
+hat,hu,hat,hu,sentence,developer_auto,2026-05-07T11:01:50Z,admin@readirect.local,auto-added from developer reinforcement mode
+hat,hut,hat,hut,sentence,developer_auto,2026-05-07T11:02:02Z,admin@readirect.local,auto-added from developer reinforcement mode
+ball,dull,ball,dull,sentence,developer_auto,2026-05-07T11:02:11Z,admin@readirect.local,auto-added from developer reinforcement mode
+ball,boy,ball,boy,sentence,developer_auto,2026-05-07T11:02:20Z,admin@readirect.local,auto-added from developer reinforcement mode
+book,bok,book,bok,sentence,developer_auto,2026-05-07T11:02:31Z,admin@readirect.local,auto-added from developer reinforcement mode
+tree,tr,tree,tr,sentence,developer_auto,2026-05-07T11:02:37Z,admin@readirect.local,auto-added from developer reinforcement mode
+rock,ruck,rock,ruck,sentence,developer_auto,2026-05-07T11:03:03Z,admin@readirect.local,auto-added from developer reinforcement mode

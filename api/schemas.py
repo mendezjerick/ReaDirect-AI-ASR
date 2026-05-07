@@ -17,10 +17,15 @@ class HealthResponse(BaseModel):
     active_asr_model: str = "wav2vec2"
     wav2vec2_asr_available: bool = False
     wav2vec2_asr_model_name: str = ""
+    active_asr_model_path: str = ""
     wav2vec2_phoneme_available: bool = False
     wav2vec2_phoneme_model_name: str = ""
     whisper_available: bool = False
     whisper_removed: bool = True
+    model_version: str = ""
+    base_model: str = ""
+    training_type: str = ""
+    training_mix: str = ""
     supported_prompt_types: list[str] = Field(default_factory=lambda: ["letter", "word", "sentence"])
     correction_layer_enabled: bool = True
     expected_centric_scoring_enabled: bool = True
@@ -66,6 +71,7 @@ class AnalyzeAudioRequest(BaseModel):
     expected_text: str | None = None
     accepted_answers: list[str] = Field(default_factory=list)
     prompt_id: str | None = None
+    prompt_type: str | None = None
     module_key: str | None = None
     activity_type: str | None = None
     task_type: str | None = None
@@ -75,6 +81,31 @@ class AnalyzeAudioRequest(BaseModel):
     learner_history: list[dict[str, Any]] = Field(default_factory=list)
     candidate_items: list[dict[str, Any]] = Field(default_factory=list)
     debug: bool = False
+    developer_reinforcement_enabled: bool = False
+    developer_user_role: str | None = None
+    developer_user_id: str | int | None = None
+
+
+class ReinforcementCorrectionRequest(BaseModel):
+    expected_text: str
+    raw_transcript: str
+    prompt_type: str
+    accepted: bool = False
+    retry_required: bool = False
+    uncertain: bool = False
+    correction_strategy_used: str = "none"
+    created_by: str = "admin"
+    source: str = "developer_auto"
+    notes: str = "auto-added from developer reinforcement mode"
+    developer_reinforcement_enabled: bool = True
+    developer_user_role: str | None = None
+
+
+class ReinforcementCorrectionResponse(BaseModel):
+    saved: bool
+    target_file: str = ""
+    reason: str
+    duplicate: bool = False
 
 
 class AnalysisResponse(BaseModel):
@@ -167,6 +198,11 @@ class AnalysisResponse(BaseModel):
     enrichment_metadata: dict[str, Any] = Field(default_factory=dict)
     analysis_source: str = "heuristic_transcript_phoneme"
     debug_metadata: dict[str, Any] = Field(default_factory=dict)
+    developer_reinforcement_mode: bool = False
+    reinforcement_saved: bool = False
+    reinforcement_duplicate: bool = False
+    reinforcement_target_file: str = ""
+    reinforcement_reason: str = ""
     warnings: list[str] = Field(default_factory=list)
     debug_info: Optional[dict[str, Any]] = None
     processing_seconds: float = 0.0
