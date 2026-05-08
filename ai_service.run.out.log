@@ -1,0 +1,59 @@
+Using local .venv
+Python: C:\Users\Lost\Documents\holder-ReaDirect\ReaDirect-AI-ASR\.venv\Scripts\python.exe
+AI service startup validation
+Checks:
+- Selected provider: wav2vec2_only
+- FastAPI app imports successfully
+- torch installed: 2.11.0+cu126
+- CUDA available: True
+- CUDA device: NVIDIA GeForce RTX 3060
+- transformers installed: 5.7.0
+- soundfile installed: 0.13.1
+- librosa installed: 0.11.0
+- torchaudio installed: 2.11.0+cu126
+- rapidfuzz installed: 3.14.5
+- g2p_en installed
+- Fine-tuned Wav2Vec2 ASR model exists: models\wav2vec2-readirect-asr-letters-v2
+- Wav2Vec2 phoneme model exists: models\wav2vec2-phoneme
+- ASR model file exists: models\wav2vec2-readirect-asr-letters-v2\config.json
+- ASR model weights exist: models\wav2vec2-readirect-asr-letters-v2
+- ASR processor/preprocessor config exists: models\wav2vec2-readirect-asr-letters-v2
+- ASR tokenizer files exist: models\wav2vec2-readirect-asr-letters-v2
+- ASR ReaDirect model metadata exists: models\wav2vec2-readirect-asr-letters-v2\readirect_model_metadata.json
+- phoneme model file exists: models\wav2vec2-phoneme\config.json
+- phoneme model weights exist: models\wav2vec2-phoneme
+- phoneme processor/preprocessor config exists: models\wav2vec2-phoneme
+- phoneme tokenizer files exist: models\wav2vec2-phoneme
+- ASR Wav2Vec2 processor loads locally: models\wav2vec2-readirect-asr-letters-v2
+- ASR Wav2Vec2 model loads locally: models\wav2vec2-readirect-asr-letters-v2
+- phoneme Wav2Vec2 processor loads locally: models\wav2vec2-phoneme
+- phoneme Wav2Vec2 model loads locally: models\wav2vec2-phoneme
+- health/status asr_architecture: wav2vec2_only
+- health/status active_asr_model: wav2vec2
+- health/status wav2vec2_asr_available: True
+- health/status wav2vec2_asr_model_name: models/wav2vec2-readirect-asr-letters-v2
+- health/status wav2vec2_phoneme_available: True
+- health/status wav2vec2_phoneme_model_name: models/wav2vec2-phoneme
+- health/status whisper_removed: True
+- health/status correction_layer_enabled: True
+- health/status expected_centric_scoring_enabled: True
+- health/status phoneme_evidence_enabled: True
+- health/status reinforcement_corrections_enabled: True
+- health/status audio_quality_validation_enabled: True
+- health/status pause_detection_enabled: True
+- health/status uncertainty_decision_enabled: True
+- health/status model_version: letters-v2
+- health/status training_type: continued_fine_tuning
+- health/status training_mix: 50% ReaDirect letters, 30% SpeechOcean, 20% LibriSpeech
+- CMUdict file exists: external_datasets\cmudict\cmudict.dict
+- CMUdict file exists: external_datasets\cmudict\cmudict.phones
+- CMUdict file exists: external_datasets\cmudict\cmudict.symbols
+- Content metadata exists: content_bank_enriched\enriched_content_index.csv
+- Content metadata exists: data\manifests\content_index.csv
+- Config exists: configs/service_config.yaml
+- Config exists: configs/analysis_config.yaml
+- Config exists: configs/adaptive_config.yaml
+Warnings:
+- Speechocean762 and training JSONL files are NOT required for production runtime.
+- Whisper is not required and is not validated for Wav2Vec2-only runtime.
+PASS: AI service runtime checks passed.

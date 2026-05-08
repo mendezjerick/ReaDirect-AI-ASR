@@ -1,0 +1,7 @@
+Loading weights:   0%|          | 0/213 [00:00<?, ?it/s]Loading weights: 100%|##########| 213/213 [00:00<00:00, 8970.38it/s]
+Loading weights:   0%|          | 0/424 [00:00<?, ?it/s]Loading weights: 100%|##########| 424/424 [00:00<00:00, 38211.14it/s]
+INFO:httpx:HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+INFO:     Started server process [5500]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
