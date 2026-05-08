@@ -57,3 +57,9 @@ Warnings:
 - Speechocean762 and training JSONL files are NOT required for production runtime.
 - Whisper is not required and is not validated for Wav2Vec2-only runtime.
 PASS: AI service runtime checks passed.
+INFO:     127.0.0.1:55436 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55438 - "POST /analyze-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55445 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55446 - "GET /version HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55454 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55455 - "GET /version HTTP/1.1" 200 OK
