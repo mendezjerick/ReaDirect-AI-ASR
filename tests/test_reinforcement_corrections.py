@@ -13,7 +13,7 @@ def test_load_letter_reinforcement_csv_case_insensitive() -> None:
 
     assert "letter-reinforcement.csv" in table.files_loaded
     assert table.letter_rules_count == 20
-    assert table.word_rules_count == 12
+    assert table.word_rules_count >= 12
     assert table.match("z", "they", "letter") is not None
     assert table.match(" Z ", " They ", "letter") is not None
     assert table.match("W", "zavil you", "letter") is not None

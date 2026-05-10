@@ -390,7 +390,7 @@ def normalize_asr_transcript(
         elif _critical_blocks_acceptance(critical, critical_required, normalized_observed_phonemes):
             confidence_level = "low"
             reason = critical["critical_phoneme_reason"] or "Critical phoneme evidence contradicted expected answer"
-        elif reinforcement_match:
+        elif reinforcement_match and is_single_letter:
             match_metadata = reinforcement_match.to_metadata()
             corrected = expected
             displayed = expected
@@ -458,6 +458,25 @@ def normalize_asr_transcript(
                 strategy = "wav2vec2_expected_centric_acoustic_phonetic_scoring"
             else:
                 reason = "Known ASR confusion did not meet the configured threshold"
+        elif reinforcement_match:
+            match_metadata = reinforcement_match.to_metadata()
+            corrected = expected
+            displayed = expected
+            score = 1.0
+            composite_score = 1.0
+            applied = True
+            accepted_for_display = True
+            accepted_by_reinforcement_match = True
+            reinforcement_source_file = str(match_metadata["reinforcement_source_file"])
+            reinforcement_expected_label = str(match_metadata["reinforcement_expected_label"])
+            reinforcement_matched_transcript = str(match_metadata["reinforcement_matched_transcript"])
+            reinforcement_match_normalized = dict(match_metadata["reinforcement_match_normalized"])
+            reinforcement_match_original = dict(match_metadata["reinforcement_match_original"])
+            reason = (
+                "Raw transcript matched curated reinforcement correction row: "
+                f"expected {reinforcement_expected_label}, transcript-error {reinforcement_matched_transcript}"
+            )
+            strategy = "reinforcement_error_transcript_match"
         elif is_single_letter and phoneme_score >= single_letter_threshold:
             corrected = expected
             displayed = expected
