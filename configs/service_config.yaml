@@ -50,3 +50,17 @@ transcript_normalization:
   reinforcement_corrections_dir: reinforcement-learning
   letter_reinforcement_file: letter-reinforcement.csv
   word_reinforcement_file: word-reinforcement.csv
+
+dynamic_expected_correction:
+  enabled: true
+  letter_accept_threshold: 0.72
+  word_accept_threshold: 0.78
+  rhyme_accept_threshold: 0.78
+  sentence_word_accept_threshold: 0.80
+  passage_word_accept_threshold: 0.82
+  homophone_threshold: 0.96
+  min_phoneme_for_low_text_match: 0.90
+  min_gop_for_acceptance: 0.75
+  skip_on_retry_required: true
+  skip_on_uncertain_audio: true
+  debug: false

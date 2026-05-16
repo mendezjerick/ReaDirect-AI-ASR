@@ -12,6 +12,7 @@ Core responsibilities:
 
 - Local Wav2Vec2 speech recognition.
 - Wav2Vec2 phoneme evidence for letter and short-word support.
+- GOP-style pronunciation evidence for reducing false short-prompt ASR errors.
 - Expected-centric letter and word correction.
 - Separate `raw_transcript`, `corrected_transcript`, and `displayed_transcript` handling.
 - Human-curated reinforcement correction memory.
@@ -84,6 +85,7 @@ Audio input
 -> CTC greedy decoding
 -> raw_transcript
 -> Wav2Vec2 phoneme evidence
+-> GOP-style pronunciation evidence
 -> expected-centric correction
 -> corrected_transcript
 -> displayed_transcript

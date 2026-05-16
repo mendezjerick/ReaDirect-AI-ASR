@@ -147,6 +147,34 @@ class AnalysisResponse(BaseModel):
     accepted_by_exact_match: bool = False
     accepted_by_vowel_tail: bool = False
     accepted_by_phoneme_evidence: bool = False
+    gop_enabled: bool = True
+    gop_available: bool = False
+    gop_score: Optional[float] = None
+    gop_confidence: Optional[float] = None
+    gop_decision: str = "not_available"
+    gop_threshold: Optional[float] = None
+    gop_prompt_type: str = "unknown"
+    gop_expected_phonemes: list[str] = Field(default_factory=list)
+    gop_observed_phonemes: list[str] = Field(default_factory=list)
+    gop_phoneme_scores: list[dict[str, Any]] = Field(default_factory=list)
+    gop_word_scores: list[dict[str, Any]] = Field(default_factory=list)
+    mispronounced_phonemes: list[str] = Field(default_factory=list)
+    weak_words: list[str] = Field(default_factory=list)
+    gop_correction_applied: bool = False
+    gop_error: Optional[str] = None
+    dynamic_correction_enabled: bool = True
+    dynamic_correction_applied: bool = False
+    dynamic_correction_strategy: str = "dynamic_expected_word_correction"
+    dynamic_correction_sub_strategy: str = ""
+    dynamic_correction_confidence: Optional[float] = None
+    dynamic_correction_threshold: Optional[float] = None
+    dynamic_spelling_similarity: Optional[float] = None
+    dynamic_phoneme_similarity: Optional[float] = None
+    dynamic_gop_score: Optional[float] = None
+    dynamic_homophone_match: bool = False
+    dynamic_context_score: Optional[float] = None
+    dynamic_correction_reason: str = ""
+    word_alignment: list[dict[str, Any]] = Field(default_factory=list)
     accepted_by_reinforcement_match: bool = False
     reinforcement_source_file: str = ""
     reinforcement_expected_label: str = ""

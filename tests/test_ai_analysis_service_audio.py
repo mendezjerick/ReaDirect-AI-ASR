@@ -53,6 +53,26 @@ def test_audio_analysis_scores_corrected_transcript_and_preserves_raw(tmp_path: 
     assert response.debug_info["transcript_normalization"]["corrected_transcript"] == "Red"
 
 
+def test_audio_analysis_applies_dynamic_expected_word_correction(tmp_path: Path) -> None:
+    audio = tmp_path / "sample.wav"
+    audio.write_bytes(b"fake")
+    response = _service(tmp_path).analyze_audio(
+        AnalyzeAudioRequest(
+            audio_path=str(audio),
+            expected_text="shield",
+            content_metadata={"mock_transcript": "shild"},
+            debug=True,
+        )
+    )
+
+    assert response.ok is True
+    assert response.raw_transcript == "shild"
+    assert response.corrected_transcript == "shield"
+    assert response.displayed_transcript == "shield"
+    assert response.dynamic_correction_applied is True
+    assert response.dynamic_correction_sub_strategy == "spelling_context_expected_match"
+
+
 def test_missing_audio_path_returns_safe_error(tmp_path: Path) -> None:
     response = _service(tmp_path).analyze_audio(AnalyzeAudioRequest(expected_text="cat"))
     assert response.ok is False

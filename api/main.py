@@ -74,7 +74,11 @@ def health() -> HealthResponse:
         base_model=str(provider_status.get("base_model", "")),
         training_type=str(provider_status.get("training_type", "")),
         training_mix=str(provider_status.get("training_mix", "")),
-        thresholds=config.get("transcript_normalization", {}),
+        thresholds={
+            **config.get("transcript_normalization", {}),
+            "gop": config.get("gop", {}),
+            "dynamic_expected_correction": config.get("dynamic_expected_correction", {}),
+        },
         local_model_paths_loaded=not missing_paths,
         missing_model_paths=missing_paths,
         audio_quality_validation_enabled=True,
@@ -119,6 +123,8 @@ def version() -> VersionResponse:
                 "content_index_path": str(service.content_repository.loaded_path) if service.content_repository.loaded_path else "",
             },
             "transcript_normalization": config.get("transcript_normalization", {}),
+            "gop": config.get("gop", {}),
+            "dynamic_expected_correction": config.get("dynamic_expected_correction", {}),
         },
     )
 

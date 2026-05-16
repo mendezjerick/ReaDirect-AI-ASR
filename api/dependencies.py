@@ -33,6 +33,8 @@ def get_config() -> dict[str, Any]:
     config.setdefault("asr", {})
     config.setdefault("transcript_normalization", {})
     config.setdefault("audio_quality", {})
+    config.setdefault("gop", {})
+    config.setdefault("dynamic_expected_correction", {})
     adaptive_config_path = os.getenv("ADAPTIVE_CONFIG_PATH", "configs/adaptive_config.yaml")
     config["adaptive"] = {**_load_yaml(adaptive_config_path), **config.get("adaptive", {})}
     config["api"]["debug"] = os.getenv("API_DEBUG", str(config["api"].get("debug", True))).lower() in {"1", "true", "yes"}
@@ -80,6 +82,30 @@ def get_config() -> dict[str, Any]:
     normalization["reinforcement_corrections_dir"] = os.getenv("REINFORCEMENT_CORRECTIONS_DIR", str(normalization.get("reinforcement_corrections_dir", "reinforcement-learning")))
     normalization["letter_reinforcement_file"] = os.getenv("LETTER_REINFORCEMENT_FILE", str(normalization.get("letter_reinforcement_file", "letter-reinforcement.csv")))
     normalization["word_reinforcement_file"] = os.getenv("WORD_REINFORCEMENT_FILE", str(normalization.get("word_reinforcement_file", "word-reinforcement.csv")))
+    gop = config["gop"]
+    gop["enabled"] = _env_bool("GOP_ENABLED", bool(gop.get("enabled", True)))
+    gop["letter_threshold"] = float(os.getenv("GOP_LETTER_THRESHOLD", str(gop.get("letter_threshold", 0.70))))
+    gop["word_threshold"] = float(os.getenv("GOP_WORD_THRESHOLD", str(gop.get("word_threshold", 0.75))))
+    gop["rhyme_threshold"] = float(os.getenv("GOP_RHYME_THRESHOLD", str(gop.get("rhyme_threshold", 0.75))))
+    gop["sentence_word_threshold"] = float(os.getenv("GOP_SENTENCE_WORD_THRESHOLD", str(gop.get("sentence_word_threshold", 0.70))))
+    gop["passage_word_threshold"] = float(os.getenv("GOP_PASSAGE_WORD_THRESHOLD", str(gop.get("passage_word_threshold", 0.70))))
+    gop["min_audio_quality_required"] = _env_bool("GOP_MIN_AUDIO_QUALITY_REQUIRED", bool(gop.get("min_audio_quality_required", True)))
+    gop["skip_on_retry_required"] = _env_bool("GOP_SKIP_ON_RETRY_REQUIRED", bool(gop.get("skip_on_retry_required", True)))
+    gop["skip_on_uncertain_audio"] = _env_bool("GOP_SKIP_ON_UNCERTAIN_AUDIO", bool(gop.get("skip_on_uncertain_audio", True)))
+    gop["debug"] = _env_bool("GOP_DEBUG", bool(gop.get("debug", False)))
+    dynamic = config["dynamic_expected_correction"]
+    dynamic["enabled"] = _env_bool("DYNAMIC_EXPECTED_CORRECTION_ENABLED", bool(dynamic.get("enabled", True)))
+    dynamic["letter_accept_threshold"] = float(os.getenv("DYNAMIC_LETTER_ACCEPT_THRESHOLD", str(dynamic.get("letter_accept_threshold", 0.72))))
+    dynamic["word_accept_threshold"] = float(os.getenv("DYNAMIC_WORD_ACCEPT_THRESHOLD", str(dynamic.get("word_accept_threshold", 0.78))))
+    dynamic["rhyme_accept_threshold"] = float(os.getenv("DYNAMIC_RHYME_ACCEPT_THRESHOLD", str(dynamic.get("rhyme_accept_threshold", 0.78))))
+    dynamic["sentence_word_accept_threshold"] = float(os.getenv("DYNAMIC_SENTENCE_WORD_ACCEPT_THRESHOLD", str(dynamic.get("sentence_word_accept_threshold", 0.80))))
+    dynamic["passage_word_accept_threshold"] = float(os.getenv("DYNAMIC_PASSAGE_WORD_ACCEPT_THRESHOLD", str(dynamic.get("passage_word_accept_threshold", 0.82))))
+    dynamic["homophone_threshold"] = float(os.getenv("DYNAMIC_HOMOPHONE_THRESHOLD", str(dynamic.get("homophone_threshold", 0.96))))
+    dynamic["min_phoneme_for_low_text_match"] = float(os.getenv("DYNAMIC_MIN_PHONEME_FOR_LOW_TEXT_MATCH", str(dynamic.get("min_phoneme_for_low_text_match", 0.90))))
+    dynamic["min_gop_for_acceptance"] = float(os.getenv("DYNAMIC_MIN_GOP_FOR_ACCEPTANCE", str(dynamic.get("min_gop_for_acceptance", 0.75))))
+    dynamic["skip_on_retry_required"] = _env_bool("DYNAMIC_SKIP_ON_RETRY_REQUIRED", bool(dynamic.get("skip_on_retry_required", True)))
+    dynamic["skip_on_uncertain_audio"] = _env_bool("DYNAMIC_SKIP_ON_UNCERTAIN_AUDIO", bool(dynamic.get("skip_on_uncertain_audio", True)))
+    dynamic["debug"] = _env_bool("DYNAMIC_DEBUG", bool(dynamic.get("debug", False)))
     return config
 
 

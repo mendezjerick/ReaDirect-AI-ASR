@@ -22,8 +22,10 @@ from readirect_asr.asr.result import ASRResult
 from readirect_asr.audio.preprocessing import analyze_audio_quality, audio_quality_config, validate_audio_file
 from readirect_asr.content.content_repository import ContentRepository
 from readirect_asr.content.enricher import ContentEnricher
+from readirect_asr.correction.dynamic_expected_word_correction import apply_dynamic_expected_word_correction, dynamic_response_fields
 from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
+from readirect_asr.pronunciation.gop import apply_gop_to_transcript_meta, compute_gop, gop_response_fields
 from readirect_asr.scoring.answer_matching import parse_accepted_answers
 from readirect_asr.scoring.reading_analyzer import analyze_reading_response
 from readirect_asr.text.normalization import normalize_transcript
@@ -182,9 +184,36 @@ class AIAnalysisService:
                 model_used=asr.model_used or asr.model_size or "",
                 asr_route=asr.asr_route or "wav2vec2_only",
             )
-            analysis = self.run_reading_analysis(expected_text, normalization.corrected_transcript, context["accepted_answers"], context["content_metadata"])
-            adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
             uncertainty = self._quality_uncertainty_decision(audio_quality, asr, expected_text, normalization)
+            gop = compute_gop(
+                audio_path_or_waveform=str(audio_path),
+                expected_text=expected_text,
+                prompt_type=request.prompt_type or request.task_type or context["content_metadata"].get("task_type") or normalization.prompt_type,
+                raw_transcript=asr.transcript,
+                sample_rate=asr.audio_sample_rate or 16000,
+                observed_phonemes=asr.observed_phonemes,
+                cmudict_loader=self.cmudict_loader,
+                config=self.config.get("gop", {}),
+                audio_quality=audio_quality,
+                retry_required=bool(uncertainty.get("retry_required", False)),
+                uncertain=bool(uncertainty.get("uncertain", False)),
+            )
+            transcript_meta = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
+            transcript_meta = apply_dynamic_expected_word_correction(
+                transcript_meta,
+                config=self.config.get("dynamic_expected_correction", {}),
+                audio_quality=audio_quality,
+                retry_required=bool(uncertainty.get("retry_required", False)),
+                uncertain=bool(uncertainty.get("uncertain", False)),
+                context_metadata=context["content_metadata"],
+                cmudict_loader=self.cmudict_loader,
+            )
+            normalization = TranscriptNormalizationResult(**transcript_meta)
+            actual_for_analysis = normalization.corrected_transcript
+            if normalization.prompt_type in {"sentence", "paragraph", "passage", "final_sentence", "reading_passage"}:
+                actual_for_analysis = normalization.raw_transcript
+            analysis = self.run_reading_analysis(expected_text, actual_for_analysis, context["accepted_answers"], context["content_metadata"])
+            adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
             developer_reinforcement = self._maybe_append_developer_reinforcement(
                 request=request,
                 expected_text=expected_text,
@@ -213,6 +242,7 @@ class AIAnalysisService:
                     "audio_quality": audio_quality,
                     "pause_metrics": pause_metrics,
                     "transcript_normalization": normalization.to_dict(),
+                    "gop": gop,
                     "learner_response_id": request.learner_response_id,
                     "attempt_id": request.attempt_id,
                 },
@@ -433,6 +463,15 @@ class AIAnalysisService:
             "confidence_or_threshold_used": 0.0,
             "debug_metadata": {},
         }
+        transcript_meta = {**transcript_meta, **gop_response_fields(transcript_meta), **dynamic_response_fields(transcript_meta)}
+        if bool(self.config.get("gop", {}).get("debug", False)):
+            debug_metadata = dict(transcript_meta.get("debug_metadata", {}) or {})
+            debug_metadata["gop"] = {
+                key: value
+                for key, value in transcript_meta.items()
+                if str(key).startswith("gop_") or key in {"mispronounced_phonemes", "weak_words"}
+            }
+            transcript_meta["debug_metadata"] = debug_metadata
         audio_quality_payload = _json_safe(audio_quality or {})
         pause_metrics_payload = _json_safe(pause_metrics or {})
         uncertainty_payload = uncertainty or {}
@@ -483,6 +522,34 @@ class AIAnalysisService:
             accepted_by_exact_match=bool(transcript_meta.get("accepted_by_exact_match", False)),
             accepted_by_vowel_tail=bool(transcript_meta.get("accepted_by_vowel_tail", False)),
             accepted_by_phoneme_evidence=bool(transcript_meta.get("accepted_by_phoneme_evidence", False)),
+            gop_enabled=bool(transcript_meta.get("gop_enabled", True)),
+            gop_available=bool(transcript_meta.get("gop_available", False)),
+            gop_score=transcript_meta.get("gop_score"),
+            gop_confidence=transcript_meta.get("gop_confidence"),
+            gop_decision=str(transcript_meta.get("gop_decision", "not_available")),
+            gop_threshold=transcript_meta.get("gop_threshold"),
+            gop_prompt_type=str(transcript_meta.get("gop_prompt_type", "unknown")),
+            gop_expected_phonemes=list(transcript_meta.get("gop_expected_phonemes", []) or []),
+            gop_observed_phonemes=list(transcript_meta.get("gop_observed_phonemes", []) or []),
+            gop_phoneme_scores=list(transcript_meta.get("gop_phoneme_scores", []) or []),
+            gop_word_scores=list(transcript_meta.get("gop_word_scores", []) or []),
+            mispronounced_phonemes=list(transcript_meta.get("mispronounced_phonemes", []) or []),
+            weak_words=list(transcript_meta.get("weak_words", []) or []),
+            gop_correction_applied=False if retry_required else bool(transcript_meta.get("gop_correction_applied", False)),
+            gop_error=transcript_meta.get("gop_error"),
+            dynamic_correction_enabled=bool(transcript_meta.get("dynamic_correction_enabled", True)),
+            dynamic_correction_applied=False if retry_required else bool(transcript_meta.get("dynamic_correction_applied", False)),
+            dynamic_correction_strategy=str(transcript_meta.get("dynamic_correction_strategy", "dynamic_expected_word_correction")),
+            dynamic_correction_sub_strategy=str(transcript_meta.get("dynamic_correction_sub_strategy", "")),
+            dynamic_correction_confidence=transcript_meta.get("dynamic_correction_confidence"),
+            dynamic_correction_threshold=transcript_meta.get("dynamic_correction_threshold"),
+            dynamic_spelling_similarity=transcript_meta.get("dynamic_spelling_similarity"),
+            dynamic_phoneme_similarity=transcript_meta.get("dynamic_phoneme_similarity"),
+            dynamic_gop_score=transcript_meta.get("dynamic_gop_score"),
+            dynamic_homophone_match=bool(transcript_meta.get("dynamic_homophone_match", False)),
+            dynamic_context_score=transcript_meta.get("dynamic_context_score"),
+            dynamic_correction_reason=str(transcript_meta.get("dynamic_correction_reason", "")),
+            word_alignment=list(transcript_meta.get("word_alignment", []) or []),
             accepted_by_reinforcement_match=bool(transcript_meta.get("accepted_by_reinforcement_match", False)),
             reinforcement_source_file=str(transcript_meta.get("reinforcement_source_file", "")),
             reinforcement_expected_label=str(transcript_meta.get("reinforcement_expected_label", "")),
@@ -662,6 +729,12 @@ class AIAnalysisService:
         include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
         debug_info = {"audio_quality": audio_quality, "pause_metrics": pause_metrics} if include_debug else None
         reason = _normalization_reason_for_quality(uncertainty.get("uncertainty_reasons", []))
+        gop = gop_response_fields({
+            "gop_enabled": bool(self.config.get("gop", {}).get("enabled", True)),
+            "gop_available": False,
+            "gop_decision": "skipped_bad_audio",
+            "gop_error": reason,
+        })
         logger.info("request_id=%s endpoint=audio provider=%s prompt_id=%s quality_gate_failed=true", request_id, self.provider_name, prompt_id)
         return AnalysisResponse(
             ok=True,
@@ -688,6 +761,7 @@ class AIAnalysisService:
             normalization_applied=False,
             normalization_reason=reason,
             correction_strategy_used="audio_quality_gate",
+            **gop,
             is_correct=False,
             is_exact=False,
             is_accepted=False,

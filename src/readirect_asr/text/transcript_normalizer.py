@@ -289,6 +289,34 @@ class TranscriptNormalizationResult:
     threshold_used: float
     confidence_or_threshold_used: float
     debug_metadata: dict[str, Any]
+    gop_enabled: bool = True
+    gop_available: bool = False
+    gop_score: float | None = None
+    gop_confidence: float | None = None
+    gop_decision: str = "not_available"
+    gop_threshold: float | None = None
+    gop_prompt_type: str = "unknown"
+    gop_expected_phonemes: list[str] | None = None
+    gop_observed_phonemes: list[str] | None = None
+    gop_phoneme_scores: list[dict[str, Any]] | None = None
+    gop_word_scores: list[dict[str, Any]] | None = None
+    mispronounced_phonemes: list[str] | None = None
+    weak_words: list[str] | None = None
+    gop_correction_applied: bool = False
+    gop_error: str | None = None
+    dynamic_correction_enabled: bool = True
+    dynamic_correction_applied: bool = False
+    dynamic_correction_strategy: str = "dynamic_expected_word_correction"
+    dynamic_correction_sub_strategy: str = ""
+    dynamic_correction_confidence: float | None = None
+    dynamic_correction_threshold: float | None = None
+    dynamic_spelling_similarity: float | None = None
+    dynamic_phoneme_similarity: float | None = None
+    dynamic_gop_score: float | None = None
+    dynamic_homophone_match: bool = False
+    dynamic_context_score: float | None = None
+    dynamic_correction_reason: str = ""
+    word_alignment: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
