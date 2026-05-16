@@ -61,6 +61,26 @@ dynamic_expected_correction:
   homophone_threshold: 0.96
   min_phoneme_for_low_text_match: 0.90
   min_gop_for_acceptance: 0.75
+  fragment_detection_enabled: true
+  reject_consonant_fragment_by_default: true
+  min_raw_length_ratio_for_words: 0.50
+  min_phoneme_coverage_for_words: 0.65
+  fragment_gop_accept_threshold: 0.88
+  fragment_phoneme_accept_threshold: 0.82
+  fragment_retry_on_bad_audio: true
+  fragment_allow_accept_with_strong_gop: true
+  asr_spelling_variant_enabled: true
+  asr_variant_word_accept_threshold: 0.78
+  asr_variant_rhyme_accept_threshold: 0.78
+  asr_variant_letter_accept_threshold: 0.72
+  asr_variant_sentence_word_accept_threshold: 0.82
+  asr_variant_passage_word_accept_threshold: 0.84
+  asr_variant_min_consonant_skeleton: 0.80
+  asr_variant_min_vowel_tolerant_score: 0.78
+  asr_variant_min_gop_for_risky_accept: 0.82
+  asr_variant_min_phoneme_coverage: 0.70
+  asr_variant_short_word_strict: true
+  asr_variant_debug: true
   skip_on_retry_required: true
   skip_on_uncertain_audio: true
   debug: false

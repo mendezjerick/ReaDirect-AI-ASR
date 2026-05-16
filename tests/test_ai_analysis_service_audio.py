@@ -70,7 +70,9 @@ def test_audio_analysis_applies_dynamic_expected_word_correction(tmp_path: Path)
     assert response.corrected_transcript == "shield"
     assert response.displayed_transcript == "shield"
     assert response.dynamic_correction_applied is True
-    assert response.dynamic_correction_sub_strategy == "spelling_context_expected_match"
+    assert response.correction_strategy_used == "dynamic_asr_spelling_variant"
+    assert response.dynamic_correction_sub_strategy == "vowel_tolerant_consonant_skeleton_match"
+    assert response.asr_spelling_variant_applied is True
 
 
 def test_missing_audio_path_returns_safe_error(tmp_path: Path) -> None:

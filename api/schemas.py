@@ -174,6 +174,20 @@ class AnalysisResponse(BaseModel):
     dynamic_homophone_match: bool = False
     dynamic_context_score: Optional[float] = None
     dynamic_correction_reason: str = ""
+    dynamic_suspicious_fragment: bool = False
+    dynamic_fragment_reasons: list[str] = Field(default_factory=list)
+    dynamic_phoneme_coverage: Optional[float] = None
+    asr_spelling_variant_enabled: bool = True
+    asr_spelling_variant_applied: bool = False
+    asr_spelling_variant_strategy: str = "dynamic_asr_spelling_variant"
+    asr_spelling_variant_sub_strategy: str = ""
+    asr_spelling_variant_confidence: Optional[float] = None
+    asr_spelling_variant_threshold: Optional[float] = None
+    consonant_skeleton_similarity: Optional[float] = None
+    vowel_tolerant_similarity: Optional[float] = None
+    expected_phoneme_coverage: Optional[float] = None
+    variant_edit_similarity: Optional[float] = None
+    variant_reason: str = ""
     word_alignment: list[dict[str, Any]] = Field(default_factory=list)
     accepted_by_reinforcement_match: bool = False
     reinforcement_source_file: str = ""

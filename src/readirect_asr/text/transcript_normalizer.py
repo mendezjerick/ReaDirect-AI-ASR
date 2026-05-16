@@ -316,6 +316,20 @@ class TranscriptNormalizationResult:
     dynamic_homophone_match: bool = False
     dynamic_context_score: float | None = None
     dynamic_correction_reason: str = ""
+    dynamic_suspicious_fragment: bool = False
+    dynamic_fragment_reasons: list[str] | None = None
+    dynamic_phoneme_coverage: float | None = None
+    asr_spelling_variant_enabled: bool = True
+    asr_spelling_variant_applied: bool = False
+    asr_spelling_variant_strategy: str = "dynamic_asr_spelling_variant"
+    asr_spelling_variant_sub_strategy: str = ""
+    asr_spelling_variant_confidence: float | None = None
+    asr_spelling_variant_threshold: float | None = None
+    consonant_skeleton_similarity: float | None = None
+    vowel_tolerant_similarity: float | None = None
+    expected_phoneme_coverage: float | None = None
+    variant_edit_similarity: float | None = None
+    variant_reason: str = ""
     word_alignment: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
