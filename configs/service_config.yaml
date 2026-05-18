@@ -81,6 +81,17 @@ dynamic_expected_correction:
   asr_variant_min_phoneme_coverage: 0.70
   asr_variant_short_word_strict: true
   asr_variant_debug: true
+  dynamic_alignment_repair_enabled: true
+  dynamic_alignment_allow_split_merge: true
+  dynamic_alignment_max_expected_chunk: 3
+  dynamic_alignment_max_raw_chunk: 3
+  dynamic_alignment_accept_threshold: 0.82
+  dynamic_alignment_partial_threshold: 0.65
+  dynamic_alignment_split_merge_threshold: 0.84
+  dynamic_alignment_homophone_threshold: 0.96
+  dynamic_alignment_gop_accept_threshold: 0.75
+  dynamic_alignment_short_function_word_strict: true
+  dynamic_alignment_debug: true
   skip_on_retry_required: true
   skip_on_uncertain_audio: true
   debug: false

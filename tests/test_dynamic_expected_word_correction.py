@@ -25,12 +25,30 @@ def _loader(tmp_path: Path) -> CMUDictLoader:
                 "HAND HH AE1 N D",
                 "HUND HH AH1 N D",
                 "HEAD HH EH1 D",
+                "SUN S AH1 N",
+                "SON S AH1 N",
+                "TIME T AY1 M",
+                "AFTER AE1 F T ER0",
+                "OPEN OW1 P AH0 N",
+                "MAYA M AY1 AH0",
+                "SMILED S M AY1 L D",
+                "REEDS R IY1 D Z",
+                "SHE SH IY1",
+                "FRUIT F R UW1 T",
+                "SEEDS S IY1 D Z",
+                "NEARBY N IH1 R B AY2",
+                "NEAR N IH1 R",
+                "BY B AY1",
+                "BOOK B UH1 K",
+                "MARK M AA1 R K",
+                "WOVEN W OW1 V AH0 N",
+                "WOMAN W UH1 M AH0 N",
             ]
         ),
         encoding="utf-8",
     )
-    (cmu / "cmudict.phones").write_text("N nasal\nAY vowel\nT stop\nS fricative\nP stop\nUH vowel\nL liquid\nD stop\nOW vowel\nDH fricative\nAH vowel\nF fricative\nIH vowel\nSH fricative\nR liquid\nIY vowel\nHH aspirate\nAE vowel\nEH vowel\n", encoding="utf-8")
-    (cmu / "cmudict.symbols").write_text("N\nAY\nAY1\nT\nS\nP\nUH\nUH1\nL\nD\nOW\nOW1\nDH\nAH\nAH0\nAH1\nF\nIH\nIH1\nSH\nR\nIY\nIY1\nHH\nAE\nAE1\nEH\nEH1\n", encoding="utf-8")
+    (cmu / "cmudict.phones").write_text("N nasal\nAY vowel\nT stop\nS fricative\nP stop\nUH vowel\nL liquid\nD stop\nOW vowel\nDH fricative\nAH vowel\nF fricative\nIH vowel\nSH fricative\nR liquid\nIY vowel\nHH aspirate\nAE vowel\nEH vowel\nER vowel\nM nasal\nB stop\nUW vowel\nK stop\nAA vowel\nW semivowel\nV fricative\nZ fricative\n", encoding="utf-8")
+    (cmu / "cmudict.symbols").write_text("N\nAY\nAY1\nAY2\nT\nS\nP\nUH\nUH1\nL\nD\nOW\nOW1\nDH\nAH\nAH0\nAH1\nF\nIH\nIH1\nSH\nR\nIY\nIY1\nHH\nAE\nAE1\nEH\nEH1\nER\nER0\nM\nB\nUW\nUW1\nK\nAA\nAA1\nW\nV\nZ\n", encoding="utf-8")
     return CMUDictLoader(cmu / "cmudict.dict", cmu / "cmudict.phones", cmu / "cmudict.symbols").load()
 
 
@@ -58,11 +76,18 @@ def test_word_accepts_dynamic_spelling_and_homophone_matches(tmp_path: Path) -> 
     loader = _loader(tmp_path)
     spelling = correct_expected_word("shield", "shild", "word", cmudict_loader=loader)
     homophone = correct_expected_word("knights", "nights", "word", cmudict_loader=loader)
+    common_homophone = correct_expected_word("sun", "son", "word", cmudict_loader=loader)
+    common_homophone_without_phoneme = correct_expected_word("sun", "son", "word", phoneme_similarity_score=0.0, cmudict_loader=loader)
 
     assert spelling["accepted"] is True
     assert spelling["sub_strategy"] == "vowel_tolerant_consonant_skeleton_match"
     assert homophone["accepted"] is True
     assert homophone["homophone_match"] is True
+    assert common_homophone["accepted"] is True
+    assert common_homophone["corrected_text"] == "sun"
+    assert common_homophone["sub_strategy"] in {"homophone_match", "known_asr_confusion_match"}
+    assert common_homophone_without_phoneme["accepted"] is True
+    assert common_homophone_without_phoneme["sub_strategy"] == "known_asr_confusion_match"
 
 
 def test_asr_spelling_variant_accepts_vowel_tolerant_expected_word(tmp_path: Path) -> None:
@@ -176,7 +201,57 @@ def test_sentence_metadata_does_not_force_full_displayed_transcript(tmp_path: Pa
     assert updated["word_alignment"][-1]["status"] == "accepted_by_asr_spelling_variant"
 
 
-def test_sentence_metadata_does_not_repair_phase_1b_split_merge_cases(tmp_path: Path) -> None:
+def test_passage_alignment_repairs_two_expected_words_to_one_raw_chunk(tmp_path: Path) -> None:
+    alignment = dynamic_word_alignment("time after lunch", "timeafter lunch", "passage", cmudict_loader=_loader(tmp_path))
+    repaired = [item for item in alignment if item["expected_word"] in {"time", "after"}]
+
+    assert len(repaired) == 2
+    assert {item["status"] for item in repaired} == {"accepted_by_split_merge"}
+    assert all(item["recognized_word"] == "timeafter" for item in repaired)
+    assert all(item["operation"] == "merge_match" for item in repaired)
+    assert all(item["counts_as_correct"] is True for item in repaired)
+
+
+def test_passage_alignment_repairs_common_merge_and_split_cases(tmp_path: Path) -> None:
+    loader = _loader(tmp_path)
+    cases = [
+        ("open Maya", "openmya", {"open", "maya"}),
+        ("smiled the", "smiledthe", {"smiled", "the"}),
+        ("reeds she", "reedsshe", {"reeds", "she"}),
+        ("book mark", "bookmark", {"book", "mark"}),
+    ]
+
+    for expected, raw, expected_words in cases:
+        alignment = dynamic_word_alignment(expected, raw, "passage", cmudict_loader=loader)
+        repaired = [item for item in alignment if item["expected_word"] in expected_words]
+
+        assert repaired
+        assert all(item["status"] == "accepted_by_split_merge" for item in repaired)
+        assert all(item["counts_as_correct"] is True for item in repaired)
+
+    split = dynamic_word_alignment("nearby", "near by", "passage", cmudict_loader=loader)
+
+    assert split[0]["status"] == "accepted_by_split_merge"
+    assert split[0]["recognized_word"] == "near by"
+    assert split[0]["operation"] == "split_match"
+    assert split[0]["counts_as_correct"] is True
+
+
+def test_passage_alignment_handles_distorted_boundary_repair_and_risky_rejections(tmp_path: Path) -> None:
+    loader = _loader(tmp_path)
+    fruit = dynamic_word_alignment("fruit seeds", "fruitsieds", "passage", cmudict_loader=loader)
+    woven = dynamic_word_alignment("woven", "woman", "passage", cmudict_loader=loader)
+    function_word = dynamic_word_alignment("the", "a", "passage", cmudict_loader=loader)
+
+    assert all(item["status"] in {"accepted_by_split_merge", "partial"} for item in fruit)
+    assert any(item["status"] == "accepted_by_split_merge" for item in fruit)
+    assert woven[0]["status"] in {"incorrect", "partial"}
+    assert woven[0]["counts_as_correct"] is False
+    assert function_word[0]["status"] == "incorrect"
+    assert function_word[0]["counts_as_correct"] is False
+
+
+def test_sentence_metadata_repairs_phase_1b_split_merge_cases(tmp_path: Path) -> None:
     meta = {
         "expected_text": "time after lunch",
         "raw_transcript": "timeafter lunch",
@@ -190,7 +265,9 @@ def test_sentence_metadata_does_not_repair_phase_1b_split_merge_cases(tmp_path: 
 
     assert updated["raw_transcript"] == "timeafter lunch"
     assert updated["displayed_transcript"] == "timeafter lunch"
-    assert not any(item.get("recognized_word") == "timeafter" and item.get("counts_as_correct") for item in updated["word_alignment"])
+    assert any(item.get("recognized_word") == "timeafter" and item.get("counts_as_correct") for item in updated["word_alignment"])
+    assert updated["word_alignment"][0]["status"] == "accepted_by_split_merge"
+    assert "alignment_debug" in updated["debug_metadata"]
 
 
 def test_dynamic_correction_skips_retry_uncertain_and_missing_expected() -> None:

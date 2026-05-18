@@ -138,6 +138,8 @@ KNOWN_ASR_CONFUSIONS = {
     "for": {"four"},
     "ate": {"eight"},
     "eight": {"ate"},
+    "sun": {"son"},
+    "son": {"sun"},
     "blue": {"blew"},
     "blew": {"blue"},
     "sun": {"son"},

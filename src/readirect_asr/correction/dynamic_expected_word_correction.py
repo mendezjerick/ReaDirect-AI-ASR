@@ -45,6 +45,17 @@ DEFAULT_DYNAMIC_CONFIG = {
     "asr_variant_min_phoneme_coverage": 0.70,
     "asr_variant_short_word_strict": True,
     "asr_variant_debug": True,
+    "dynamic_alignment_repair_enabled": True,
+    "dynamic_alignment_allow_split_merge": True,
+    "dynamic_alignment_max_expected_chunk": 3,
+    "dynamic_alignment_max_raw_chunk": 3,
+    "dynamic_alignment_accept_threshold": 0.82,
+    "dynamic_alignment_partial_threshold": 0.65,
+    "dynamic_alignment_split_merge_threshold": 0.84,
+    "dynamic_alignment_homophone_threshold": 0.96,
+    "dynamic_alignment_gop_accept_threshold": 0.75,
+    "dynamic_alignment_short_function_word_strict": True,
+    "dynamic_alignment_debug": True,
     "skip_on_retry_required": True,
     "skip_on_uncertain_audio": True,
     "debug": False,
@@ -487,14 +498,23 @@ def apply_dynamic_expected_word_correction(
             uncertain=uncertain,
             cmudict_loader=cmudict_loader,
         )
-        applied_items = [item for item in alignment if item.get("status") in {"accepted_by_dynamic_expected_word_correction", "accepted_by_homophone", "accepted_by_asr_spelling_variant"}]
-        best = max((float(item.get("dynamic_correction_confidence", 0.0) or 0.0) for item in applied_items), default=0.0)
+        accepted_statuses = {
+            "exact_correct",
+            "accepted_by_dynamic_expected_word_correction",
+            "accepted_by_homophone",
+            "accepted_by_phoneme_similarity",
+            "accepted_by_gop",
+            "accepted_by_asr_spelling_variant",
+            "accepted_by_split_merge",
+        }
+        applied_items = [item for item in alignment if item.get("status") in accepted_statuses and item.get("status") != "exact_correct"]
+        best = max((float(item.get("alignment_confidence", item.get("dynamic_correction_confidence", 0.0)) or 0.0) for item in applied_items), default=0.0)
         result = _result(
             accepted=bool(applied_items),
             corrected=None,
             display=raw,
             prompt_type=detected_prompt_type,
-            sub_strategy="word_alignment_dynamic_correction" if applied_items else "no_word_alignment_corrections",
+            sub_strategy="passage_aware_dynamic_alignment_repair" if any(item.get("status") == "accepted_by_split_merge" for item in applied_items) else ("word_alignment_dynamic_correction" if applied_items else "no_word_alignment_corrections"),
             confidence=best,
             threshold=_threshold_for_prompt(detected_prompt_type, _config(config)),
             spelling=0.0,
@@ -503,13 +523,15 @@ def apply_dynamic_expected_word_correction(
             homophone=any(item.get("status") == "accepted_by_homophone" for item in applied_items),
             context=_context_score(context),
             known=0.0,
-            reason="dynamic correction applied to aligned words only" if applied_items else "no aligned word met dynamic correction threshold",
+            reason="passage-aware alignment repair applied to word chunks only" if applied_items else "no aligned word met dynamic correction threshold",
         )
         updated = _with_dynamic_fields(updated, DynamicCorrectionResult(**result))
         updated["word_alignment"] = alignment
         debug_metadata = dict(updated.get("debug_metadata", {}) or {})
         debug_metadata["word_alignment"] = alignment
         debug_metadata["dynamic_expected_word_correction"] = result
+        if bool(_config(config)["dynamic_alignment_debug"]):
+            debug_metadata["alignment_debug"] = _alignment_debug(expected, raw, alignment)
         updated["debug_metadata"] = debug_metadata
         return updated
 
@@ -561,6 +583,19 @@ def dynamic_word_alignment(
 ) -> list[dict[str, Any]]:
     expected_words = normalize_for_wer(expected_text).split()
     raw_words = normalize_for_wer(raw_transcript).split()
+    active_config = _config(config)
+    if bool(active_config["dynamic_alignment_repair_enabled"]):
+        return _dynamic_chunk_alignment(
+            expected_words,
+            raw_words,
+            prompt_type,
+            gop_word_scores=gop_word_scores or [],
+            config=active_config,
+            retry_required=retry_required,
+            uncertain=uncertain,
+            cmudict_loader=cmudict_loader,
+        )
+
     pairs = _align_words(expected_words, raw_words)
     gop_by_word = {normalize_for_wer(str(item.get("word", ""))): _optional_float(item.get("score")) for item in gop_word_scores or []}
     alignment: list[dict[str, Any]] = []
@@ -589,7 +624,7 @@ def dynamic_word_alignment(
             alignment.append({
                 "expected_word": expected,
                 "recognized_word": recognized_text,
-                "status": "correct",
+                "status": "exact_correct",
                 "counts_as_correct": True,
             })
             continue
@@ -632,6 +667,496 @@ def dynamic_word_alignment(
         })
 
     return alignment
+
+
+def _dynamic_chunk_alignment(
+    expected_words: list[str],
+    raw_words: list[str],
+    prompt_type: str,
+    *,
+    gop_word_scores: list[dict[str, Any]],
+    config: dict[str, Any],
+    retry_required: bool,
+    uncertain: bool,
+    cmudict_loader: Any | None,
+) -> list[dict[str, Any]]:
+    n = len(expected_words)
+    m = len(raw_words)
+    gop_by_word = {normalize_for_wer(str(item.get("word", ""))): _optional_float(item.get("score")) for item in gop_word_scores}
+    phoneme_cache: dict[tuple[str, str], float | None] = {}
+    dynamic_result_cache: dict[tuple[str, str], dict[str, Any]] = {}
+    inf = 1_000_000.0
+    dp: list[list[tuple[float, list[dict[str, Any]]]]] = [[(inf, []) for _ in range(m + 1)] for _ in range(n + 1)]
+    dp[0][0] = (0.0, [])
+
+    for i in range(n + 1):
+        for j in range(m + 1):
+            base_cost, base_ops = dp[i][j]
+            if base_cost >= inf:
+                continue
+
+            if i < n:
+                op = _missing_operation(expected_words[i])
+                _relax(dp, i + 1, j, base_cost + 1.0, base_ops + [op])
+
+            if j < m:
+                op = _inserted_operation(raw_words[j])
+                _relax(dp, i, j + 1, base_cost + 0.95, base_ops + [op])
+
+            for expected_count, raw_count in _candidate_chunk_sizes(config):
+                if expected_count <= 0 or raw_count <= 0 or i + expected_count > n or j + raw_count > m:
+                    continue
+                expected_chunk = expected_words[i:i + expected_count]
+                raw_chunk = raw_words[j:j + raw_count]
+                candidate = _score_alignment_candidate(
+                    expected_chunk,
+                    raw_chunk,
+                    prompt_type,
+                    gop_by_word=gop_by_word,
+                    config=config,
+                    retry_required=retry_required,
+                    uncertain=uncertain,
+                    cmudict_loader=cmudict_loader,
+                    phoneme_cache=phoneme_cache,
+                    dynamic_result_cache=dynamic_result_cache,
+                )
+                if expected_count == 3 or raw_count == 3:
+                    if not _is_obvious_three_word_boundary_repair(candidate, config):
+                        continue
+                _relax(
+                    dp,
+                    i + expected_count,
+                    j + raw_count,
+                    base_cost + _candidate_cost(candidate, config),
+                    base_ops + [candidate],
+                )
+
+    operations = dp[n][m][1]
+    alignment: list[dict[str, Any]] = []
+    chunk_index = 1
+    for operation in operations:
+        alignment.extend(_expand_operation(operation, chunk_index))
+        if operation.get("expected_words") or operation.get("recognized_words"):
+            chunk_index += 1
+    return alignment
+
+
+def _candidate_chunk_sizes(config: dict[str, Any]) -> list[tuple[int, int]]:
+    if not bool(config["dynamic_alignment_allow_split_merge"]):
+        return [(1, 1)]
+    max_expected = max(1, min(3, int(config["dynamic_alignment_max_expected_chunk"])))
+    max_raw = max(1, min(3, int(config["dynamic_alignment_max_raw_chunk"])))
+    candidates: list[tuple[int, int]] = []
+    for expected_count, raw_count in [(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (1, 3)]:
+        if expected_count <= max_expected and raw_count <= max_raw:
+            candidates.append((expected_count, raw_count))
+    return candidates
+
+
+def _score_alignment_candidate(
+    expected_words: list[str],
+    raw_words: list[str],
+    prompt_type: str,
+    *,
+    gop_by_word: dict[str, float | None],
+    config: dict[str, Any],
+    retry_required: bool,
+    uncertain: bool,
+    cmudict_loader: Any | None,
+    phoneme_cache: dict[tuple[str, str], float | None],
+    dynamic_result_cache: dict[tuple[str, str], dict[str, Any]],
+) -> dict[str, Any]:
+    expected_spaced = " ".join(expected_words)
+    raw_spaced = " ".join(raw_words)
+    expected_joined = "".join(expected_words)
+    raw_joined = "".join(raw_words)
+    expected_count = len(expected_words)
+    raw_count = len(raw_words)
+    operation = _operation_name(expected_count, raw_count)
+    gop_score = _mean_optional([gop_by_word.get(word) for word in expected_words])
+    spelling_similarity = max(_spelling_similarity(expected_spaced, raw_spaced), _spelling_similarity(expected_joined, raw_joined))
+    boundary_similarity = _spelling_similarity(expected_joined, raw_joined)
+    vowel_similarity = _vowel_tolerant_similarity(expected_joined, raw_joined)
+    skeleton_similarity = _consonant_skeleton_similarity(expected_joined, raw_joined)
+    context_score = 1.0
+    is_split_merge = expected_count != raw_count
+    exact_match = expected_spaced == raw_spaced
+    cheap_similarity = max(spelling_similarity, boundary_similarity, vowel_similarity, skeleton_similarity)
+    should_compute_phonemes = (
+        not exact_match
+        and (
+            cheap_similarity >= 0.58
+            or (is_split_merge and boundary_similarity >= 0.62)
+            or (gop_score is not None and gop_score >= float(config["dynamic_alignment_gop_accept_threshold"]))
+        )
+    )
+    phoneme_similarity = (
+        _cached_phoneme_similarity(expected_spaced, raw_spaced, cmudict_loader, phoneme_cache)
+        if should_compute_phonemes
+        else None
+    )
+    homophone = bool(phoneme_similarity is not None and phoneme_similarity >= float(config["dynamic_alignment_homophone_threshold"]) and expected_joined != raw_joined)
+
+    dynamic_result: dict[str, Any] | None = None
+    if expected_count == 1 and raw_count == 1 and not exact_match and should_compute_phonemes:
+        dynamic_key = (expected_spaced, raw_spaced)
+        if dynamic_key not in dynamic_result_cache:
+            dynamic_result_cache[dynamic_key] = correct_expected_word(
+                expected_text=expected_spaced,
+                raw_transcript=raw_spaced,
+                prompt_type=prompt_type,
+                gop_score=gop_score,
+                phoneme_similarity_score=phoneme_similarity,
+                retry_required=retry_required,
+                uncertain=uncertain,
+                context_metadata={"expected_position_context_score": context_score},
+                cmudict_loader=cmudict_loader,
+                config=config,
+            )
+        dynamic_result = dynamic_result_cache[dynamic_key]
+
+    confidence = _alignment_confidence(
+        spelling_similarity=spelling_similarity,
+        boundary_similarity=boundary_similarity,
+        skeleton_similarity=skeleton_similarity,
+        vowel_similarity=vowel_similarity,
+        phoneme_similarity=phoneme_similarity,
+        gop_score=gop_score,
+        context_score=context_score,
+        is_split_merge=is_split_merge,
+    )
+    status = "incorrect"
+    reason = "candidate did not meet passage-aware alignment thresholds"
+    counts_as_correct = False
+    sub_strategy = "rejected_low_alignment_confidence"
+    unsafe_function_pair = (
+        bool(config["dynamic_alignment_short_function_word_strict"])
+        and expected_count == 1
+        and raw_count == 1
+        and _is_unsafe_function_word_pair(expected_spaced, raw_spaced)
+    )
+
+    if exact_match:
+        status = "exact_correct"
+        counts_as_correct = True
+        confidence = 1.0
+        reason = "expected and raw word match exactly"
+        sub_strategy = "exact_normalized_match"
+    elif unsafe_function_pair:
+        status = "incorrect"
+        reason = "short function word substitution is too risky for alignment repair"
+        confidence = min(confidence, 0.49)
+    elif dynamic_result and dynamic_result.get("accepted"):
+        counts_as_correct = True
+        confidence = max(confidence, float(dynamic_result.get("confidence", 0.0) or 0.0))
+        sub_strategy = str(dynamic_result.get("sub_strategy", "dynamic_expected_word_correction"))
+        reason = str(dynamic_result.get("reason", "dynamic expected-word correction accepted the aligned word"))
+        if dynamic_result.get("strategy") == "dynamic_asr_spelling_variant":
+            status = "accepted_by_asr_spelling_variant"
+        else:
+            status = "accepted_by_homophone" if dynamic_result.get("homophone_match") else "accepted_by_dynamic_expected_word_correction"
+    elif homophone:
+        status = "accepted_by_homophone"
+        counts_as_correct = True
+        confidence = max(confidence, phoneme_similarity or 0.0)
+        reason = "expected and raw chunks are homophones or near-identical phoneme matches"
+        sub_strategy = "homophone_match"
+    elif is_split_merge and _split_merge_accepts(boundary_similarity, confidence, phoneme_similarity, gop_score, skeleton_similarity, vowel_similarity, config):
+        status = "accepted_by_split_merge"
+        counts_as_correct = True
+        reason = "expected and raw chunks match after repairing word boundaries"
+        sub_strategy = "boundary_repair_expected_raw_joined_match"
+    elif gop_score is not None and gop_score >= float(config["dynamic_alignment_gop_accept_threshold"]) and confidence >= float(config["dynamic_alignment_accept_threshold"]):
+        status = "accepted_by_gop"
+        counts_as_correct = True
+        confidence = max(confidence, gop_score)
+        reason = "GOP word score and alignment evidence support the expected chunk"
+        sub_strategy = "gop_supported_chunk_match"
+    elif phoneme_similarity is not None and phoneme_similarity >= float(config["dynamic_alignment_accept_threshold"]) and confidence >= float(config["dynamic_alignment_accept_threshold"]):
+        status = "accepted_by_phoneme_similarity"
+        counts_as_correct = True
+        confidence = max(confidence, phoneme_similarity)
+        reason = "phoneme similarity supports the expected chunk"
+        sub_strategy = "phoneme_supported_chunk_match"
+    elif confidence >= float(config["dynamic_alignment_partial_threshold"]):
+        status = "partial"
+        reason = "candidate has partial alignment evidence but not enough to count as correct"
+        sub_strategy = "partial_chunk_match"
+
+    return {
+        "expected_words": expected_words,
+        "recognized_words": raw_words,
+        "expected_chunk": expected_spaced,
+        "recognized_chunk": raw_spaced,
+        "operation": operation,
+        "status": status,
+        "counts_as_correct": counts_as_correct,
+        "alignment_confidence": round(confidence, 6),
+        "spelling_similarity": round(spelling_similarity, 6),
+        "boundary_similarity": round(boundary_similarity, 6),
+        "phoneme_similarity": None if phoneme_similarity is None else round(phoneme_similarity, 6),
+        "gop_score": None if gop_score is None else round(gop_score, 6),
+        "consonant_skeleton_similarity": round(skeleton_similarity, 6),
+        "vowel_tolerant_similarity": round(vowel_similarity, 6),
+        "sub_strategy": sub_strategy,
+        "dynamic_correction_reason": reason,
+        "dynamic_correction_confidence": round(confidence, 6),
+        "asr_spelling_variant_applied": bool(dynamic_result and dynamic_result.get("asr_spelling_variant_applied")),
+        "asr_spelling_variant_confidence": dynamic_result.get("asr_spelling_variant_confidence") if dynamic_result else None,
+        "variant_reason": dynamic_result.get("variant_reason", "") if dynamic_result else "",
+    }
+
+
+def _alignment_confidence(
+    *,
+    spelling_similarity: float,
+    boundary_similarity: float,
+    skeleton_similarity: float,
+    vowel_similarity: float,
+    phoneme_similarity: float | None,
+    gop_score: float | None,
+    context_score: float,
+    is_split_merge: bool,
+) -> float:
+    if is_split_merge:
+        weights = {
+            "boundary": 0.28,
+            "skeleton": 0.17,
+            "vowel": 0.15,
+            "phoneme": 0.25,
+            "gop": 0.10,
+            "context": 0.05,
+        }
+        values = {
+            "boundary": boundary_similarity,
+            "skeleton": skeleton_similarity,
+            "vowel": vowel_similarity,
+            "phoneme": phoneme_similarity,
+            "gop": gop_score,
+            "context": context_score,
+        }
+    else:
+        weights = {
+            "spelling": 0.25,
+            "skeleton": 0.15,
+            "vowel": 0.15,
+            "phoneme": 0.30,
+            "gop": 0.10,
+            "context": 0.05,
+        }
+        values = {
+            "spelling": spelling_similarity,
+            "skeleton": skeleton_similarity,
+            "vowel": vowel_similarity,
+            "phoneme": phoneme_similarity,
+            "gop": gop_score,
+            "context": context_score,
+        }
+
+    total = sum(weight for key, weight in weights.items() if values.get(key) is not None)
+    if total <= 0:
+        return 0.0
+    return round(sum(weights[key] * float(values[key]) for key in weights if values.get(key) is not None) / total, 6)
+
+
+def _split_merge_accepts(
+    boundary_similarity: float,
+    confidence: float,
+    phoneme_similarity: float | None,
+    gop_score: float | None,
+    skeleton_similarity: float,
+    vowel_similarity: float,
+    config: dict[str, Any],
+) -> bool:
+    if boundary_similarity >= float(config["dynamic_alignment_split_merge_threshold"]):
+        return True
+    if confidence < float(config["dynamic_alignment_accept_threshold"]):
+        return False
+    return (
+        (phoneme_similarity or 0.0) >= 0.80
+        or (gop_score or 0.0) >= float(config["dynamic_alignment_gop_accept_threshold"])
+        or (skeleton_similarity >= 0.95 and vowel_similarity >= 0.70)
+    )
+
+
+def _candidate_cost(candidate: dict[str, Any], config: dict[str, Any]) -> float:
+    status = str(candidate.get("status", "incorrect"))
+    confidence = float(candidate.get("alignment_confidence", 0.0) or 0.0)
+    if status == "exact_correct":
+        return 0.01
+    if status.startswith("accepted_by_"):
+        return max(0.04, 0.35 - (confidence * 0.25))
+    if status == "partial":
+        return max(0.60, 1.0 - (confidence * 0.35))
+    return 1.05
+
+
+def _operation_name(expected_count: int, raw_count: int) -> str:
+    if expected_count == 1 and raw_count == 1:
+        return "match"
+    if expected_count == 1 and raw_count > 1:
+        return "split_match"
+    if expected_count > 1 and raw_count == 1:
+        return "merge_match"
+    return "phrase_match"
+
+
+def _missing_operation(expected_word: str) -> dict[str, Any]:
+    return {
+        "expected_words": [expected_word],
+        "recognized_words": [],
+        "expected_chunk": expected_word,
+        "recognized_chunk": "",
+        "operation": "deletion",
+        "status": "missing",
+        "counts_as_correct": False,
+        "alignment_confidence": 0.0,
+        "dynamic_correction_reason": "expected word was not aligned to a raw token",
+    }
+
+
+def _inserted_operation(raw_word: str) -> dict[str, Any]:
+    return {
+        "expected_words": [],
+        "recognized_words": [raw_word],
+        "expected_chunk": "",
+        "recognized_chunk": raw_word,
+        "operation": "insertion",
+        "status": "inserted",
+        "counts_as_correct": False,
+        "alignment_confidence": 0.0,
+        "dynamic_correction_reason": "raw token was inserted relative to expected passage",
+    }
+
+
+def _expand_operation(operation: dict[str, Any], chunk_index: int) -> list[dict[str, Any]]:
+    expected_words = list(operation.get("expected_words", []) or [])
+    recognized_words = list(operation.get("recognized_words", []) or [])
+    recognized_chunk = str(operation.get("recognized_chunk", ""))
+    expected_chunk = str(operation.get("expected_chunk", ""))
+    chunk_id = f"chunk_{chunk_index:03d}"
+
+    if not expected_words:
+        return [{
+            **_public_alignment_fields(operation, chunk_id),
+            "expected_word": None,
+            "recognized_word": recognized_chunk,
+        }]
+
+    return [
+        {
+            **_public_alignment_fields(operation, chunk_id),
+            "expected_word": expected_word,
+            "recognized_word": recognized_chunk if len(recognized_words) != len(expected_words) else (recognized_words[index] if index < len(recognized_words) else recognized_chunk),
+        }
+        for index, expected_word in enumerate(expected_words)
+    ]
+
+
+def _public_alignment_fields(operation: dict[str, Any], chunk_id: str) -> dict[str, Any]:
+    return {
+        "expected_chunk": operation.get("expected_chunk", ""),
+        "recognized_chunk": operation.get("recognized_chunk", ""),
+        "chunk_match_id": chunk_id,
+        "operation": operation.get("operation", ""),
+        "status": operation.get("status", "incorrect"),
+        "counts_as_correct": bool(operation.get("counts_as_correct", False)),
+        "alignment_confidence": operation.get("alignment_confidence"),
+        "dynamic_correction_confidence": operation.get("dynamic_correction_confidence", operation.get("alignment_confidence")),
+        "spelling_similarity": operation.get("spelling_similarity"),
+        "boundary_similarity": operation.get("boundary_similarity"),
+        "phoneme_similarity": operation.get("phoneme_similarity"),
+        "gop_score": operation.get("gop_score"),
+        "sub_strategy": operation.get("sub_strategy"),
+        "dynamic_correction_reason": operation.get("dynamic_correction_reason"),
+        "asr_spelling_variant_applied": operation.get("asr_spelling_variant_applied", False),
+        "asr_spelling_variant_confidence": operation.get("asr_spelling_variant_confidence"),
+        "consonant_skeleton_similarity": operation.get("consonant_skeleton_similarity"),
+        "vowel_tolerant_similarity": operation.get("vowel_tolerant_similarity"),
+        "variant_reason": operation.get("variant_reason", ""),
+    }
+
+
+def _is_obvious_three_word_boundary_repair(candidate: dict[str, Any], config: dict[str, Any]) -> bool:
+    return (
+        candidate.get("status") == "accepted_by_split_merge"
+        and (
+            float(candidate.get("boundary_similarity", 0.0) or 0.0) >= 0.92
+            or float(candidate.get("phoneme_similarity", 0.0) or 0.0) >= 0.90
+            or float(candidate.get("alignment_confidence", 0.0) or 0.0) >= 0.90
+        )
+    )
+
+
+def _relax(
+    dp: list[list[tuple[float, list[dict[str, Any]]]]],
+    i: int,
+    j: int,
+    cost: float,
+    operations: list[dict[str, Any]],
+) -> None:
+    if cost < dp[i][j][0]:
+        dp[i][j] = (cost, operations)
+
+
+def _mean_optional(values: list[float | None]) -> float | None:
+    numeric = [float(value) for value in values if value is not None]
+    if not numeric:
+        return None
+    return sum(numeric) / len(numeric)
+
+
+def _cached_phoneme_similarity(
+    expected: str,
+    raw: str,
+    cmudict_loader: Any | None,
+    cache: dict[tuple[str, str], float | None],
+) -> float | None:
+    key = (expected, raw)
+    if key not in cache:
+        cache[key] = _phoneme_similarity(expected, raw, cmudict_loader)
+    return cache[key]
+
+
+def _alignment_debug(expected_text: str, raw_transcript: str, alignment: list[dict[str, Any]]) -> dict[str, Any]:
+    accepted_statuses = {
+        "exact_correct",
+        "accepted_by_dynamic_expected_word_correction",
+        "accepted_by_homophone",
+        "accepted_by_phoneme_similarity",
+        "accepted_by_gop",
+        "accepted_by_asr_spelling_variant",
+        "accepted_by_split_merge",
+    }
+    return {
+        "expected_tokens": normalize_for_wer(expected_text).split(),
+        "raw_tokens": normalize_for_wer(raw_transcript).split(),
+        "selected_operations": [
+            {
+                "operation": item.get("operation"),
+                "expected_chunk": item.get("expected_chunk"),
+                "recognized_chunk": item.get("recognized_chunk"),
+                "status": item.get("status"),
+                "alignment_confidence": item.get("alignment_confidence"),
+                "reason": item.get("dynamic_correction_reason"),
+            }
+            for item in alignment
+            if item.get("expected_word") is not None
+        ],
+        "after_alignment_summary": {
+            "total_expected_words": sum(1 for item in alignment if item.get("expected_word") is not None),
+            "correct_words_exact": sum(1 for item in alignment if item.get("status") == "exact_correct"),
+            "correct_words_dynamic_accepted": sum(1 for item in alignment if item.get("status") in {"accepted_by_dynamic_expected_word_correction", "accepted_by_asr_spelling_variant"}),
+            "correct_words_split_merge_accepted": sum(1 for item in alignment if item.get("status") == "accepted_by_split_merge"),
+            "correct_words_homophone_accepted": sum(1 for item in alignment if item.get("status") == "accepted_by_homophone"),
+            "correct_words_gop_accepted": sum(1 for item in alignment if item.get("status") == "accepted_by_gop"),
+            "partial_words": sum(1 for item in alignment if item.get("status") == "partial"),
+            "incorrect_words": sum(1 for item in alignment if item.get("status") == "incorrect"),
+            "missing_words": sum(1 for item in alignment if item.get("status") == "missing"),
+            "inserted_words": sum(1 for item in alignment if item.get("status") == "inserted"),
+            "wcpm_correct_statuses": sorted(accepted_statuses),
+        },
+    }
 
 
 def dynamic_response_fields(meta: dict[str, Any] | None) -> dict[str, Any]:
@@ -722,7 +1247,7 @@ def _decision(
         return False, "rejected_short_function_word_safety", "short function word pair requires stronger exact or acoustic evidence"
     if homophone and context_score >= 0.95:
         return True, "homophone_match", "raw transcript is a homophone or near-identical phoneme match for expected text"
-    if known_confusion >= 0.90 and final_score >= min(threshold, 0.78):
+    if known_confusion >= 0.90 and context_score >= 0.95 and (spelling >= 0.50 or (phoneme_score or 0.0) >= 0.70 or (gop_score or 0.0) >= 0.75):
         return True, "known_asr_confusion_match", "raw transcript matches a known expected-centric ASR confusion"
     if gop_score is not None and gop_score >= float(config["min_gop_for_acceptance"]) and context_score >= 0.95 and (spelling >= 0.50 or (phoneme_score or 0.0) >= 0.70):
         return True, "gop_supported_expected_match", "GOP and text/context evidence support expected text"
@@ -974,6 +1499,17 @@ def _config(config: dict[str, Any] | None) -> dict[str, Any]:
         "asr_variant_min_phoneme_coverage": float(merged.get("asr_variant_min_phoneme_coverage", 0.70)),
         "asr_variant_short_word_strict": _as_bool(merged.get("asr_variant_short_word_strict", True)),
         "asr_variant_debug": _as_bool(merged.get("asr_variant_debug", True)),
+        "dynamic_alignment_repair_enabled": _as_bool(merged.get("dynamic_alignment_repair_enabled", True)),
+        "dynamic_alignment_allow_split_merge": _as_bool(merged.get("dynamic_alignment_allow_split_merge", True)),
+        "dynamic_alignment_max_expected_chunk": int(merged.get("dynamic_alignment_max_expected_chunk", 3)),
+        "dynamic_alignment_max_raw_chunk": int(merged.get("dynamic_alignment_max_raw_chunk", 3)),
+        "dynamic_alignment_accept_threshold": float(merged.get("dynamic_alignment_accept_threshold", 0.82)),
+        "dynamic_alignment_partial_threshold": float(merged.get("dynamic_alignment_partial_threshold", 0.65)),
+        "dynamic_alignment_split_merge_threshold": float(merged.get("dynamic_alignment_split_merge_threshold", 0.84)),
+        "dynamic_alignment_homophone_threshold": float(merged.get("dynamic_alignment_homophone_threshold", 0.96)),
+        "dynamic_alignment_gop_accept_threshold": float(merged.get("dynamic_alignment_gop_accept_threshold", 0.75)),
+        "dynamic_alignment_short_function_word_strict": _as_bool(merged.get("dynamic_alignment_short_function_word_strict", True)),
+        "dynamic_alignment_debug": _as_bool(merged.get("dynamic_alignment_debug", True)),
         "skip_on_retry_required": _as_bool(merged.get("skip_on_retry_required", True)),
         "skip_on_uncertain_audio": _as_bool(merged.get("skip_on_uncertain_audio", True)),
         "debug": _as_bool(merged.get("debug", False)),
@@ -1159,7 +1695,7 @@ def _short_word_fragment(
             reasons.append("raw_shorter_than_expected_ratio")
     if bool(config["reject_consonant_fragment_by_default"]) and _looks_like_consonant_skeleton(expected_compact, raw_compact):
         reasons.append("raw_looks_like_consonant_skeleton")
-    if phoneme_coverage is not None and phoneme_coverage < float(config["min_phoneme_coverage_for_words"]):
+    if reasons and phoneme_coverage is not None and phoneme_coverage < float(config["min_phoneme_coverage_for_words"]):
         reasons.append("incomplete_phoneme_coverage")
     if bad_audio:
         reasons.append("bad_audio_quality")

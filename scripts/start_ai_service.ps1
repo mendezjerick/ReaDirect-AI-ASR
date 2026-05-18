@@ -1,10 +1,12 @@
 $ErrorActionPreference = "Stop"
-if (Test-Path ".venv\Scripts\Activate.ps1") {
-    Write-Host "Using local .venv"
-    . .venv\Scripts\Activate.ps1
-} else {
-    Write-Warning ".venv not found; using current Python environment"
+
+$Python = Join-Path (Get-Location) ".venv\Scripts\python.exe"
+
+if (-not (Test-Path -LiteralPath $Python)) {
+    throw "AI service virtual environment was not found at $Python. Create the .venv before starting ASR."
 }
-python -c "import sys; print('Python:', sys.executable)"
-python scripts/validate_ai_service_startup.py
-uvicorn api.main:app --host 127.0.0.1 --port 8001
+
+Write-Host "Using local .venv"
+& $Python -c "import sys; print('Python:', sys.executable)"
+& $Python scripts/validate_ai_service_startup.py
+& $Python -m uvicorn api.main:app --host 127.0.0.1 --port 8001
