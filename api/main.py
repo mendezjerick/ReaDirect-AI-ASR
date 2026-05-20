@@ -26,7 +26,7 @@ from api.schemas import (
 )
 from api.security import validate_api_token
 from readirect_asr.audio.preprocessing import audio_quality_config
-from readirect_asr.text.reinforcement_corrections import append_developer_correction, reinforcement_status_from_config
+from readirect_asr.text.reinforcement_corrections import append_supervised_correction, reinforcement_status_from_config
 
 SERVICE_NAME = "ReaDirect AI/ASR Service"
 SERVICE_VERSION = "0.1.0"
@@ -142,7 +142,7 @@ def analyze_audio(request: AnalyzeAudioRequest) -> AnalysisResponse:
 @app.post("/reinforcement/corrections", response_model=ReinforcementCorrectionResponse, dependencies=[Depends(validate_api_token)])
 def reinforcement_correction(request: ReinforcementCorrectionRequest) -> ReinforcementCorrectionResponse:
     active_config = config.get("transcript_normalization", {})
-    result = append_developer_correction(
+    result = append_supervised_correction(
         expected_text=request.expected_text,
         raw_transcript=request.raw_transcript,
         prompt_type=request.prompt_type,
@@ -150,7 +150,7 @@ def reinforcement_correction(request: ReinforcementCorrectionRequest) -> Reinfor
         retry_required=request.retry_required,
         uncertain=request.uncertain,
         correction_strategy_used=request.correction_strategy_used,
-        developer_reinforcement_enabled=request.developer_reinforcement_enabled,
+        developer_reinforcement_enabled=request.supervised_reinforcement_enabled and request.developer_reinforcement_enabled,
         developer_user_role=request.developer_user_role or request.created_by,
         created_by=request.created_by,
         source=request.source,

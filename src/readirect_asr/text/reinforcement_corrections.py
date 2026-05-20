@@ -214,7 +214,7 @@ def _cached_reinforcement_table(corrections_dir: str, letter_file: str, word_fil
     return load_reinforcement_corrections(corrections_dir=corrections_dir, letter_file=letter_file, word_file=word_file, enabled=enabled)
 
 
-def append_developer_correction(
+def append_supervised_correction(
     *,
     expected_text: str,
     raw_transcript: str,
@@ -226,8 +226,8 @@ def append_developer_correction(
     developer_reinforcement_enabled: bool = False,
     developer_user_role: str = "",
     created_by: str = "",
-    source: str = "developer_auto",
-    notes: str = "auto-added from developer reinforcement mode",
+    source: str = "true_sandbox_supervised",
+    notes: str = "manually approved from True Sandbox",
     corrections_dir: str | Path = DEFAULT_REINFORCEMENT_DIR,
     letter_file: str = DEFAULT_LETTER_REINFORCEMENT_FILE,
     word_file: str = DEFAULT_WORD_REINFORCEMENT_FILE,
@@ -306,6 +306,10 @@ def append_developer_correction(
     result["reason"] = "new correction added"
     _audit(directory, expected_text, raw_transcript, prompt_type, target_file, "saved", result["reason"], created_by)
     return result
+
+
+def append_developer_correction(**kwargs: Any) -> dict[str, Any]:
+    return append_supervised_correction(**kwargs)
 
 
 def route_for_prompt_type(prompt_type: str | None) -> str | None:
@@ -416,7 +420,7 @@ def _append_skip_reason(
     normalized_expected = _normalize_cell(expected_text)
     normalized_raw = _normalize_cell(raw_transcript)
     if not developer_reinforcement_enabled:
-        return "developer reinforcement mode is off"
+        return "supervised reinforcement is not enabled"
     if not _is_developer_role(developer_user_role or created_by):
         return "user is not admin/developer"
     if route is None:

@@ -42,3 +42,7 @@
 2026-05-07T11:03:17Z	expected_text=rock	raw_transcript=ruck	prompt_type=sentence	target_csv=word-reinforcement.csv	status=skipped	reason=existing correction accepted transcript	created_by=admin@readirect.local
 2026-05-07T11:03:18Z	expected_text=cup	raw_transcript=cup	prompt_type=sentence	target_csv=word-reinforcement.csv	status=skipped	reason=raw transcript already equals expected text	created_by=admin@readirect.local
 2026-05-07T11:03:18Z	expected_text=bed	raw_transcript=bed	prompt_type=sentence	target_csv=word-reinforcement.csv	status=skipped	reason=raw transcript already equals expected text	created_by=admin@readirect.local
+2026-05-20T10:46:15Z	expected_text=log	raw_transcript=lug	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T10:46:21Z	expected_text=log	raw_transcript=lug	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
+2026-05-20T10:48:34Z	expected_text=bat	raw_transcript=but	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T10:50:15Z	expected_text=cat	raw_transcript=ca	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local

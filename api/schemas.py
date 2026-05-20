@@ -95,8 +95,9 @@ class ReinforcementCorrectionRequest(BaseModel):
     uncertain: bool = False
     correction_strategy_used: str = "none"
     created_by: str = "admin"
-    source: str = "developer_auto"
-    notes: str = "auto-added from developer reinforcement mode"
+    source: str = "true_sandbox_supervised"
+    notes: str = "manually approved from True Sandbox"
+    supervised_reinforcement_enabled: bool = True
     developer_reinforcement_enabled: bool = True
     developer_user_role: str | None = None
 

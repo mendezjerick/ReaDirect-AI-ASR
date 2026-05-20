@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from readirect_asr.text.reinforcement_corrections import append_developer_correction, load_reinforcement_corrections
+from readirect_asr.text.reinforcement_corrections import append_supervised_correction, load_reinforcement_corrections
 from readirect_asr.text.transcript_normalizer import normalize_asr_transcript
 
 
@@ -88,7 +88,7 @@ def test_missing_reinforcement_file_does_not_crash(tmp_path: Path) -> None:
 
 
 def test_append_letter_correction_routes_to_letter_file_and_deduplicates(tmp_path: Path) -> None:
-    first = append_developer_correction(
+    first = append_supervised_correction(
         expected_text="C",
         raw_transcript="See",
         prompt_type="letter",
@@ -98,7 +98,7 @@ def test_append_letter_correction_routes_to_letter_file_and_deduplicates(tmp_pat
         created_by="admin",
         corrections_dir=tmp_path,
     )
-    second = append_developer_correction(
+    second = append_supervised_correction(
         expected_text="C",
         raw_transcript="See",
         prompt_type="letter",
@@ -125,7 +125,7 @@ def test_append_word_rhyme_and_paragraph_route_to_word_file(tmp_path: Path) -> N
     ]
 
     for expected, raw, prompt_type in cases:
-        result = append_developer_correction(
+        result = append_supervised_correction(
             expected_text=expected,
             raw_transcript=raw,
             prompt_type=prompt_type,
@@ -156,13 +156,13 @@ def test_append_skips_bad_audio_uncertain_audio_and_non_admin(tmp_path: Path) ->
         "corrections_dir": tmp_path,
     }
 
-    bad_audio = append_developer_correction(**base, retry_required=True)
-    uncertain = append_developer_correction(**base, uncertain=True)
-    non_admin = append_developer_correction(**{**base, "developer_reinforcement_enabled": False})
+    bad_audio = append_supervised_correction(**base, retry_required=True)
+    uncertain = append_supervised_correction(**base, uncertain=True)
+    non_admin = append_supervised_correction(**{**base, "developer_reinforcement_enabled": False})
 
     assert bad_audio["saved"] is False
     assert bad_audio["reason"] == "bad audio"
     assert uncertain["saved"] is False
     assert uncertain["reason"] == "uncertain audio"
     assert non_admin["saved"] is False
-    assert non_admin["reason"] == "developer reinforcement mode is off"
+    assert non_admin["reason"] == "supervised reinforcement is not enabled"
