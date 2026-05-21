@@ -6,6 +6,7 @@ from readirect_asr.correction.dynamic_expected_word_correction import (
     dynamic_word_alignment,
 )
 from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
+from readirect_asr.text.reinforcement_corrections import append_supervised_correction
 
 
 def _loader(tmp_path: Path) -> CMUDictLoader:
@@ -74,10 +75,11 @@ def test_word_accepts_gop_supported_near_match_and_rejects_unrelated(tmp_path: P
 
 def test_word_accepts_dynamic_spelling_and_homophone_matches(tmp_path: Path) -> None:
     loader = _loader(tmp_path)
-    spelling = correct_expected_word("shield", "shild", "word", cmudict_loader=loader)
-    homophone = correct_expected_word("knights", "nights", "word", cmudict_loader=loader)
-    common_homophone = correct_expected_word("sun", "son", "word", cmudict_loader=loader)
-    common_homophone_without_phoneme = correct_expected_word("sun", "son", "word", phoneme_similarity_score=0.0, cmudict_loader=loader)
+    config = {"reinforcement_corrections_enabled": False}
+    spelling = correct_expected_word("shield", "shild", "word", cmudict_loader=loader, config=config)
+    homophone = correct_expected_word("knights", "nights", "word", cmudict_loader=loader, config=config)
+    common_homophone = correct_expected_word("sun", "son", "word", cmudict_loader=loader, config=config)
+    common_homophone_without_phoneme = correct_expected_word("sun", "son", "word", phoneme_similarity_score=0.0, cmudict_loader=loader, config=config)
 
     assert spelling["accepted"] is True
     assert spelling["sub_strategy"] == "vowel_tolerant_consonant_skeleton_match"
@@ -137,8 +139,9 @@ def test_asr_spelling_variant_rejects_unrelated_or_risky_words(tmp_path: Path) -
 
 def test_short_word_fragments_need_pronunciation_evidence(tmp_path: Path) -> None:
     loader = _loader(tmp_path)
-    fish_weak = correct_expected_word("fish", "fs", "word", phoneme_similarity_score=0.40, cmudict_loader=loader)
-    tree_weak = correct_expected_word("tree", "tr", "word", phoneme_similarity_score=0.50, cmudict_loader=loader)
+    config = {"reinforcement_corrections_enabled": False}
+    fish_weak = correct_expected_word("fish", "fs", "word", phoneme_similarity_score=0.40, cmudict_loader=loader, config=config)
+    tree_weak = correct_expected_word("tree", "tr", "word", phoneme_similarity_score=0.50, cmudict_loader=loader, config=config)
 
     assert fish_weak["accepted"] is False
     assert fish_weak["suspicious_fragment"] is True
@@ -150,8 +153,9 @@ def test_short_word_fragments_need_pronunciation_evidence(tmp_path: Path) -> Non
 
 def test_short_word_fragments_accept_only_with_strong_gop_or_phoneme_support(tmp_path: Path) -> None:
     loader = _loader(tmp_path)
-    fish = correct_expected_word("fish", "fs", "word", gop_score=0.91, phoneme_similarity_score=0.83, cmudict_loader=loader)
-    tree = correct_expected_word("tree", "tr", "word", phoneme_similarity_score=0.86, cmudict_loader=loader)
+    config = {"reinforcement_corrections_enabled": False}
+    fish = correct_expected_word("fish", "fs", "word", gop_score=0.91, phoneme_similarity_score=0.83, cmudict_loader=loader, config=config)
+    tree = correct_expected_word("tree", "tr", "word", phoneme_similarity_score=0.86, cmudict_loader=loader, config=config)
 
     assert fish["accepted"] is True
     assert fish["corrected_text"] == "fish"
@@ -171,9 +175,10 @@ def test_dynamic_safety_rejects_weak_or_short_function_word_matches(tmp_path: Pa
 
 def test_sentence_word_alignment_marks_dynamic_and_homophone_acceptance(tmp_path: Path) -> None:
     loader = _loader(tmp_path)
-    shield = dynamic_word_alignment("Arthur carried his shield", "arthur carried his shild", "passage", cmudict_loader=loader)
-    knights = dynamic_word_alignment("Many knights pulled", "many nights pulled", "passage", cmudict_loader=loader)
-    hand = dynamic_word_alignment("Raise your hand", "raise your hund", "passage", cmudict_loader=loader)
+    config = {"reinforcement_corrections_enabled": False}
+    shield = dynamic_word_alignment("Arthur carried his shield", "arthur carried his shild", "passage", cmudict_loader=loader, config=config)
+    knights = dynamic_word_alignment("Many knights pulled", "many nights pulled", "passage", cmudict_loader=loader, config=config)
+    hand = dynamic_word_alignment("Raise your hand", "raise your hund", "passage", cmudict_loader=loader, config=config)
 
     assert shield[-1]["status"] == "accepted_by_asr_spelling_variant"
     assert shield[-1]["counts_as_correct"] is True
@@ -181,6 +186,64 @@ def test_sentence_word_alignment_marks_dynamic_and_homophone_acceptance(tmp_path
     assert knights[1]["counts_as_correct"] is True
     assert hand[-1]["status"] == "accepted_by_asr_spelling_variant"
     assert hand[-1]["counts_as_correct"] is True
+
+
+def test_sentence_word_alignment_uses_supervised_reinforcement_word_pair(tmp_path: Path) -> None:
+    append_supervised_correction(
+        expected_text="shield",
+        raw_transcript="shill",
+        prompt_type="word",
+        accepted=False,
+        developer_reinforcement_enabled=True,
+        developer_user_role="admin",
+        created_by="admin",
+        corrections_dir=tmp_path,
+    )
+
+    alignment = dynamic_word_alignment(
+        "Arthur carried his shield",
+        "arthur carried his shill",
+        "sentence",
+        config={
+            "reinforcement_corrections_enabled": True,
+            "reinforcement_corrections_dir": str(tmp_path),
+        },
+    )
+
+    final_word = alignment[-1]
+    assert final_word["expected_word"] == "shield"
+    assert final_word["recognized_word"] == "shill"
+    assert final_word["counts_as_correct"] is True
+    assert final_word["status"] == "accepted_by_reinforcement_match"
+
+
+def test_sentence_word_alignment_checks_reinforcement_before_similarity_gate(tmp_path: Path) -> None:
+    append_supervised_correction(
+        expected_text="cat",
+        raw_transcript="banana",
+        prompt_type="word",
+        accepted=False,
+        developer_reinforcement_enabled=True,
+        developer_user_role="admin",
+        created_by="admin",
+        corrections_dir=tmp_path,
+    )
+
+    alignment = dynamic_word_alignment(
+        "red cat",
+        "red banana",
+        "sentence",
+        config={
+            "reinforcement_corrections_enabled": True,
+            "reinforcement_corrections_dir": str(tmp_path),
+        },
+    )
+
+    final_word = alignment[-1]
+    assert final_word["expected_word"] == "cat"
+    assert final_word["recognized_word"] == "banana"
+    assert final_word["counts_as_correct"] is True
+    assert final_word["status"] == "accepted_by_reinforcement_match"
 
 
 def test_sentence_metadata_does_not_force_full_displayed_transcript(tmp_path: Path) -> None:

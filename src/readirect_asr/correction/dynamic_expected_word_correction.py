@@ -7,6 +7,7 @@ from typing import Any
 from readirect_asr.evaluation.asr_metrics import compute_cer, compute_wer
 from readirect_asr.scoring.phoneme_comparison import phoneme_similarity as phoneme_sequence_similarity
 from readirect_asr.text.normalization import normalize_for_wer
+from readirect_asr.text.reinforcement_corrections import reinforcement_table_from_config
 from readirect_asr.text.transcript_normalizer import (
     KNOWN_ASR_CONFUSIONS,
     LETTER_PRONUNCIATIONS,
@@ -211,6 +212,26 @@ def correct_expected_word(
 
     if _exact_match(normalized_expected, normalized_raw):
         return _result(True, expected, expected, detected_prompt_type, "exact_normalized_match", 1.0, threshold, 1.0, phoneme_score, gop_score, False, context_score, known_confusion, "raw transcript matches expected text after normalization")
+
+    reinforcement_match = reinforcement_table_from_config(config or {}).match(expected, raw, "word" if detected_prompt_type in LONG_PROMPT_TYPES else detected_prompt_type)
+    if reinforcement_match and detected_prompt_type != "letter":
+        return _result(
+            True,
+            expected,
+            expected,
+            detected_prompt_type,
+            "reinforcement_error_transcript_match",
+            1.0,
+            threshold,
+            max(spelling, 1.0),
+            phoneme_score,
+            gop_score,
+            False,
+            context_score,
+            known_confusion,
+            "Aligned word matched supervised reinforcement correction memory",
+            strategy="reinforcement_error_transcript_match",
+        )
 
     if detected_prompt_type == "letter" and _letter_alias_match(normalized_expected, normalized_raw):
         return _result(True, expected, expected, detected_prompt_type, "letter_alias_match", 0.98, threshold, spelling, phoneme_score, gop_score, False, context_score, max(known_confusion, 0.9), "raw transcript is a spoken form of the expected letter")
@@ -642,7 +663,9 @@ def dynamic_word_alignment(
         )
         status = "incorrect"
         if result["accepted"]:
-            if result.get("strategy") == "dynamic_asr_spelling_variant":
+            if result.get("sub_strategy") == "reinforcement_error_transcript_match" or result.get("strategy") == "reinforcement_error_transcript_match":
+                status = "accepted_by_reinforcement_match"
+            elif result.get("strategy") == "dynamic_asr_spelling_variant":
                 status = "accepted_by_asr_spelling_variant"
             else:
                 status = "accepted_by_homophone" if result["homophone_match"] else "accepted_by_dynamic_expected_word_correction"
@@ -781,6 +804,9 @@ def _score_alignment_candidate(
     context_score = 1.0
     is_split_merge = expected_count != raw_count
     exact_match = expected_spaced == raw_spaced
+    reinforcement_match = None
+    if expected_count == 1 and raw_count == 1 and not exact_match:
+        reinforcement_match = reinforcement_table_from_config(config).match(expected_spaced, raw_spaced, "word")
     cheap_similarity = max(spelling_similarity, boundary_similarity, vowel_similarity, skeleton_similarity)
     should_compute_phonemes = (
         not exact_match
@@ -846,6 +872,12 @@ def _score_alignment_candidate(
         status = "incorrect"
         reason = "short function word substitution is too risky for alignment repair"
         confidence = min(confidence, 0.49)
+    elif reinforcement_match:
+        status = "accepted_by_reinforcement_match"
+        counts_as_correct = True
+        confidence = 1.0
+        reason = "aligned word matched supervised reinforcement correction memory"
+        sub_strategy = "reinforcement_error_transcript_match"
     elif dynamic_result and dynamic_result.get("accepted"):
         counts_as_correct = True
         confidence = max(confidence, float(dynamic_result.get("confidence", 0.0) or 0.0))
@@ -853,6 +885,8 @@ def _score_alignment_candidate(
         reason = str(dynamic_result.get("reason", "dynamic expected-word correction accepted the aligned word"))
         if dynamic_result.get("strategy") == "dynamic_asr_spelling_variant":
             status = "accepted_by_asr_spelling_variant"
+        elif dynamic_result.get("sub_strategy") == "reinforcement_error_transcript_match" or dynamic_result.get("strategy") == "reinforcement_error_transcript_match":
+            status = "accepted_by_reinforcement_match"
         else:
             status = "accepted_by_homophone" if dynamic_result.get("homophone_match") else "accepted_by_dynamic_expected_word_correction"
     elif homophone:
@@ -1512,6 +1546,10 @@ def _config(config: dict[str, Any] | None) -> dict[str, Any]:
         "dynamic_alignment_debug": _as_bool(merged.get("dynamic_alignment_debug", True)),
         "skip_on_retry_required": _as_bool(merged.get("skip_on_retry_required", True)),
         "skip_on_uncertain_audio": _as_bool(merged.get("skip_on_uncertain_audio", True)),
+        "reinforcement_corrections_enabled": _as_bool(merged.get("reinforcement_corrections_enabled", True)),
+        "reinforcement_corrections_dir": str(merged.get("reinforcement_corrections_dir", "reinforcement-learning")),
+        "letter_reinforcement_file": str(merged.get("letter_reinforcement_file", "letter-reinforcement.csv")),
+        "word_reinforcement_file": str(merged.get("word_reinforcement_file", "word-reinforcement.csv")),
         "debug": _as_bool(merged.get("debug", False)),
     }
 

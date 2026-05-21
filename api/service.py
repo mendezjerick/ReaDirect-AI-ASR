@@ -200,7 +200,10 @@ class AIAnalysisService:
             transcript_meta = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
             transcript_meta = apply_dynamic_expected_word_correction(
                 transcript_meta,
-                config=self.config.get("dynamic_expected_correction", {}),
+                config={
+                    **self.config.get("transcript_normalization", {}),
+                    **self.config.get("dynamic_expected_correction", {}),
+                },
                 audio_quality=audio_quality,
                 retry_required=bool(uncertainty.get("retry_required", False)),
                 uncertain=bool(uncertainty.get("uncertain", False)),

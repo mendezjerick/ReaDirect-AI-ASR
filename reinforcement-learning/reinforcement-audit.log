@@ -46,3 +46,13 @@
 2026-05-20T10:46:21Z	expected_text=log	raw_transcript=lug	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
 2026-05-20T10:48:34Z	expected_text=bat	raw_transcript=but	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
 2026-05-20T10:50:15Z	expected_text=cat	raw_transcript=ca	prompt_type=rhyme	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:15:55Z	expected_text=arthur	raw_transcript=artor	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:16:32Z	expected_text=shield	raw_transcript=shill	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:16:33Z	expected_text=brother's	raw_transcript=brother	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:23:34Z	expected_text=arthur	raw_transcript=artor	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
+2026-05-20T13:23:37Z	expected_text=knights	raw_transcript=nights	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:23:42Z	expected_text=pulled	raw_transcript=polld	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:23:57Z	expected_text=once	raw_transcript=ones	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:32:57Z	expected_text=sword	raw_transcript=sord	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-05-20T13:33:03Z	expected_text=knights	raw_transcript=nights	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
+2026-05-20T13:33:19Z	expected_text=sword	raw_transcript=sord	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
