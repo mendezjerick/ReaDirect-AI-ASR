@@ -56,3 +56,9 @@
 2026-05-20T13:32:57Z	expected_text=sword	raw_transcript=sord	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
 2026-05-20T13:33:03Z	expected_text=knights	raw_transcript=nights	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
 2026-05-20T13:33:19Z	expected_text=sword	raw_transcript=sord	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
+2026-06-02T06:27:12Z	expected_text=cat	raw_transcript=ben	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-02T06:35:35Z	expected_text=cup	raw_transcript=cop	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-02T06:36:56Z	expected_text=sun	raw_transcript=shan	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-02T06:39:09Z	expected_text=ball	raw_transcript=bl	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-02T06:46:36Z	expected_text=ball	raw_transcript=bu	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-02T06:49:07Z	expected_text=duck	raw_transcript=dock	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
