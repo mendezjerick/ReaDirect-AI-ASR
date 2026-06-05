@@ -111,3 +111,6 @@
 2026-06-04T06:21:21Z	expected_text=bees	raw_transcript=bis	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
 2026-06-04T06:21:25Z	expected_text=visiting	raw_transcript=bisiting	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
 2026-06-04T06:25:24Z	expected_text=patience	raw_transcript=facians	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-05T14:21:57Z	expected_text=knights	raw_transcript=nights	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
+2026-06-05T14:22:01Z	expected_text=pulled	raw_transcript=puld	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-05T14:31:19Z	expected_text=ball	raw_transcript=bo	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local

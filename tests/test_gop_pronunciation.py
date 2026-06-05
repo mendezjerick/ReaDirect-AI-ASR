@@ -131,7 +131,7 @@ def test_acoustic_gop_maps_arpabet_expected_phonemes_to_ipa_model_vocabulary() -
 
 
 def test_short_word_gop_assist_accepts_strong_consonants_with_allowed_vowel_variant(tmp_path) -> None:
-    ipa_vocab = {0: "<pad>", 1: "b", 2: "\u028a", 3: "k", 4: "u"}
+    ipa_vocab = {0: "<pad>", 1: "b", 2: "\u028a", 3: "k", 4: "u\u02d0"}
 
     def row(best_id: int, weak_expected_id: int | None = None, competitor_id: int | None = None) -> list[float]:
         probs = [0.01] * len(ipa_vocab)
@@ -159,7 +159,7 @@ def test_short_word_gop_assist_accepts_strong_consonants_with_allowed_vowel_vari
             "vocabulary": ipa_vocab,
             "blank_token_id": 0,
             "log_probs": [row(0), row(1), row(1), row(2, 2, 4), row(2, 2, 4), row(3), row(3), row(0)],
-            "decoded_phonemes": ["b", "u", "k"],
+            "decoded_phonemes": ["b", "u\u02d0", "k"],
         },
         cmudict_loader=loader,
         config={"word_threshold": 0.75, "short_word_assist_min_overall": 0.60},
