@@ -83,12 +83,20 @@ def get_config() -> dict[str, Any]:
     normalization["letter_reinforcement_file"] = os.getenv("LETTER_REINFORCEMENT_FILE", str(normalization.get("letter_reinforcement_file", "letter-reinforcement.csv")))
     normalization["word_reinforcement_file"] = os.getenv("WORD_REINFORCEMENT_FILE", str(normalization.get("word_reinforcement_file", "word-reinforcement.csv")))
     gop = config["gop"]
-    gop["enabled"] = _env_bool("GOP_ENABLED", bool(gop.get("enabled", True)))
+    gop_enabled_default = bool(gop.get("enabled", True))
+    gop["enabled"] = _env_bool("ENABLE_ACOUSTIC_GOP", _env_bool("GOP_ENABLED", gop_enabled_default))
+    if os.getenv("GOP_MODEL_PATH"):
+        config["asr"]["wav2vec2_phoneme_model_path"] = os.getenv("GOP_MODEL_PATH", config["asr"].get("wav2vec2_phoneme_model_path", "models/wav2vec2-phoneme"))
+    if os.getenv("GOP_MODEL_NAME"):
+        gop["model_name"] = os.getenv("GOP_MODEL_NAME")
     gop["letter_threshold"] = float(os.getenv("GOP_LETTER_THRESHOLD", str(gop.get("letter_threshold", 0.70))))
     gop["word_threshold"] = float(os.getenv("GOP_WORD_THRESHOLD", str(gop.get("word_threshold", 0.75))))
     gop["rhyme_threshold"] = float(os.getenv("GOP_RHYME_THRESHOLD", str(gop.get("rhyme_threshold", 0.75))))
     gop["sentence_word_threshold"] = float(os.getenv("GOP_SENTENCE_WORD_THRESHOLD", str(gop.get("sentence_word_threshold", 0.70))))
     gop["passage_word_threshold"] = float(os.getenv("GOP_PASSAGE_WORD_THRESHOLD", str(gop.get("passage_word_threshold", 0.70))))
+    gop["min_alignment_quality"] = float(os.getenv("GOP_MIN_ALIGNMENT_QUALITY", str(gop.get("min_alignment_quality", 0.25))))
+    gop["weak_threshold"] = float(os.getenv("GOP_WEAK_THRESHOLD", str(gop.get("weak_threshold", 0.55))))
+    gop["acceptable_threshold"] = float(os.getenv("GOP_ACCEPTABLE_THRESHOLD", str(gop.get("acceptable_threshold", 0.75))))
     gop["min_audio_quality_required"] = _env_bool("GOP_MIN_AUDIO_QUALITY_REQUIRED", bool(gop.get("min_audio_quality_required", True)))
     gop["skip_on_retry_required"] = _env_bool("GOP_SKIP_ON_RETRY_REQUIRED", bool(gop.get("skip_on_retry_required", True)))
     gop["skip_on_uncertain_audio"] = _env_bool("GOP_SKIP_ON_UNCERTAIN_AUDIO", bool(gop.get("skip_on_uncertain_audio", True)))

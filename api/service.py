@@ -32,6 +32,7 @@ from readirect_asr.text.normalization import normalize_transcript
 from readirect_asr.text.transcript_normalizer import TranscriptNormalizationResult, normalize_asr_transcript
 
 logger = logging.getLogger("readirect_ai_asr")
+GOP_VOWELS = {"AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW"}
 
 
 class AIAnalysisService:
@@ -188,9 +189,11 @@ class AIAnalysisService:
                 audio_path_or_waveform=str(audio_path),
                 expected_text=expected_text,
                 prompt_type=request.prompt_type or request.task_type or context["content_metadata"].get("task_type") or normalization.prompt_type,
+                task_type=request.task_type or context["content_metadata"].get("task_type") or request.activity_type or context["content_metadata"].get("activity_type"),
                 raw_transcript=asr.transcript,
                 sample_rate=asr.audio_sample_rate or 16000,
                 observed_phonemes=asr.observed_phonemes,
+                acoustic_evidence=self._phoneme_frame_evidence(str(audio_path)),
                 cmudict_loader=self.cmudict_loader,
                 config=self.config.get("gop", {}),
                 audio_quality=audio_quality,
@@ -215,6 +218,7 @@ class AIAnalysisService:
             if normalization.prompt_type in {"sentence", "paragraph", "passage", "final_sentence", "reading_passage"}:
                 actual_for_analysis = normalization.raw_transcript
             analysis = self.run_reading_analysis(expected_text, actual_for_analysis, context["accepted_answers"], context["content_metadata"])
+            analysis = self._apply_gop_to_analysis(analysis, gop)
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
             return self.build_response(
                 request_id=request_id,
@@ -354,12 +358,73 @@ class AIAnalysisService:
             model_size=self.model_size,
             inference_time_ms=result.get("inference_time_ms"),
             observed_phonemes=list(result.get("observed_phonemes", []) or []),
+            decoded_acoustic_phonemes=list(result.get("decoded_acoustic_phonemes", result.get("observed_phonemes", [])) or []),
+            acoustic_frame_count=result.get("acoustic_frame_count"),
             phoneme_model_used=str(result.get("phoneme_model_used", "")),
             phoneme_inference_time_ms=result.get("phoneme_inference_time_ms"),
             phoneme_error=result.get("phoneme_error"),
             debug_metadata=dict(result.get("debug_metadata", {}) or {}),
             error=result.get("error"),
         )
+
+    def _phoneme_frame_evidence(self, audio_path: str) -> dict[str, Any] | None:
+        method = getattr(self.asr_provider, "phoneme_frame_evidence", None)
+        if not callable(method):
+            return None
+        return method(audio_path)
+
+    def _apply_gop_to_analysis(self, analysis: dict[str, Any], gop: dict[str, Any]) -> dict[str, Any]:
+        if not gop.get("gop_supported") or gop.get("alignment_quality") not in {"usable", "low_confidence"}:
+            return analysis
+        if bool(analysis.get("is_correct", False)) or bool(analysis.get("is_accepted", False)):
+            if gop.get("alignment_quality") == "low_confidence":
+                return {**analysis, "error_type": "correct_with_low_confidence"}
+            return analysis
+
+        weak = str(gop.get("weak_phoneme") or gop.get("lowest_phoneme") or "")
+        if weak == "":
+            return analysis
+        expected = list(gop.get("canonical_expected_phonemes") or gop.get("gop_expected_phonemes") or [])
+        decoded = list(gop.get("decoded_acoustic_phonemes") or gop.get("gop_observed_phonemes") or [])
+        position = _phoneme_position(weak, expected)
+        nearest = str(gop.get("nearest_confusion") or "")
+        error_type = str(analysis.get("error_type") or "")
+        weak_score = gop.get("lowest_phoneme_score", gop.get("weak_phoneme_score"))
+
+        if gop.get("alignment_quality") == "low_confidence" and (weak_score is None or float(weak_score or 0.0) < 0.35):
+            error_type = "low_confidence_audio"
+        elif len(decoded) > len(expected) and expected:
+            error_type = "phoneme_insertion"
+        elif position == "final" and (not decoded or len(decoded) < len(expected) or (weak not in decoded and not nearest)):
+            error_type = "final_sound_omission"
+        elif weak not in decoded and (len(decoded) < len(expected) or not nearest):
+            error_type = "phoneme_omission"
+        elif weak in GOP_VOWELS or nearest in GOP_VOWELS:
+            error_type = "vowel_confusion"
+        elif position == "initial":
+            error_type = "initial_sound_substitution"
+        elif position == "medial":
+            error_type = "medial_sound_confusion"
+        else:
+            error_type = "consonant_confusion"
+
+        return {
+            **analysis,
+            "error_type": error_type,
+            "error_position": position,
+            "target_phoneme": weak,
+            "target_position": position,
+            "analysis_source": "heuristic_transcript_phoneme_with_acoustic_gop",
+            "explanation": {
+                **(analysis.get("explanation") if isinstance(analysis.get("explanation"), dict) else {}),
+                "acoustic_gop": {
+                    "weak_phoneme": weak,
+                    "nearest_confusion": nearest,
+                    "lowest_phoneme_score": gop.get("lowest_phoneme_score"),
+                    "alignment_quality": gop.get("alignment_quality"),
+                },
+            },
+        }
 
     def run_reading_analysis(
         self,
@@ -518,17 +583,36 @@ class AIAnalysisService:
             accepted_by_phoneme_evidence=bool(transcript_meta.get("accepted_by_phoneme_evidence", False)),
             gop_enabled=bool(transcript_meta.get("gop_enabled", True)),
             gop_available=bool(transcript_meta.get("gop_available", False)),
+            gop_supported=bool(transcript_meta.get("gop_supported", transcript_meta.get("gop_available", False))),
             gop_score=transcript_meta.get("gop_score"),
+            overall_gop_score=transcript_meta.get("overall_gop_score", transcript_meta.get("gop_score")),
             gop_confidence=transcript_meta.get("gop_confidence"),
+            acoustic_confidence=transcript_meta.get("acoustic_confidence", transcript_meta.get("gop_confidence")),
             gop_decision=str(transcript_meta.get("gop_decision", "not_available")),
             gop_threshold=transcript_meta.get("gop_threshold"),
             gop_prompt_type=str(transcript_meta.get("gop_prompt_type", "unknown")),
             gop_expected_phonemes=list(transcript_meta.get("gop_expected_phonemes", []) or []),
+            canonical_phonemes=list(transcript_meta.get("canonical_phonemes", transcript_meta.get("gop_expected_phonemes", [])) or []),
+            canonical_expected_phonemes=list(transcript_meta.get("canonical_expected_phonemes", transcript_meta.get("gop_expected_phonemes", [])) or []),
             gop_observed_phonemes=list(transcript_meta.get("gop_observed_phonemes", []) or []),
+            decoded_phonemes=list(transcript_meta.get("decoded_phonemes", transcript_meta.get("gop_observed_phonemes", [])) or []),
+            decoded_acoustic_phonemes=list(transcript_meta.get("decoded_acoustic_phonemes", transcript_meta.get("gop_observed_phonemes", [])) or []),
             gop_phoneme_scores=list(transcript_meta.get("gop_phoneme_scores", []) or []),
+            phoneme_scores=list(transcript_meta.get("phoneme_scores", transcript_meta.get("gop_phoneme_scores", [])) or []),
             gop_word_scores=list(transcript_meta.get("gop_word_scores", []) or []),
             mispronounced_phonemes=list(transcript_meta.get("mispronounced_phonemes", []) or []),
             weak_words=list(transcript_meta.get("weak_words", []) or []),
+            weak_phoneme=transcript_meta.get("weak_phoneme", transcript_meta.get("lowest_phoneme")),
+            weak_phoneme_score=transcript_meta.get("weak_phoneme_score", transcript_meta.get("lowest_phoneme_score")),
+            lowest_phoneme=transcript_meta.get("lowest_phoneme", transcript_meta.get("weak_phoneme")),
+            lowest_phoneme_score=transcript_meta.get("lowest_phoneme_score", transcript_meta.get("weak_phoneme_score")),
+            nearest_confusion=transcript_meta.get("nearest_confusion"),
+            alignment_quality=transcript_meta.get("alignment_quality"),
+            gop_model_version=str(transcript_meta.get("gop_model_version", "existing_wavtec_phoneme_model")),
+            gop_model_path=transcript_meta.get("gop_model_path"),
+            gop_frame_count=transcript_meta.get("gop_frame_count"),
+            gop_duration_seconds=transcript_meta.get("gop_duration_seconds"),
+            gop_fallback_used=bool(transcript_meta.get("gop_fallback_used", False)),
             gop_correction_applied=False if retry_required else bool(transcript_meta.get("gop_correction_applied", False)),
             gop_error=transcript_meta.get("gop_error"),
             dynamic_correction_enabled=bool(transcript_meta.get("dynamic_correction_enabled", True)),
@@ -811,6 +895,15 @@ class AIAnalysisService:
         include_debug = bool(self.config.get("api", {}).get("debug", True))
         if exception and include_debug:
             debug_info = {**(debug_info or {}), "exception": str(exception)}
+        gop = gop_response_fields({
+            "gop_enabled": bool(self.config.get("gop", {}).get("enabled", True)),
+            "gop_available": False,
+            "gop_supported": False,
+            "gop_decision": "not_available",
+            "alignment_quality": "failed",
+            "gop_model_version": self.config.get("gop", {}).get("model_version", "existing_wavtec_phoneme_model"),
+            "gop_error": f"GOP skipped because ASR failed: {warning or error}",
+        })
         logger.warning("request_id=%s endpoint=%s provider=%s ok=false error=%s", request_id, mode, self.provider_name, error)
         return AnalysisResponse(
             ok=False,
@@ -818,6 +911,7 @@ class AIAnalysisService:
             mode=mode,
             provider=self.provider_name,
             model_size=self.model_size,
+            **gop,
             warnings=active_warnings,
             debug_info=_json_safe(debug_info) if debug_info and include_debug else None,
             processing_seconds=round(time.perf_counter() - started, 3),
@@ -889,6 +983,19 @@ def _normalization_reason_for_quality(reasons: list[str]) -> str:
     if "clipped" in reasons:
         return "Audio appears clipped or distorted."
     return "Audio quality was not reliable enough for scoring."
+
+
+def _phoneme_position(phoneme: str, expected: list[str]) -> str:
+    normalized = [str(item).upper() for item in expected]
+    phone = str(phoneme).upper()
+    if not normalized or phone not in normalized:
+        return "unknown"
+    index = normalized.index(phone)
+    if index == 0:
+        return "initial"
+    if index == len(normalized) - 1:
+        return "final"
+    return "medial"
 
 
 def _analysis_to_history_item(context: dict[str, Any], analysis: dict[str, Any]) -> dict[str, Any]:

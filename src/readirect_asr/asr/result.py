@@ -42,6 +42,8 @@ class ASRResult:
     phoneme_model_used: str = ""
     phoneme_inference_time_ms: float | None = None
     phoneme_error: str | None = None
+    decoded_acoustic_phonemes: list[str] = field(default_factory=list)
+    acoustic_frame_count: int | None = None
     debug_metadata: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
 

@@ -1,118 +1,237 @@
-from readirect_asr.pronunciation.gop import apply_gop_to_transcript_meta, compute_gop
+import math
+
+from api.service import AIAnalysisService
+from readirect_asr.asr.mock_asr import MockASR
+from readirect_asr.pronunciation.gop import canonical_expected_phonemes, compute_gop, ctc_forced_align
 from readirect_asr.text.transcript_normalizer import normalize_asr_transcript
 
 
-def _normalize(raw: str, expected: str, prompt_type: str, observed: list[str]):
-    return normalize_asr_transcript(
-        raw_transcript=raw,
-        expected_text=expected,
-        prompt_type=prompt_type,
-        observed_phonemes=observed,
-    )
+VOCAB = {
+    0: "<pad>",
+    1: "K",
+    2: "AE",
+    3: "T",
+    4: "AH",
+    5: "P",
+    6: "B",
+    7: "L",
+    8: "OW",
+    9: "G",
+    10: "UW",
+    11: "HH",
+    12: "IY",
+    13: "AO",
+}
 
 
-def test_word_accepted_by_gop_pronunciation_evidence() -> None:
-    normalization = _normalize("Layo", "Leo", "word", ["L", "EY", "OW"])
+def _log_row(best_id: int, weak_expected_id: int | None = None, competitor_id: int | None = None) -> list[float]:
+    probs = [0.01] * len(VOCAB)
+    probs[0] = 0.03
+    probs[best_id] = 0.90
+    if weak_expected_id is not None and competitor_id is not None:
+        probs[best_id] = 0.03
+        probs[weak_expected_id] = 0.22
+        probs[competitor_id] = 0.68
+    total = sum(probs)
+    return [math.log(value / total) for value in probs]
+
+
+def _evidence(phone_ids: list[int], *, weak_index: int | None = None, competitor_id: int | None = None) -> dict:
+    rows = [_log_row(0)]
+    decoded = []
+    for index, phone_id in enumerate(phone_ids):
+        if weak_index == index and competitor_id is not None:
+            rows.extend([_log_row(phone_id, phone_id, competitor_id), _log_row(phone_id, phone_id, competitor_id)])
+            decoded.append(VOCAB[competitor_id])
+        else:
+            rows.extend([_log_row(phone_id), _log_row(phone_id)])
+            decoded.append(VOCAB[phone_id])
+        rows.append(_log_row(0))
+    return {
+        "available": True,
+        "model_version": "existing_wavtec_phoneme_model",
+        "model_path": "models/wav2vec2-phoneme",
+        "duration_seconds": 0.8,
+        "frame_count": len(rows),
+        "vocabulary": VOCAB,
+        "blank_token_id": 0,
+        "log_probs": rows,
+        "decoded_phonemes": decoded,
+    }
+
+
+def test_acoustic_gop_correct_word_high_score() -> None:
     gop = compute_gop(
         audio_path_or_waveform=None,
-        expected_text="Leo",
+        expected_text="cat",
         prompt_type="word",
-        raw_transcript="Layo",
-        observed_phonemes=["L", "EY", "OW"],
+        raw_transcript="cat",
+        acoustic_evidence=_evidence([1, 2, 3]),
         config={"word_threshold": 0.75},
     )
-    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
 
-    assert gop["gop_score"] >= 0.75
-    assert updated["accepted"] is True
-    assert updated["corrected_transcript"] == "Leo"
-    assert updated["displayed_transcript"] == "Leo"
-    assert updated["correction_strategy_used"] == "gop_pronunciation_evidence"
-    assert updated["gop_correction_applied"] is True
+    assert gop["gop_supported"] is True
+    assert gop["alignment_quality"] == "usable"
+    assert gop["overall_gop_score"] >= 0.75
+    assert [item["phoneme"] for item in gop["phoneme_scores"]] == ["K", "AE", "T"]
 
 
-def test_word_rejected_by_low_gop_does_not_force_expected_text() -> None:
-    normalization = _normalize("banana", "Leo", "word", ["B", "AH", "N", "AE", "N", "AH"])
+def test_acoustic_gop_maps_arpabet_expected_phonemes_to_ipa_model_vocabulary() -> None:
+    ipa_vocab = {
+        0: "<pad>",
+        1: "l",
+        2: "ɔ",
+        3: "ɡ",
+        4: "b",
+    }
+
+    def row(best_id: int) -> list[float]:
+        probs = [0.02] * len(ipa_vocab)
+        probs[0] = 0.03
+        probs[best_id] = 0.90
+        total = sum(probs)
+        return [math.log(value / total) for value in probs]
+
+    evidence = {
+        "available": True,
+        "model_version": "existing_wavtec_phoneme_model",
+        "model_path": "models/wav2vec2-phoneme",
+        "duration_seconds": 0.8,
+        "frame_count": 7,
+        "vocabulary": ipa_vocab,
+        "blank_token_id": 0,
+        "log_probs": [row(0), row(1), row(1), row(2), row(2), row(3), row(0)],
+        "decoded_phonemes": ["l", "ɔ", "ɡ"],
+    }
+
     gop = compute_gop(
         audio_path_or_waveform=None,
-        expected_text="Leo",
+        expected_text="log",
+        prompt_type="word",
+        raw_transcript="log",
+        acoustic_evidence=evidence,
+        config={"word_threshold": 0.75},
+    )
+
+    assert gop["gop_supported"] is True
+    assert gop["alignment_quality"] == "usable"
+    assert gop["gop_error"] is None
+    assert [item["phoneme"] for item in gop["phoneme_scores"]] == ["L", "AO", "G"]
+    assert [item["model_phoneme"] for item in gop["phoneme_scores"]] == ["l", "ɔ", "ɡ"]
+
+
+def test_acoustic_gop_detects_vowel_confusion_log_lug() -> None:
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="log",
+        prompt_type="word",
+        raw_transcript="lug",
+        acoustic_evidence=_evidence([7, 13, 9], weak_index=1, competitor_id=10),
+        config={"word_threshold": 0.75},
+    )
+    analysis = AIAnalysisService(asr_provider=MockASR())._apply_gop_to_analysis({"is_correct": False, "is_accepted": False, "error_type": ""}, gop)
+
+    assert gop["weak_phoneme"] == "AO"
+    assert gop["nearest_confusion"] == "UW"
+    assert analysis["error_type"] == "vowel_confusion"
+
+
+def test_acoustic_gop_detects_initial_consonant_confusion_bat_pat() -> None:
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="bat",
+        prompt_type="word",
+        raw_transcript="pat",
+        acoustic_evidence=_evidence([6, 2, 3], weak_index=0, competitor_id=5),
+        config={"word_threshold": 0.75},
+    )
+    analysis = AIAnalysisService(asr_provider=MockASR())._apply_gop_to_analysis({"is_correct": False, "is_accepted": False, "error_type": ""}, gop)
+
+    assert gop["weak_phoneme"] == "B"
+    assert gop["nearest_confusion"] == "P"
+    assert analysis["error_type"] == "initial_sound_substitution"
+
+
+def test_acoustic_gop_detects_final_sound_omission() -> None:
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="cat",
+        prompt_type="word",
+        raw_transcript="ca",
+        acoustic_evidence={**_evidence([1, 2, 3], weak_index=2, competitor_id=4), "decoded_phonemes": ["K", "AE"]},
+        config={"word_threshold": 0.75},
+    )
+    analysis = AIAnalysisService(asr_provider=MockASR())._apply_gop_to_analysis({"is_correct": False, "is_accepted": False, "error_type": ""}, gop)
+
+    assert gop["weak_phoneme"] == "T"
+    assert analysis["error_type"] == "final_sound_omission"
+
+
+def test_gop_disabled_fallback() -> None:
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="cat",
+        prompt_type="word",
+        raw_transcript="cat",
+        acoustic_evidence=_evidence([1, 2, 3]),
+        config={"enabled": False},
+    )
+
+    assert gop["gop_enabled"] is False
+    assert gop["gop_supported"] is False
+    assert gop["gop_decision"] == "disabled"
+
+
+def test_missing_phoneme_mapping_fails_safely() -> None:
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="ship",
+        prompt_type="word",
+        raw_transcript="ship",
+        acoustic_evidence=_evidence([1, 2, 3]),
+        config={"word_threshold": 0.75},
+    )
+
+    assert gop["gop_supported"] is False
+    assert gop["alignment_quality"] == "failed"
+    assert "not found" in (gop["gop_error"] or "")
+
+
+def test_alignment_failure_fallback_for_empty_frames() -> None:
+    alignment = ctc_forced_align(expected_phonemes=["K"], frame_log_probs=[], vocabulary=VOCAB, blank_token_id=0)
+
+    assert alignment["ok"] is False
+    assert "empty" in alignment["error"]
+
+
+def test_letter_sound_mapping_differs_from_letter_name_mapping() -> None:
+    sound, sound_source, _ = canonical_expected_phonemes("H", prompt_type="letter", task_type="letter_sound")
+    name, name_source, _ = canonical_expected_phonemes("H", prompt_type="letter", task_type="crla_task_1_letter")
+
+    assert sound == ["HH"]
+    assert sound_source == "letter_sound_map"
+    assert name != sound
+    assert name_source != "letter_sound_map"
+
+
+def test_expected_centric_layer_does_not_accept_on_gop_alone() -> None:
+    normalization = normalize_asr_transcript(
+        raw_transcript="banana",
+        expected_text="cat",
+        prompt_type="word",
+        observed_phonemes=["B", "AH"],
+    )
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="cat",
         prompt_type="word",
         raw_transcript="banana",
-        observed_phonemes=["B", "AH", "N", "AE", "N", "AH"],
+        acoustic_evidence=_evidence([1, 2, 3]),
         config={"word_threshold": 0.75},
     )
-    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
 
-    assert gop["gop_decision"] == "rejected_low_gop"
-    assert updated["accepted"] is False
-    assert updated["displayed_transcript"] != "Leo"
+    updated = AIAnalysisService(asr_provider=MockASR())
+    transcript_meta = updated._apply_gop_to_analysis({"is_correct": False, "is_accepted": False, "error_type": ""}, gop)
 
-
-def test_letter_accepted_by_gop_pronunciation_evidence() -> None:
-    normalization = _normalize("See", "C", "letter", ["S", "IY"])
-    gop = compute_gop(
-        audio_path_or_waveform=None,
-        expected_text="C",
-        prompt_type="letter",
-        raw_transcript="See",
-        observed_phonemes=["S", "IY"],
-        config={"letter_threshold": 0.70},
-    )
-    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
-
-    assert gop["gop_decision"] == "accepted_by_pronunciation_evidence"
-    assert updated["accepted"] is True
-    assert updated["corrected_transcript"] == "C"
-    assert updated["displayed_transcript"] == "C"
-
-
-def test_gop_skips_bad_audio() -> None:
-    gop = compute_gop(
-        audio_path_or_waveform=None,
-        expected_text="Leo",
-        prompt_type="word",
-        raw_transcript="Layo",
-        observed_phonemes=["L", "EY", "OW"],
-        retry_required=True,
-    )
-
-    assert gop["gop_available"] is False
-    assert gop["gop_decision"] == "skipped_bad_audio"
-
-
-def test_gop_skips_missing_expected_text() -> None:
-    gop = compute_gop(
-        audio_path_or_waveform=None,
-        expected_text="",
-        prompt_type="word",
-        raw_transcript="Layo",
-        observed_phonemes=["L", "EY", "OW"],
-    )
-
-    assert gop["gop_available"] is False
-    assert gop["gop_decision"] == "skipped_no_expected_text"
-
-
-def test_sentence_gop_does_not_force_full_expected_sentence() -> None:
-    normalization = _normalize("Layo can read", "Leo can read", "sentence", ["L", "EY", "OW", "K", "AE", "N", "R", "IY", "D"])
-    gop = {
-        "gop_enabled": True,
-        "gop_available": True,
-        "gop_score": 0.82,
-        "gop_confidence": 0.78,
-        "gop_decision": "accepted_by_pronunciation_evidence",
-        "gop_threshold": 0.70,
-        "gop_prompt_type": "sentence",
-        "gop_expected_phonemes": ["L", "IY", "OW"],
-        "gop_observed_phonemes": ["L", "EY", "OW"],
-        "gop_phoneme_scores": [],
-        "gop_word_scores": [{"word": "Leo", "score": 0.82, "status": "acceptable"}],
-        "mispronounced_phonemes": [],
-        "weak_words": [],
-        "gop_error": None,
-    }
-    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
-
-    assert updated["displayed_transcript"] != "Leo can read"
-    assert updated["displayed_transcript"] == "Layo can read"
-    assert updated["gop_word_scores"][0]["word"] == "Leo"
+    assert normalization.accepted is False
+    assert transcript_meta["error_type"] != "correct"

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from difflib import SequenceMatcher
+import math
 from typing import Any
 
 from readirect_asr.evaluation.asr_metrics import compute_cer
+from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
 from readirect_asr.scoring.phoneme_comparison import phoneme_similarity
 from readirect_asr.text.normalization import normalize_for_wer
 from readirect_asr.text.transcript_normalizer import detect_prompt_type, generate_expected_phonemes
@@ -16,6 +17,9 @@ DEFAULT_GOP_CONFIG = {
     "rhyme_threshold": 0.75,
     "sentence_word_threshold": 0.70,
     "passage_word_threshold": 0.70,
+    "min_alignment_quality": 0.25,
+    "weak_threshold": 0.55,
+    "acceptable_threshold": 0.75,
     "min_audio_quality_required": True,
     "skip_on_retry_required": True,
     "skip_on_uncertain_audio": True,
@@ -24,21 +28,89 @@ DEFAULT_GOP_CONFIG = {
 
 SHORT_PROMPT_TYPES = {"letter", "word", "rhyme", "rhyming_word"}
 LONG_PROMPT_TYPES = {"sentence", "paragraph", "passage", "final_sentence", "reading_passage"}
-
 VOWELS = {"AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW"}
-SIMILAR_PHONEME_GROUPS = [
-    {"IY", "IH", "EY"},
-    {"EH", "AE", "AH"},
-    {"OW", "AO", "UH", "UW"},
-    {"L", "R"},
-    {"S", "Z"},
-    {"T", "D"},
-    {"P", "B"},
-    {"K", "G"},
-    {"F", "V"},
-    {"TH", "DH"},
-    {"CH", "JH", "SH", "ZH"},
-]
+SPECIAL_TOKENS = {"", "<PAD>", "<S>", "</S>", "<UNK>", "[PAD]", "[UNK]", "|", "SIL", "SPN", "UNK", "PAD", "BLANK"}
+
+LETTER_SOUND_PHONEMES = {
+    "A": ["AE"],
+    "B": ["B"],
+    "C": ["K"],
+    "D": ["D"],
+    "E": ["EH"],
+    "F": ["F"],
+    "G": ["G"],
+    "H": ["HH"],
+    "I": ["IH"],
+    "J": ["JH"],
+    "K": ["K"],
+    "L": ["L"],
+    "M": ["M"],
+    "N": ["N"],
+    "O": ["AA"],
+    "P": ["P"],
+    "Q": ["K"],
+    "R": ["R"],
+    "S": ["S"],
+    "T": ["T"],
+    "U": ["AH"],
+    "V": ["V"],
+    "W": ["W"],
+    "X": ["K", "S"],
+    "Y": ["Y"],
+    "Z": ["Z"],
+}
+
+LETTER_SOUND_HINTS = {
+    "letter_sound",
+    "sound_drill",
+    "see_letter_say_sound",
+    "match_sound_to_letter",
+    "hear_and_repeat",
+    "listen_and_say",
+    "mastery_check",
+}
+
+ARPABET_TO_MODEL_LABELS = {
+    "AA": ["ɑ", "ɑː", "a"],
+    "AE": ["æ", "a"],
+    "AH": ["ʌ", "ə", "ɐ"],
+    "AO": ["ɔ", "ɔː", "o"],
+    "AW": ["aʊ"],
+    "AY": ["aɪ"],
+    "EH": ["ɛ", "e"],
+    "ER": ["ɚ", "ɜː", "ɜ", "ə"],
+    "EY": ["eɪ", "e"],
+    "IH": ["ɪ", "i"],
+    "IY": ["i", "iː"],
+    "OW": ["oʊ", "o"],
+    "OY": ["ɔɪ", "oɪ"],
+    "UH": ["ʊ", "u"],
+    "UW": ["u", "uː"],
+    "B": ["b"],
+    "CH": ["tʃ", "tS"],
+    "D": ["d"],
+    "DH": ["ð"],
+    "F": ["f"],
+    "G": ["ɡ", "g"],
+    "HH": ["h"],
+    "JH": ["dʒ", "dZ"],
+    "K": ["k"],
+    "L": ["l"],
+    "M": ["m"],
+    "N": ["n"],
+    "NG": ["ŋ"],
+    "P": ["p"],
+    "R": ["ɹ", "r"],
+    "S": ["s"],
+    "SH": ["ʃ"],
+    "T": ["t"],
+    "TH": ["θ"],
+    "V": ["v"],
+    "W": ["w"],
+    "Y": ["j", "y"],
+    "Z": ["z"],
+    "ZH": ["ʒ"],
+}
 
 
 def compute_gop(
@@ -50,104 +122,369 @@ def compute_gop(
     phoneme_model: Any | None = None,
     phoneme_processor: Any | None = None,
     *,
+    task_type: str | None = None,
     observed_phonemes: list[str] | None = None,
-    cmudict_loader: Any | None = None,
+    acoustic_evidence: dict[str, Any] | None = None,
+    cmudict_loader: CMUDictLoader | None = None,
     config: dict[str, Any] | None = None,
     audio_quality: dict[str, Any] | None = None,
     retry_required: bool = False,
     uncertain: bool = False,
 ) -> dict[str, Any]:
+    del audio_path_or_waveform, sample_rate, phoneme_model, phoneme_processor
     active_config = {**DEFAULT_GOP_CONFIG, **(config or {})}
     detected_prompt_type = detect_prompt_type(expected_text, prompt_type=prompt_type)
     threshold = _threshold_for_prompt(detected_prompt_type, active_config)
     base = _base_payload(active_config, detected_prompt_type, threshold)
 
     if not bool(active_config.get("enabled", True)):
-        return {**base, "gop_enabled": False, "gop_available": False, "gop_decision": "not_available", "gop_error": "GOP is disabled"}
+        return _unsupported(base, "GOP is disabled", enabled=False, decision="disabled")
 
     expected = str(expected_text or "").strip()
     if expected == "":
-        return {**base, "gop_available": False, "gop_decision": "skipped_no_expected_text", "gop_error": "expected_text is missing"}
+        return _unsupported(base, "expected_text is missing", decision="skipped_no_expected_text")
 
     if detected_prompt_type not in SHORT_PROMPT_TYPES | LONG_PROMPT_TYPES:
-        return {**base, "gop_available": False, "gop_decision": "skipped_unsupported_prompt_type", "gop_error": f"unsupported prompt type: {detected_prompt_type}"}
+        return _unsupported(base, f"unsupported prompt type: {detected_prompt_type}", decision="skipped_unsupported_prompt_type")
 
     bad_audio_reason = _bad_audio_reason(audio_quality or {}, retry_required, uncertain, active_config)
     if bad_audio_reason:
-        return {**base, "gop_available": False, "gop_decision": "skipped_bad_audio", "gop_error": bad_audio_reason}
+        return _unsupported(base, bad_audio_reason, decision="skipped_bad_audio")
 
     try:
-        expected_phonemes, expected_source, expected_variants = generate_expected_phonemes(expected, cmudict_loader)
-        if not expected_phonemes:
-            expected_phonemes = _fallback_expected_phonemes(expected)
-            expected_source = "simple_fallback" if expected_phonemes else expected_source
-            expected_variants = [expected_phonemes] if expected_phonemes else expected_variants
-        observed = _normalize_phonemes(observed_phonemes or [])
-
-        if not observed and phoneme_model is not None and phoneme_processor is not None and audio_path_or_waveform is not None:
-            observed = _decode_observed_phonemes(audio_path_or_waveform, sample_rate, phoneme_model, phoneme_processor)
-
-        if not expected_phonemes:
-            return {**base, "gop_available": False, "gop_decision": "not_available", "gop_error": "expected phonemes are unavailable"}
-
-        if not observed:
-            return {
-                **base,
-                "gop_available": False,
-                "gop_decision": "not_available",
-                "gop_expected_phonemes": expected_phonemes,
-                "gop_error": "observed phonemes are unavailable",
-            }
-
-        alignment = _align_phonemes(expected_phonemes, observed)
-        phoneme_scores = [_phoneme_score_item(expected, actual) for expected, actual in alignment if expected]
-        sequence_similarity = phoneme_similarity(expected_phonemes, observed)
-        alignment_score = _mean([float(item["score"]) for item in phoneme_scores])
-        acoustic_confidence = _mean([float(item["score"]) for item in phoneme_scores]) if phoneme_scores else None
-        transcript_support = _transcript_support(expected, raw_transcript or "")
-        gop_score = _weighted_score(
-            {
-                "phoneme_sequence_similarity": sequence_similarity,
-                "phoneme_alignment_score": alignment_score,
-                "acoustic_confidence_score": acoustic_confidence,
-                "transcript_support_score": transcript_support,
-            }
+        expected_phonemes, expected_source, expected_variants = canonical_expected_phonemes(
+            expected,
+            prompt_type=detected_prompt_type,
+            task_type=task_type,
+            cmudict_loader=cmudict_loader,
         )
-        status = _status_for_score(gop_score, threshold)
-        word_scores = _word_scores(expected, detected_prompt_type, gop_score, threshold)
-        weak_words = [item["word"] for item in word_scores if item["status"] == "weak"]
-        mispronounced = [item["expected_phoneme"] for item in phoneme_scores if item["status"] == "weak"]
-        decision = "accepted_by_pronunciation_evidence" if status in {"good", "acceptable"} else "rejected_low_gop"
+        if not expected_phonemes:
+            return _unsupported(base, "expected phonemes are unavailable", decision="not_available")
+
+        evidence = acoustic_evidence or {}
+        if not evidence.get("available"):
+            return {
+                **_unsupported(base, str(evidence.get("error") or "phoneme frame probabilities are unavailable"), decision="not_available"),
+                "gop_expected_phonemes": expected_phonemes,
+                "canonical_phonemes": expected_phonemes,
+                "canonical_expected_phonemes": expected_phonemes,
+                "expected_phoneme_source": expected_source,
+                "expected_phoneme_variants": expected_variants,
+            }
+        model_expected_phonemes, missing_model_labels = _map_expected_to_model_labels(expected_phonemes, evidence.get("vocabulary") or {})
+        if missing_model_labels:
+            return {
+                **_unsupported(base, f"phoneme token not found in model vocabulary: {', '.join(missing_model_labels)}", decision="alignment_failed"),
+                "gop_expected_phonemes": expected_phonemes,
+                "canonical_phonemes": expected_phonemes,
+                "canonical_expected_phonemes": expected_phonemes,
+                "gop_model_version": evidence.get("model_version") or base["gop_model_version"],
+                "gop_model_path": evidence.get("model_path"),
+                "alignment_quality": "failed",
+            }
+
+        alignment = ctc_forced_align(
+            expected_phonemes=model_expected_phonemes,
+            frame_log_probs=evidence.get("log_probs"),
+            vocabulary=evidence.get("vocabulary") or {},
+            blank_token_id=evidence.get("blank_token_id"),
+        )
+        if not alignment["ok"]:
+            return {
+                **_unsupported(base, str(alignment["error"]), decision="alignment_failed"),
+                "gop_expected_phonemes": expected_phonemes,
+                "canonical_phonemes": expected_phonemes,
+                "canonical_expected_phonemes": expected_phonemes,
+                "gop_model_version": evidence.get("model_version") or base["gop_model_version"],
+                "gop_model_path": evidence.get("model_path"),
+                "alignment_quality": "failed",
+            }
+
+        phoneme_scores = score_aligned_phonemes(
+            alignment["segments"],
+            evidence.get("log_probs"),
+            alignment["phone_ids"],
+            evidence.get("vocabulary") or {},
+            evidence.get("blank_token_id"),
+            float(evidence.get("duration_seconds") or 0.0),
+            weak_threshold=float(active_config.get("weak_threshold", 0.55)),
+            acceptable_threshold=float(active_config.get("acceptable_threshold", 0.75)),
+        )
+        if not phoneme_scores:
+            return {
+                **_unsupported(base, "alignment produced no phoneme score ranges", decision="alignment_failed"),
+                "gop_expected_phonemes": expected_phonemes,
+                "canonical_phonemes": expected_phonemes,
+                "canonical_expected_phonemes": expected_phonemes,
+                "alignment_quality": "failed",
+            }
+        for index, item in enumerate(phoneme_scores):
+            if index < len(expected_phonemes):
+                item["model_phoneme"] = item.get("phoneme")
+                item["phoneme"] = expected_phonemes[index]
+                item["expected_phoneme"] = expected_phonemes[index]
+
+        overall = _mean([float(item["score"]) for item in phoneme_scores])
+        lowest = min(phoneme_scores, key=lambda item: float(item["score"]))
+        min_alignment_quality = float(active_config.get("min_alignment_quality", 0.25))
+        alignment_quality = "usable" if overall >= min_alignment_quality else "low_confidence"
+        observed = _normalize_phonemes(observed_phonemes or [])
+        decoded = _normalize_phonemes(evidence.get("decoded_phonemes") or observed)
+        sequence_similarity = phoneme_similarity(expected_phonemes, decoded) if decoded else 0.0
+        transcript_support = _transcript_support(expected, raw_transcript or "")
+        decision = "accepted_by_pronunciation_evidence" if overall >= threshold else "rejected_low_gop"
 
         return {
             **base,
             "gop_available": True,
-            "gop_score": round(gop_score, 6),
-            "gop_confidence": round(_mean([sequence_similarity, alignment_score, acoustic_confidence or alignment_score]), 6),
+            "gop_supported": True,
+            "gop_score": round(overall, 6),
+            "overall_gop_score": round(overall, 6),
+            "gop_confidence": round(_mean([overall, sequence_similarity, transcript_support]), 6),
+            "acoustic_confidence": round(overall, 6),
             "gop_decision": decision,
             "gop_expected_phonemes": expected_phonemes,
-            "gop_observed_phonemes": observed,
+            "canonical_phonemes": expected_phonemes,
+            "canonical_expected_phonemes": expected_phonemes,
+            "gop_observed_phonemes": decoded,
+            "decoded_phonemes": decoded,
+            "decoded_acoustic_phonemes": decoded,
             "gop_phoneme_scores": phoneme_scores,
-            "gop_word_scores": word_scores,
-            "mispronounced_phonemes": mispronounced,
-            "weak_words": weak_words,
+            "phoneme_scores": phoneme_scores,
+            "gop_word_scores": _word_scores(expected, detected_prompt_type, overall, threshold),
+            "mispronounced_phonemes": [str(item["phoneme"]) for item in phoneme_scores if item["status"] == "weak"],
+            "weak_words": [],
+            "lowest_phoneme": lowest["phoneme"],
+            "weak_phoneme": lowest["phoneme"],
+            "lowest_phoneme_score": lowest["score"],
+            "weak_phoneme_score": lowest["score"],
+            "nearest_confusion": lowest.get("nearest_competitor"),
+            "alignment_quality": alignment_quality,
+            "gop_model_version": evidence.get("model_version") or base["gop_model_version"],
+            "gop_model_path": evidence.get("model_path"),
+            "gop_frame_count": evidence.get("frame_count"),
+            "gop_duration_seconds": evidence.get("duration_seconds"),
+            "gop_fallback_used": False,
             "gop_error": None,
             "debug_components": {
                 "expected_phoneme_source": expected_source,
                 "expected_phoneme_variants": expected_variants,
                 "phoneme_sequence_similarity": round(sequence_similarity, 6),
-                "phoneme_alignment_score": round(alignment_score, 6),
-                "acoustic_confidence_score": round(acoustic_confidence or 0.0, 6),
                 "transcript_support_score": round(transcript_support, 6),
+                "alignment_path_log_score": alignment.get("path_log_score"),
             },
         }
     except Exception as exc:
-        return {**base, "gop_available": False, "gop_decision": "error", "gop_error": str(exc)}
+        return _unsupported(base, str(exc), decision="error")
+
+
+def canonical_expected_phonemes(
+    expected_text: str,
+    *,
+    prompt_type: str,
+    task_type: str | None = None,
+    cmudict_loader: CMUDictLoader | None = None,
+) -> tuple[list[str], str, list[list[str]]]:
+    expected = str(expected_text or "").strip()
+    task = str(task_type or "").lower()
+    normalized_letter = expected.upper() if len(expected) == 1 and expected.isalpha() else ""
+    if normalized_letter and (prompt_type == "letter_sound" or "letter_sound" in task or task in LETTER_SOUND_HINTS or "sound" in task):
+        phones = LETTER_SOUND_PHONEMES.get(normalized_letter, [])
+        return phones, "letter_sound_map", [phones] if phones else []
+
+    phones, source, variants = generate_expected_phonemes(expected, cmudict_loader)
+    if not phones:
+        phones = _fallback_expected_phonemes(expected)
+        source = "simple_fallback" if phones else source
+        variants = [phones] if phones else variants
+    return _normalize_phonemes(phones), source, [_normalize_phonemes(variant) for variant in variants if variant]
+
+
+def _map_expected_to_model_labels(expected_phonemes: list[str], vocabulary: dict[Any, Any]) -> tuple[list[str], list[str]]:
+    vocab_labels = {_normalize_model_token(label) for label in vocabulary.values()}
+    mapped: list[str] = []
+    missing: list[str] = []
+
+    for phone in expected_phonemes:
+        normalized = str(phone).strip()
+        base = "".join(ch for ch in normalized.upper() if not ch.isdigit())
+        candidates = [
+            normalized,
+            normalized.upper(),
+            normalized.lower(),
+            base,
+            base.lower(),
+            *ARPABET_TO_MODEL_LABELS.get(base, []),
+        ]
+        match = next((_normalize_model_token(candidate) for candidate in candidates if _normalize_model_token(candidate) in vocab_labels), None)
+        if match is None:
+            missing.append(normalized)
+            continue
+        mapped.append(match)
+
+    return mapped, missing
+
+
+def ctc_forced_align(
+    *,
+    expected_phonemes: list[str],
+    frame_log_probs: Any,
+    vocabulary: dict[int, str] | dict[str, str],
+    blank_token_id: int | None,
+) -> dict[str, Any]:
+    log_probs = _as_frame_matrix(frame_log_probs)
+    if not log_probs:
+        return {"ok": False, "error": "frame log probabilities are empty"}
+    if not expected_phonemes:
+        return {"ok": False, "error": "expected phoneme sequence is empty"}
+
+    id_to_phone = {int(index): _normalize_model_token(label) for index, label in vocabulary.items()}
+    phone_to_ids: dict[str, list[int]] = {}
+    for index, phone in id_to_phone.items():
+        if phone and phone not in SPECIAL_TOKENS:
+            phone_to_ids.setdefault(phone, []).append(index)
+
+    phone_ids: list[int] = []
+    missing: list[str] = []
+    for phone in [_normalize_model_token(item) for item in expected_phonemes]:
+        ids = phone_to_ids.get(phone)
+        if not ids:
+            missing.append(phone)
+            continue
+        phone_ids.append(ids[0])
+    if missing:
+        return {"ok": False, "error": "phoneme token not found in model vocabulary: "+", ".join(missing)}
+    if blank_token_id is None:
+        blank_token_id = _infer_blank_id(id_to_phone)
+    if blank_token_id is None:
+        return {"ok": False, "error": "blank token id is unavailable"}
+
+    frames = len(log_probs)
+    labels: list[int] = [blank_token_id]
+    label_to_phone_index: list[int | None] = [None]
+    for index, phone_id in enumerate(phone_ids):
+        labels.extend([phone_id, blank_token_id])
+        label_to_phone_index.extend([index, None])
+    states = len(labels)
+    neg_inf = -1.0e30
+    dp = [[neg_inf] * states for _ in range(frames)]
+    back = [[0] * states for _ in range(frames)]
+    dp[0][0] = _lp(log_probs, 0, labels[0])
+    if states > 1:
+        dp[0][1] = _lp(log_probs, 0, labels[1])
+        back[0][1] = 0
+
+    for frame in range(1, frames):
+        for state in range(states):
+            candidates = [(dp[frame - 1][state], state)]
+            if state - 1 >= 0:
+                candidates.append((dp[frame - 1][state - 1], state - 1))
+            if state - 2 >= 0 and labels[state] != blank_token_id and labels[state] != labels[state - 2]:
+                candidates.append((dp[frame - 1][state - 2], state - 2))
+            best_score, best_state = max(candidates, key=lambda item: item[0])
+            dp[frame][state] = best_score + _lp(log_probs, frame, labels[state])
+            back[frame][state] = best_state
+
+    final_candidates = [(dp[frames - 1][states - 1], states - 1)]
+    if states > 1:
+        final_candidates.append((dp[frames - 1][states - 2], states - 2))
+    best_final_score, state = max(final_candidates, key=lambda item: item[0])
+    if best_final_score <= neg_inf / 2:
+        return {"ok": False, "error": "CTC alignment did not find a valid path"}
+
+    state_path = [0] * frames
+    for frame in range(frames - 1, -1, -1):
+        state_path[frame] = state
+        state = back[frame][state] if frame > 0 else state
+
+    frame_groups: list[list[int]] = [[] for _ in phone_ids]
+    for frame, aligned_state in enumerate(state_path):
+        phone_index = label_to_phone_index[aligned_state]
+        if phone_index is not None:
+            frame_groups[phone_index].append(frame)
+
+    segments: list[dict[str, Any]] = []
+    for index, frames_for_phone in enumerate(frame_groups):
+        if not frames_for_phone:
+            return {"ok": False, "error": f"no aligned frames for phoneme {expected_phonemes[index]}"}
+        segments.append({
+            "phoneme": _normalize_model_token(expected_phonemes[index]),
+            "phone_id": phone_ids[index],
+            "start_frame": min(frames_for_phone),
+            "end_frame": max(frames_for_phone) + 1,
+            "frames": frames_for_phone,
+        })
+
+    return {
+        "ok": True,
+        "segments": segments,
+        "phone_ids": phone_ids,
+        "path_log_score": round(best_final_score / max(1, frames), 6),
+    }
+
+
+def score_aligned_phonemes(
+    segments: list[dict[str, Any]],
+    frame_log_probs: Any,
+    phone_ids: list[int],
+    vocabulary: dict[int, str] | dict[str, str],
+    blank_token_id: int | None,
+    duration_seconds: float,
+    *,
+    weak_threshold: float,
+    acceptable_threshold: float,
+) -> list[dict[str, Any]]:
+    log_probs = _as_frame_matrix(frame_log_probs)
+    id_to_phone = {int(index): _normalize_model_token(label) for index, label in vocabulary.items()}
+    excluded = set(phone_ids)
+    if blank_token_id is not None:
+        excluded.add(int(blank_token_id))
+    candidate_ids = [
+        index for index, phone in id_to_phone.items()
+        if index not in excluded and phone and phone not in SPECIAL_TOKENS
+    ]
+    frame_count = max(1, len(log_probs))
+    ms_per_frame = (duration_seconds * 1000.0 / frame_count) if duration_seconds > 0 else 0.0
+    scores: list[dict[str, Any]] = []
+
+    for segment in segments:
+        frames = list(segment["frames"])
+        expected_id = int(segment["phone_id"])
+        expected_values = [_lp(log_probs, frame, expected_id) for frame in frames]
+        competitor_avgs = {
+            index: _mean([_lp(log_probs, frame, index) for frame in frames])
+            for index in candidate_ids
+        }
+        competitor_id, competitor_log_score = (None, None)
+        if competitor_avgs:
+            competitor_id, competitor_log_score = max(competitor_avgs.items(), key=lambda item: item[1])
+        expected_log_score = _mean(expected_values)
+        margin = expected_log_score - float(competitor_log_score if competitor_log_score is not None else expected_log_score)
+        normalized = _normalize_margin(margin)
+        scores.append({
+            "phoneme": segment["phoneme"],
+            "expected_phoneme": segment["phoneme"],
+            "start_ms": int(round(segment["start_frame"] * ms_per_frame)),
+            "end_ms": int(round(segment["end_frame"] * ms_per_frame)),
+            "start_frame": segment["start_frame"],
+            "end_frame": segment["end_frame"],
+            "score": round(normalized, 6),
+            "raw_gop_margin": round(margin, 6),
+            "status": _phoneme_status(normalized, weak_threshold, acceptable_threshold),
+            "nearest_competitor": id_to_phone.get(int(competitor_id)) if competitor_id is not None else None,
+            "competitor_score": round(_logprob_to_prob(float(competitor_log_score)), 6) if competitor_log_score is not None else None,
+            "expected_log_probability": round(expected_log_score, 6),
+            "competitor_log_probability": round(float(competitor_log_score), 6) if competitor_log_score is not None else None,
+        })
+    return scores
 
 
 def apply_gop_to_transcript_meta(transcript_meta: dict[str, Any], gop: dict[str, Any]) -> dict[str, Any]:
     updated = dict(transcript_meta)
     updated.update(gop_response_fields(gop))
+    debug_metadata = dict(updated.get("debug_metadata", {}) or {})
+    debug_metadata["gop_evidence"] = gop_evidence_object(updated, gop)
+    updated["debug_metadata"] = debug_metadata
 
     if gop.get("gop_decision") != "accepted_by_pronunciation_evidence":
         return updated
@@ -160,12 +497,17 @@ def apply_gop_to_transcript_meta(transcript_meta: dict[str, Any], gop: dict[str,
     if not expected:
         return updated
 
+    existing_support = bool(updated.get("accepted")) or float(updated.get("phonetic_similarity_score", 0.0) or 0.0) >= float(updated.get("threshold_used", 1.0) or 1.0)
+    if not existing_support:
+        updated["normalization_reason"] = "Acoustic GOP supported expected phonemes, but expected-centric transcript evidence remained the final decision layer"
+        return updated
+
     updated["corrected_transcript"] = expected
     updated["displayed_transcript"] = expected
     updated["accepted"] = True
     updated["normalization_applied"] = True
-    updated["normalization_reason"] = "GOP pronunciation evidence strongly matched expected text"
-    updated["correction_strategy_used"] = "gop_pronunciation_evidence"
+    updated["normalization_reason"] = "Acoustic GOP evidence supported existing expected-centric acceptance"
+    updated["correction_strategy_used"] = "expected_centric_with_acoustic_gop"
     updated["accepted_by_phoneme_evidence"] = True
     updated["gop_correction_applied"] = True
     updated["corrected_wer"] = 0.0
@@ -176,22 +518,65 @@ def apply_gop_to_transcript_meta(transcript_meta: dict[str, Any], gop: dict[str,
 
 def gop_response_fields(gop: dict[str, Any] | None) -> dict[str, Any]:
     gop = gop or {}
+    phoneme_scores = list(gop.get("phoneme_scores", gop.get("gop_phoneme_scores", [])) or [])
+    observed = list(gop.get("decoded_acoustic_phonemes", gop.get("gop_observed_phonemes", [])) or [])
+    expected = list(gop.get("canonical_expected_phonemes", gop.get("gop_expected_phonemes", [])) or [])
     return {
         "gop_enabled": bool(gop.get("gop_enabled", True)),
         "gop_available": bool(gop.get("gop_available", False)),
-        "gop_score": gop.get("gop_score"),
-        "gop_confidence": gop.get("gop_confidence"),
+        "gop_supported": bool(gop.get("gop_supported", gop.get("gop_available", False))),
+        "gop_score": gop.get("gop_score", gop.get("overall_gop_score")),
+        "overall_gop_score": gop.get("overall_gop_score", gop.get("gop_score")),
+        "gop_confidence": gop.get("gop_confidence", gop.get("acoustic_confidence")),
+        "acoustic_confidence": gop.get("acoustic_confidence", gop.get("gop_confidence")),
         "gop_decision": str(gop.get("gop_decision", "not_available")),
         "gop_threshold": gop.get("gop_threshold"),
         "gop_prompt_type": str(gop.get("gop_prompt_type", "unknown")),
-        "gop_expected_phonemes": list(gop.get("gop_expected_phonemes", []) or []),
-        "gop_observed_phonemes": list(gop.get("gop_observed_phonemes", []) or []),
-        "gop_phoneme_scores": list(gop.get("gop_phoneme_scores", []) or []),
+        "gop_expected_phonemes": expected,
+        "canonical_phonemes": expected,
+        "canonical_expected_phonemes": expected,
+        "gop_observed_phonemes": observed,
+        "decoded_phonemes": observed,
+        "decoded_acoustic_phonemes": observed,
+        "gop_phoneme_scores": phoneme_scores,
+        "phoneme_scores": phoneme_scores,
         "gop_word_scores": list(gop.get("gop_word_scores", []) or []),
         "mispronounced_phonemes": list(gop.get("mispronounced_phonemes", []) or []),
         "weak_words": list(gop.get("weak_words", []) or []),
+        "lowest_phoneme": gop.get("lowest_phoneme", gop.get("weak_phoneme")),
+        "weak_phoneme": gop.get("weak_phoneme", gop.get("lowest_phoneme")),
+        "lowest_phoneme_score": gop.get("lowest_phoneme_score", gop.get("weak_phoneme_score")),
+        "weak_phoneme_score": gop.get("weak_phoneme_score", gop.get("lowest_phoneme_score")),
+        "nearest_confusion": gop.get("nearest_confusion"),
+        "alignment_quality": gop.get("alignment_quality"),
+        "gop_model_version": gop.get("gop_model_version", "existing_wavtec_phoneme_model"),
+        "gop_model_path": gop.get("gop_model_path"),
+        "gop_frame_count": gop.get("gop_frame_count"),
+        "gop_duration_seconds": gop.get("gop_duration_seconds"),
+        "gop_fallback_used": bool(gop.get("gop_fallback_used", not bool(gop.get("gop_available", False)))),
         "gop_correction_applied": bool(gop.get("gop_correction_applied", False)),
         "gop_error": gop.get("gop_error"),
+    }
+
+
+def gop_evidence_object(transcript_meta: dict[str, Any], gop: dict[str, Any]) -> dict[str, Any]:
+    fields = gop_response_fields(gop)
+    return {
+        "expected": transcript_meta.get("expected_text"),
+        "transcript": transcript_meta.get("raw_transcript"),
+        "expected_phonemes": list(transcript_meta.get("expected_phonemes", []) or []),
+        "transcript_phonemes": list(transcript_meta.get("observed_phonemes", []) or []),
+        "decoded_acoustic_phonemes": fields["decoded_acoustic_phonemes"],
+        "gop": {
+            "gop_supported": fields["gop_supported"],
+            "overall_gop_score": fields["overall_gop_score"],
+            "phoneme_scores": fields["phoneme_scores"],
+            "lowest_phoneme": fields["lowest_phoneme"],
+            "lowest_phoneme_score": fields["lowest_phoneme_score"],
+            "nearest_confusion": fields["nearest_confusion"],
+            "alignment_quality": fields["alignment_quality"],
+            "gop_error": fields["gop_error"],
+        },
     }
 
 
@@ -199,19 +584,49 @@ def _base_payload(config: dict[str, Any], prompt_type: str, threshold: float) ->
     return {
         "gop_enabled": bool(config.get("enabled", True)),
         "gop_available": False,
+        "gop_supported": False,
         "gop_score": None,
+        "overall_gop_score": None,
         "gop_confidence": None,
+        "acoustic_confidence": None,
         "gop_decision": "not_available",
         "gop_threshold": threshold,
         "gop_prompt_type": prompt_type,
         "gop_expected_phonemes": [],
+        "canonical_phonemes": [],
+        "canonical_expected_phonemes": [],
         "gop_observed_phonemes": [],
+        "decoded_phonemes": [],
+        "decoded_acoustic_phonemes": [],
         "gop_phoneme_scores": [],
+        "phoneme_scores": [],
         "gop_word_scores": [],
         "mispronounced_phonemes": [],
         "weak_words": [],
+        "lowest_phoneme": None,
+        "lowest_phoneme_score": None,
+        "nearest_confusion": None,
+        "alignment_quality": None,
+        "gop_model_version": "existing_wavtec_phoneme_model",
+        "gop_model_path": None,
+        "gop_frame_count": None,
+        "gop_duration_seconds": None,
+        "gop_fallback_used": True,
         "gop_correction_applied": False,
         "gop_error": None,
+    }
+
+
+def _unsupported(base: dict[str, Any], error: str, *, enabled: bool = True, decision: str = "not_available") -> dict[str, Any]:
+    return {
+        **base,
+        "gop_enabled": enabled,
+        "gop_available": False,
+        "gop_supported": False,
+        "gop_decision": decision,
+        "alignment_quality": "failed" if enabled else None,
+        "gop_fallback_used": True,
+        "gop_error": error,
     }
 
 
@@ -243,45 +658,25 @@ def _bad_audio_reason(audio_quality: dict[str, Any], retry_required: bool, uncer
     return ""
 
 
-def _decode_observed_phonemes(audio_path_or_waveform: Any, sample_rate: int, phoneme_model: Any, phoneme_processor: Any) -> list[str]:
-    try:
-        import torch
-    except ImportError as exc:
-        raise RuntimeError("torch is required for phoneme GOP decoding") from exc
-
-    audio = audio_path_or_waveform
-    if isinstance(audio_path_or_waveform, (str, bytes)):
-        import librosa
-
-        audio, sample_rate = librosa.load(str(audio_path_or_waveform), sr=sample_rate, mono=True)
-    inputs = phoneme_processor(audio, sampling_rate=sample_rate, return_tensors="pt", padding=True)
-    device = next(phoneme_model.parameters()).device
-    input_values = inputs.input_values.to(device)
-    with torch.no_grad():
-        logits = phoneme_model(input_values).logits
-    predicted_ids = torch.argmax(logits, dim=-1)
-    decoded = phoneme_processor.batch_decode(predicted_ids)[0]
-    return _normalize_phonemes(str(decoded).replace("|", " ").replace("/", " ").split())
-
-
 def _normalize_phonemes(phonemes: list[str]) -> list[str]:
     normalized: list[str] = []
     for phoneme in phonemes:
-        clean = "".join(char for char in str(phoneme or "").upper() if char.isalpha())
-        if clean and clean not in {"SIL", "SPN", "UNK", "PAD", "BLANK"}:
+        clean = _normalize_token(phoneme)
+        if clean and clean not in SPECIAL_TOKENS:
             normalized.append(clean)
     return normalized
 
 
+def _normalize_token(value: Any) -> str:
+    return "".join(char for char in str(value or "").upper() if char.isalpha())
+
+
+def _normalize_model_token(value: Any) -> str:
+    return str(value or "").strip()
+
+
 def _fallback_expected_phonemes(text: str) -> list[str]:
     word = normalize_for_wer(text).replace(" ", "")
-    overrides = {
-        "leo": ["L", "IY", "OW"],
-        "layo": ["L", "EY", "OW"],
-        "layoh": ["L", "EY", "OW"],
-    }
-    if word in overrides:
-        return overrides[word]
     phones: list[str] = []
     index = 0
     digraphs = {
@@ -300,32 +695,10 @@ def _fallback_expected_phonemes(text: str) -> list[str]:
         "oi": ["OY"],
     }
     letters = {
-        "a": ["AE"],
-        "b": ["B"],
-        "c": ["K"],
-        "d": ["D"],
-        "e": ["EH"],
-        "f": ["F"],
-        "g": ["G"],
-        "h": ["HH"],
-        "i": ["IH"],
-        "j": ["JH"],
-        "k": ["K"],
-        "l": ["L"],
-        "m": ["M"],
-        "n": ["N"],
-        "o": ["OW"],
-        "p": ["P"],
-        "q": ["K"],
-        "r": ["R"],
-        "s": ["S"],
-        "t": ["T"],
-        "u": ["AH"],
-        "v": ["V"],
-        "w": ["W"],
-        "x": ["K", "S"],
-        "y": ["Y"],
-        "z": ["Z"],
+        "a": ["AE"], "b": ["B"], "c": ["K"], "d": ["D"], "e": ["EH"], "f": ["F"], "g": ["G"], "h": ["HH"],
+        "i": ["IH"], "j": ["JH"], "k": ["K"], "l": ["L"], "m": ["M"], "n": ["N"], "o": ["OW"], "p": ["P"],
+        "q": ["K"], "r": ["R"], "s": ["S"], "t": ["T"], "u": ["AH"], "v": ["V"], "w": ["W"], "x": ["K", "S"],
+        "y": ["Y"], "z": ["Z"],
     }
     while index < len(word):
         pair = word[index : index + 2]
@@ -338,83 +711,55 @@ def _fallback_expected_phonemes(text: str) -> list[str]:
     return phones
 
 
-def _align_phonemes(expected: list[str], observed: list[str]) -> list[tuple[str | None, str | None]]:
-    rows = len(expected)
-    cols = len(observed)
-    dp = [[0.0] * (cols + 1) for _ in range(rows + 1)]
-    back: list[list[str]] = [[""] * (cols + 1) for _ in range(rows + 1)]
-    for i in range(1, rows + 1):
-        dp[i][0] = dp[i - 1][0] - 1.0
-        back[i][0] = "up"
-    for j in range(1, cols + 1):
-        dp[0][j] = dp[0][j - 1] - 1.0
-        back[0][j] = "left"
-    for i in range(1, rows + 1):
-        for j in range(1, cols + 1):
-            match = dp[i - 1][j - 1] + _pair_score(expected[i - 1], observed[j - 1])
-            delete = dp[i - 1][j] - 1.0
-            insert = dp[i][j - 1] - 1.0
-            best = max(match, delete, insert)
-            dp[i][j] = best
-            back[i][j] = "diag" if best == match else "up" if best == delete else "left"
-    aligned: list[tuple[str | None, str | None]] = []
-    i, j = rows, cols
-    while i > 0 or j > 0:
-        move = back[i][j]
-        if move == "diag":
-            aligned.append((expected[i - 1], observed[j - 1]))
-            i -= 1
-            j -= 1
-        elif move == "up":
-            aligned.append((expected[i - 1], None))
-            i -= 1
-        else:
-            aligned.append((None, observed[j - 1]))
-            j -= 1
-    aligned.reverse()
-    return aligned
+def _as_frame_matrix(value: Any) -> list[list[float]]:
+    if value is None:
+        return []
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+    if not isinstance(value, list):
+        return []
+    matrix: list[list[float]] = []
+    for row in value:
+        if hasattr(row, "tolist"):
+            row = row.tolist()
+        if isinstance(row, list):
+            matrix.append([float(item) for item in row])
+    return matrix
 
 
-def _phoneme_score_item(expected: str, observed: str | None) -> dict[str, Any]:
-    score = _pair_score(expected, observed)
-    return {
-        "expected_phoneme": expected,
-        "observed_phoneme": observed,
-        "score": round(score, 6),
-        "status": _phoneme_status(score),
-    }
+def _lp(log_probs: list[list[float]], frame: int, token_id: int) -> float:
+    if frame < 0 or frame >= len(log_probs):
+        return -1.0e30
+    row = log_probs[frame]
+    if token_id < 0 or token_id >= len(row):
+        return -1.0e30
+    return float(row[token_id])
 
 
-def _pair_score(expected: str | None, observed: str | None) -> float:
-    if not expected or not observed:
+def _infer_blank_id(id_to_phone: dict[int, str]) -> int | None:
+    for index, phone in id_to_phone.items():
+        if phone in SPECIAL_TOKENS:
+            return index
+    return None
+
+
+def _normalize_margin(margin: float) -> float:
+    return max(0.0, min(1.0, 1.0 / (1.0 + math.exp(-float(margin)))))
+
+
+def _logprob_to_prob(log_probability: float) -> float:
+    try:
+        return math.exp(float(log_probability))
+    except OverflowError:
         return 0.0
-    if expected == observed:
-        return 0.94
-    if _similar_phoneme(expected, observed):
-        return 0.74 if expected in VOWELS or observed in VOWELS else 0.68
-    if (expected in VOWELS) == (observed in VOWELS):
-        return 0.45
-    return 0.20
 
 
-def _similar_phoneme(left: str, right: str) -> bool:
-    return any(left in group and right in group for group in SIMILAR_PHONEME_GROUPS)
-
-
-def _phoneme_status(score: float) -> str:
-    if score >= 0.85:
-        return "good"
-    if score >= 0.65:
+def _phoneme_status(score: float, weak_threshold: float, acceptable_threshold: float) -> str:
+    if score < weak_threshold:
+        return "weak"
+    if score < acceptable_threshold:
         return "acceptable"
-    return "weak"
-
-
-def _status_for_score(score: float, threshold: float) -> str:
-    if score >= max(0.85, threshold):
-        return "good"
-    if score >= threshold:
-        return "acceptable"
-    return "weak"
+    return "good"
 
 
 def _word_scores(expected_text: str, prompt_type: str, score: float, threshold: float) -> list[dict[str, Any]]:
@@ -423,7 +768,7 @@ def _word_scores(expected_text: str, prompt_type: str, score: float, threshold: 
         words = [expected_text.strip()]
     if not words:
         return []
-    status = _status_for_score(score, threshold)
+    status = "good" if score >= max(0.85, threshold) else "acceptable" if score >= threshold else "weak"
     return [{"word": word, "score": round(score, 6), "status": status} for word in words]
 
 
@@ -434,25 +779,7 @@ def _transcript_support(expected_text: str, raw_transcript: str) -> float:
         return 1.0
     if not expected or not raw:
         return 0.0
-    cer = compute_cer(expected, raw)
-    edit_similarity = max(0.0, 1.0 - cer)
-    ratio = SequenceMatcher(a=expected, b=raw).ratio()
-    return round(max(edit_similarity, ratio), 6)
-
-
-def _weighted_score(components: dict[str, float | None]) -> float:
-    weights = {
-        "phoneme_sequence_similarity": 0.50,
-        "phoneme_alignment_score": 0.30,
-        "acoustic_confidence_score": 0.15,
-        "transcript_support_score": 0.05,
-    }
-    available = {key: value for key, value in components.items() if value is not None}
-    weight_sum = sum(weights[key] for key in available)
-    if weight_sum <= 0:
-        return 0.0
-    score = sum(float(value) * (weights[key] / weight_sum) for key, value in available.items())
-    return max(0.0, min(1.0, score))
+    return round(max(0.0, 1.0 - compute_cer(expected, raw)), 6)
 
 
 def _mean(values: list[float]) -> float:

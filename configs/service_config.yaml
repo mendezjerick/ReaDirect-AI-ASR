@@ -51,6 +51,22 @@ transcript_normalization:
   letter_reinforcement_file: letter-reinforcement.csv
   word_reinforcement_file: word-reinforcement.csv
 
+gop:
+  enabled: true
+  model_version: existing_wavtec_phoneme_model
+  letter_threshold: 0.70
+  word_threshold: 0.75
+  rhyme_threshold: 0.75
+  sentence_word_threshold: 0.70
+  passage_word_threshold: 0.70
+  min_alignment_quality: 0.25
+  weak_threshold: 0.55
+  acceptable_threshold: 0.75
+  min_audio_quality_required: true
+  skip_on_retry_required: true
+  skip_on_uncertain_audio: true
+  debug: false
+
 dynamic_expected_correction:
   enabled: true
   letter_accept_threshold: 0.72

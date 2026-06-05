@@ -30,6 +30,7 @@ class HealthResponse(BaseModel):
     correction_layer_enabled: bool = True
     expected_centric_scoring_enabled: bool = True
     phoneme_evidence_enabled: bool = True
+    gop_status: str = "Off"
     thresholds: dict[str, Any] = Field(default_factory=dict)
     local_model_paths_loaded: bool = False
     missing_model_paths: list[str] = Field(default_factory=list)
@@ -150,17 +151,36 @@ class AnalysisResponse(BaseModel):
     accepted_by_phoneme_evidence: bool = False
     gop_enabled: bool = True
     gop_available: bool = False
+    gop_supported: bool = False
     gop_score: Optional[float] = None
+    overall_gop_score: Optional[float] = None
     gop_confidence: Optional[float] = None
+    acoustic_confidence: Optional[float] = None
     gop_decision: str = "not_available"
     gop_threshold: Optional[float] = None
     gop_prompt_type: str = "unknown"
     gop_expected_phonemes: list[str] = Field(default_factory=list)
+    canonical_phonemes: list[str] = Field(default_factory=list)
+    canonical_expected_phonemes: list[str] = Field(default_factory=list)
     gop_observed_phonemes: list[str] = Field(default_factory=list)
+    decoded_phonemes: list[str] = Field(default_factory=list)
+    decoded_acoustic_phonemes: list[str] = Field(default_factory=list)
     gop_phoneme_scores: list[dict[str, Any]] = Field(default_factory=list)
+    phoneme_scores: list[dict[str, Any]] = Field(default_factory=list)
     gop_word_scores: list[dict[str, Any]] = Field(default_factory=list)
     mispronounced_phonemes: list[str] = Field(default_factory=list)
     weak_words: list[str] = Field(default_factory=list)
+    weak_phoneme: Optional[str] = None
+    weak_phoneme_score: Optional[float] = None
+    lowest_phoneme: Optional[str] = None
+    lowest_phoneme_score: Optional[float] = None
+    nearest_confusion: Optional[str] = None
+    alignment_quality: Optional[str] = None
+    gop_model_version: str = "existing_wavtec_phoneme_model"
+    gop_model_path: Optional[str] = None
+    gop_frame_count: Optional[int] = None
+    gop_duration_seconds: Optional[float] = None
+    gop_fallback_used: bool = False
     gop_correction_applied: bool = False
     gop_error: Optional[str] = None
     dynamic_correction_enabled: bool = True

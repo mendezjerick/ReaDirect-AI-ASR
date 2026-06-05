@@ -53,6 +53,9 @@ def health() -> HealthResponse:
     service_status = "ok" if service.provider_name == "mock" or not missing_paths else "degraded"
     reinforcement_status = reinforcement_status_from_config(config.get("transcript_normalization", {}))
     qa_config = audio_quality_config(config.get("audio_quality", {}))
+    gop_enabled = bool(config.get("gop", {}).get("enabled", False))
+    phoneme_available = bool(provider_status.get("wav2vec2_phoneme_available", service.provider_name == "mock"))
+    gop_status = "Off" if not gop_enabled else ("Ready" if phoneme_available else "Failed")
     return HealthResponse(
         status=service_status,
         service_status=service_status,
@@ -66,7 +69,7 @@ def health() -> HealthResponse:
         active_asr_model_path=str(provider_status.get("active_asr_model_path", "")),
         wav2vec2_asr_available=bool(provider_status.get("wav2vec2_asr_available", service.provider_name == "mock")),
         wav2vec2_asr_model_name=str(provider_status.get("wav2vec2_asr_model_name", config.get("asr", {}).get("wav2vec2_asr_model_path", ""))),
-        wav2vec2_phoneme_available=bool(provider_status.get("wav2vec2_phoneme_available", service.provider_name == "mock")),
+        wav2vec2_phoneme_available=phoneme_available,
         wav2vec2_phoneme_model_name=str(provider_status.get("wav2vec2_phoneme_model_name", config.get("asr", {}).get("wav2vec2_phoneme_model_path", ""))),
         whisper_available=False,
         whisper_removed=True,
@@ -74,6 +77,7 @@ def health() -> HealthResponse:
         base_model=str(provider_status.get("base_model", "")),
         training_type=str(provider_status.get("training_type", "")),
         training_mix=str(provider_status.get("training_mix", "")),
+        gop_status=gop_status,
         thresholds={
             **config.get("transcript_normalization", {}),
             "gop": config.get("gop", {}),

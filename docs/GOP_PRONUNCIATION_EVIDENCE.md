@@ -1,170 +1,157 @@
-# GOP Pronunciation Evidence
+# Acoustic GOP Pronunciation Evidence
 
-GOP in ReaDirect is a practical Goodness of Pronunciation style evidence layer. It is not a second transcript and it does not replace the raw Wav2Vec2 ASR output.
+Acoustic GOP in ReaDirect is a Goodness of Pronunciation evidence layer that uses the existing Wav2Vec2 phoneme model. It does not replace the normal ASR transcript, the expected-centric correction algorithm, learner attempt flow, or scoring routes.
 
-## Purpose
+The acoustic GOP module uses phoneme-level acoustic evidence from the learner's recorded audio. The expected phoneme sequence is aligned with frame-level phoneme probabilities or logits produced by the phoneme model, and each phoneme is scored based on how strongly the audio supports the expected sound. This provides additional evidence for identifying likely vowel confusion, consonant substitution, and omitted sounds. The system remains a reading-support and decision-support tool and does not replace teacher judgment.
 
-Wav2Vec2 can sometimes transcribe a correctly pronounced short target as a similar wrong-looking word. GOP reduces these false ASR errors by comparing expected phonemes with observed phoneme evidence from `models/wav2vec2-phoneme`.
+## Flow
 
-Example:
+1. Receive learner audio and expected item metadata.
+2. Preprocess audio through the existing ASR provider path.
+3. Generate the normal Wav2Vec2 ASR transcript.
+4. Run the existing `models/wav2vec2-phoneme` model and collect frame-level log probabilities.
+5. Convert the expected item into canonical phonemes.
+6. CTC-align the expected phonemes against frame-level phoneme probabilities.
+7. Compute per-phoneme acoustic GOP scores.
+8. Pass GOP evidence into the expected-centric decision layer.
+9. Return and store GOP fields with the normal ASR result.
+
+## How This Differs From Transcript Phoneme Comparison
+
+Transcript-based phoneme comparison checks whether the expected answer and ASR transcript have similar phoneme sequences. Acoustic GOP scores the learner audio itself. For each expected phoneme, it compares the model's acoustic support for that phoneme against the strongest competing phoneme during the aligned frames:
 
 ```text
-expected_text: Leo
-raw_transcript: Layo
-observed phonemes: L EY OW
-expected phonemes: L IY OW
-GOP score: 0.82
-decision: accepted_by_pronunciation_evidence
+GOP(phone) = average(log P(expected_phone | frame) - max log P(other_phone | frame))
 ```
 
-For a short word prompt, this allows:
+The margin is normalized to a `0.0..1.0` score for API and UI display.
+
+## Letter Tasks
+
+Letter tasks must pass the correct task metadata:
+
+- `letter_sound`: printed `B` maps to the sound phoneme `/B/`.
+- `letter_name`: printed `B` maps to the spoken letter-name sequence.
+- `word`, `sentence`, and `passage`: expected text maps through the existing phoneme dictionary/mapping path.
+
+## Configuration
+
+Relevant environment values:
 
 ```text
-corrected_transcript = Leo
-displayed_transcript = Leo
-accepted = true
-correction_strategy_used = gop_pronunciation_evidence
-```
-
-`raw_transcript` remains `Layo`.
-
-## Transcript Separation
-
-GOP is returned separately from transcript fields.
-
-- `raw_transcript`: direct Wav2Vec2 output.
-- `corrected_transcript`: scoring transcript when a correction is accepted.
-- `displayed_transcript`: learner-facing transcript.
-- GOP fields: pronunciation metadata only.
-
-GOP data must not be inserted into `raw_transcript`, `corrected_transcript`, or `displayed_transcript`.
-
-## Expected Phonemes
-
-Expected phonemes are generated in this order:
-
-1. ReaDirect letter mappings and word overrides.
-2. CMUdict.
-3. `g2p_en`, when installed.
-4. Simple fallback approximation for limited cases where no dictionary entry exists.
-
-Letter prompts use American English names. `Z` is treated as `Z IY`.
-
-## Observed Phonemes
-
-Observed phonemes come from `models/wav2vec2-phoneme` using CTC decoding. If a provider already returned `observed_phonemes`, GOP uses those values. If a phoneme model and processor are supplied directly, GOP can decode phonemes from audio.
-
-## Scoring
-
-The composite GOP score is normalized to `0.0..1.0`:
-
-```text
-0.50 * phoneme_sequence_similarity
-0.30 * phoneme_alignment_score
-0.15 * acoustic_confidence_score
-0.05 * transcript_support_score
-```
-
-When acoustic confidence is not available, the implementation uses observed phoneme alignment quality as practical confidence evidence.
-
-## Thresholds
-
-Defaults:
-
-```text
-GOP_ENABLED=true
-GOP_LETTER_THRESHOLD=0.70
-GOP_WORD_THRESHOLD=0.75
-GOP_RHYME_THRESHOLD=0.75
-GOP_SENTENCE_WORD_THRESHOLD=0.70
-GOP_PASSAGE_WORD_THRESHOLD=0.70
-GOP_MIN_AUDIO_QUALITY_REQUIRED=true
-GOP_SKIP_ON_RETRY_REQUIRED=true
-GOP_SKIP_ON_UNCERTAIN_AUDIO=true
+ENABLE_ACOUSTIC_GOP=true
+GOP_MODEL_PATH=models/wav2vec2-phoneme
+GOP_MODEL_NAME=existing_wavtec_phoneme_model
+GOP_MIN_ALIGNMENT_QUALITY=0.25
+GOP_WEAK_THRESHOLD=0.55
+GOP_ACCEPTABLE_THRESHOLD=0.75
 GOP_DEBUG=false
 ```
 
-Decision labels:
+`GOP_ENABLED` remains accepted as a backward-compatible alias for `ENABLE_ACOUSTIC_GOP`.
 
-- `accepted_by_pronunciation_evidence`
-- `rejected_low_gop`
-- `not_available`
-- `skipped_bad_audio`
-- `skipped_no_expected_text`
-- `skipped_unsupported_prompt_type`
-- `error`
-
-## Short Prompt Behavior
-
-For letters, words, and rhyming prompts, GOP can accept the expected target when the normal correction pipeline rejected the raw transcript but pronunciation evidence is strong enough.
-
-When accepted, the response sets:
-
-- `accepted = true`
-- `corrected_transcript = expected_text`
-- `displayed_transcript = expected_text`
-- `correction_strategy_used = gop_pronunciation_evidence`
-- `gop_correction_applied = true`
-
-## Sentence And Passage Behavior
-
-GOP does not force full sentence, paragraph, or passage transcripts to `expected_text`.
-
-For longer prompts, GOP is pronunciation evidence only:
-
-- `gop_word_scores`
-- `gop_phoneme_scores`
-- `weak_words`
-- `mispronounced_phonemes`
-
-Sentence and passage scoring may use this metadata as word-level evidence, but the displayed transcript remains the ASR transcript/corrected transcript from the normal sentence pipeline.
+When `ENABLE_ACOUSTIC_GOP=false`, the service returns GOP as disabled and the existing expected-centric ASR behavior is unchanged.
 
 ## API Fields
 
-The API returns:
+ASR responses may include:
 
 - `gop_enabled`
-- `gop_available`
+- `gop_supported`
+- `gop_model_version`
+- `gop_model_path`
 - `gop_score`
-- `gop_confidence`
-- `gop_decision`
-- `gop_threshold`
-- `gop_prompt_type`
-- `gop_expected_phonemes`
-- `gop_observed_phonemes`
-- `gop_phoneme_scores`
-- `gop_word_scores`
-- `mispronounced_phonemes`
-- `weak_words`
-- `gop_correction_applied`
+- `overall_gop_score`
+- `acoustic_confidence`
+- `canonical_phonemes`
+- `canonical_expected_phonemes`
+- `decoded_phonemes`
+- `decoded_acoustic_phonemes`
+- `phoneme_scores`
+- `weak_phoneme`
+- `weak_phoneme_score`
+- `lowest_phoneme`
+- `lowest_phoneme_score`
+- `nearest_confusion`
+- `alignment_quality`
+- `gop_frame_count`
+- `gop_duration_seconds`
+- `gop_fallback_used`
 - `gop_error`
 
-When `GOP_DEBUG=true`, GOP details are also included under `debug_metadata.gop`.
+Existing records without these fields remain valid.
 
-## Safety Rules
+## Fallback Behavior
 
-GOP cannot accept audio when:
+GOP failures must not block learner attempts. If audio is invalid, alignment fails, a phoneme token is missing, the phoneme model is unavailable, or GOP is disabled, the response reports `gop_supported=false` or `alignment_quality=failed` and the expected-centric decision layer continues with the transcript and phoneme comparison evidence it already used.
 
-- `retry_required = true`
-- audio quality flags indicate silence, no speech, too short, or clipping
-- `uncertain = true` and `GOP_SKIP_ON_UNCERTAIN_AUDIO=true`
-- `expected_text` is missing
-- observed phoneme evidence is unavailable
+GOP failure alone must not mark a learner wrong.
 
-In those cases the ASR request still returns safely, with a skipped or not-available GOP decision.
+## Expected-Centric Integration
 
-## Laravel Interpretation
+The expected-centric layer remains the final decision layer. Acoustic GOP can enrich technical classifications such as:
 
-Laravel does not calculate GOP. It stores and displays the GOP fields returned by FastAPI.
+- `vowel_confusion`
+- `consonant_confusion`
+- `initial_sound_substitution`
+- `medial_sound_confusion`
+- `final_sound_omission`
+- `phoneme_omission`
+- `phoneme_insertion`
+- `low_confidence_audio`
+- `correct_with_low_confidence`
+- `correct`
 
-Learner-facing copy should stay simple, for example:
+GOP supports these classifications with fields like `weak_phoneme`, `nearest_confusion`, `lowest_phoneme_score`, and `alignment_quality`. It is not the only basis for correctness.
 
-```text
-Your pronunciation was close to the target word.
+## True Sandbox Debug
+
+The Laravel True Sandbox displays acoustic GOP values when available:
+
+- enabled and supported flags
+- model/version
+- alignment quality
+- overall GOP
+- weak phoneme and weak score
+- nearest acoustic competitor
+- expected and decoded acoustic phonemes
+- per-phoneme score rows
+- GOP error and fallback state
+
+This is admin/debug visibility only.
+
+## AI Banner Status
+
+The admin AI status banner shows a compact GOP status:
+
+- `GOP: Off`: acoustic GOP is disabled.
+- `GOP: Ready`: GOP is enabled and the phoneme model is available.
+- `GOP: Active`: a result reports usable GOP alignment.
+- `GOP: Fallback`: GOP was attempted but the system used expected-centric fallback.
+- `GOP: Failed`: GOP is enabled but the service/model is not available or alignment failed.
+
+## Local Debug Script
+
+Use the debug script to inspect one recording:
+
+```bash
+python scripts/debug_acoustic_gop.py storage/audio/example.wav --expected log --prompt-type word --task-type word --transcript lug
 ```
 
-Admin/developer debug can show GOP score, decision, threshold, expected phonemes, observed phonemes, weak words, and correction strategy.
+It prints expected phonemes, decoded acoustic phonemes, alignment quality, per-phoneme GOP scores, the weakest phoneme, nearest competitor, and the expected-centric decision support fields.
+
+## Tests
+
+The unit tests use synthetic frame-level log probabilities so they can run without sample learner audio:
+
+```bash
+python -m pytest tests/test_gop_pronunciation.py
+```
+
+Covered cases include correct high-GOP evidence, vowel confusion, consonant confusion, final sound omission, invalid audio fallback, missing phoneme mapping, GOP disabled fallback, alignment failure fallback, and letter sound/name mapping.
 
 ## Limitations
 
-This is GOP-style pronunciation evidence, not a full forced-alignment GOP engine. It uses CTC phoneme decoding, sequence similarity, alignment scoring, and confidence proxies available in the current Wav2Vec2-only runtime.
+The current GOP values still require calibration against real learner recordings. CTC alignment is practical and fast, but it is approximate. Score thresholds should be validated with real classroom audio before being treated as high-confidence placement or mastery evidence.
+
+Deterministic Miss Ciel feedback and any LLM feedback layer are intentionally not part of this implementation.
