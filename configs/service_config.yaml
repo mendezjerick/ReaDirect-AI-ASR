@@ -62,6 +62,10 @@ gop:
   min_alignment_quality: 0.25
   weak_threshold: 0.55
   acceptable_threshold: 0.75
+  short_word_assist_enabled: true
+  short_word_assist_min_overall: 0.60
+  short_word_assist_min_consonant_score: 0.80
+  short_word_assist_max_phonemes: 5
   min_audio_quality_required: true
   skip_on_retry_required: true
   skip_on_uncertain_audio: true

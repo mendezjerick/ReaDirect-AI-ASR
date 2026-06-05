@@ -2,7 +2,8 @@ import math
 
 from api.service import AIAnalysisService
 from readirect_asr.asr.mock_asr import MockASR
-from readirect_asr.pronunciation.gop import canonical_expected_phonemes, compute_gop, ctc_forced_align
+from readirect_asr.phonemes.cmudict_loader import CMUDictLoader
+from readirect_asr.pronunciation.gop import apply_gop_to_transcript_meta, canonical_expected_phonemes, compute_gop, ctc_forced_align
 from readirect_asr.text.transcript_normalizer import normalize_asr_transcript
 
 
@@ -58,6 +59,15 @@ def _evidence(phone_ids: list[int], *, weak_index: int | None = None, competitor
         "log_probs": rows,
         "decoded_phonemes": decoded,
     }
+
+
+def _loader(tmp_path):
+    cmu = tmp_path / "cmu"
+    cmu.mkdir()
+    (cmu / "cmudict.dict").write_text("BOOK B UH K\nBACK B AE K\n", encoding="utf-8")
+    (cmu / "cmudict.phones").write_text("B stop\nUH vowel\nK stop\nAE vowel\n", encoding="utf-8")
+    (cmu / "cmudict.symbols").write_text("B\nUH\nK\nAE\n", encoding="utf-8")
+    return CMUDictLoader(cmu / "cmudict.dict", cmu / "cmudict.phones", cmu / "cmudict.symbols").load()
 
 
 def test_acoustic_gop_correct_word_high_score() -> None:
@@ -118,6 +128,104 @@ def test_acoustic_gop_maps_arpabet_expected_phonemes_to_ipa_model_vocabulary() -
     assert gop["gop_error"] is None
     assert [item["phoneme"] for item in gop["phoneme_scores"]] == ["L", "AO", "G"]
     assert [item["model_phoneme"] for item in gop["phoneme_scores"]] == ["l", "ɔ", "ɡ"]
+
+
+def test_short_word_gop_assist_accepts_strong_consonants_with_allowed_vowel_variant(tmp_path) -> None:
+    ipa_vocab = {0: "<pad>", 1: "b", 2: "\u028a", 3: "k", 4: "u"}
+
+    def row(best_id: int, weak_expected_id: int | None = None, competitor_id: int | None = None) -> list[float]:
+        probs = [0.01] * len(ipa_vocab)
+        probs[0] = 0.03
+        probs[best_id] = 0.90
+        if weak_expected_id is not None and competitor_id is not None:
+            probs[best_id] = 0.03
+            probs[weak_expected_id] = 0.08
+            probs[competitor_id] = 0.78
+        total = sum(probs)
+        return [math.log(value / total) for value in probs]
+
+    loader = _loader(tmp_path)
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="book",
+        prompt_type="word",
+        raw_transcript="look",
+        acoustic_evidence={
+            "available": True,
+            "model_version": "existing_wavtec_phoneme_model",
+            "model_path": "models/wav2vec2-phoneme",
+            "duration_seconds": 0.8,
+            "frame_count": 8,
+            "vocabulary": ipa_vocab,
+            "blank_token_id": 0,
+            "log_probs": [row(0), row(1), row(1), row(2, 2, 4), row(2, 2, 4), row(3), row(3), row(0)],
+            "decoded_phonemes": ["b", "u", "k"],
+        },
+        cmudict_loader=loader,
+        config={"word_threshold": 0.75, "short_word_assist_min_overall": 0.60},
+    )
+    normalization = normalize_asr_transcript(
+        raw_transcript="look",
+        expected_text="book",
+        prompt_type="word",
+        observed_phonemes=["L", "UH", "K"],
+        cmudict_loader=loader,
+    )
+    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
+
+    assert gop["gop_decision"] == "accepted_by_short_word_gop_structure"
+    assert gop["gop_short_word_assist"]["accepted"] is True
+    assert updated["accepted"] is True
+    assert updated["raw_transcript"] == "look"
+    assert updated["corrected_transcript"] == "book"
+    assert updated["correction_strategy_used"] == "gop_assisted_short_word_structure"
+
+
+def test_short_word_gop_assist_rejects_unsupported_vowel_competitor(tmp_path) -> None:
+    ipa_vocab = {0: "<pad>", 1: "b", 2: "\u028a", 3: "k", 4: "\u00e6"}
+
+    def row(best_id: int, weak_expected_id: int | None = None, competitor_id: int | None = None) -> list[float]:
+        probs = [0.01] * len(ipa_vocab)
+        probs[0] = 0.03
+        probs[best_id] = 0.90
+        if weak_expected_id is not None and competitor_id is not None:
+            probs[best_id] = 0.03
+            probs[weak_expected_id] = 0.08
+            probs[competitor_id] = 0.78
+        total = sum(probs)
+        return [math.log(value / total) for value in probs]
+
+    loader = _loader(tmp_path)
+    gop = compute_gop(
+        audio_path_or_waveform=None,
+        expected_text="book",
+        prompt_type="word",
+        raw_transcript="back",
+        acoustic_evidence={
+            "available": True,
+            "model_version": "existing_wavtec_phoneme_model",
+            "model_path": "models/wav2vec2-phoneme",
+            "duration_seconds": 0.8,
+            "frame_count": 8,
+            "vocabulary": ipa_vocab,
+            "blank_token_id": 0,
+            "log_probs": [row(0), row(1), row(1), row(2, 2, 4), row(2, 2, 4), row(3), row(3), row(0)],
+            "decoded_phonemes": ["b", "\u00e6", "k"],
+        },
+        cmudict_loader=loader,
+        config={"word_threshold": 0.75, "short_word_assist_min_overall": 0.60},
+    )
+    normalization = normalize_asr_transcript(
+        raw_transcript="back",
+        expected_text="book",
+        prompt_type="word",
+        observed_phonemes=["B", "AE", "K"],
+        cmudict_loader=loader,
+    )
+    updated = apply_gop_to_transcript_meta(normalization.to_dict(), gop)
+
+    assert gop["gop_short_word_assist"]["accepted"] is False
+    assert updated["accepted"] is False
 
 
 def test_acoustic_gop_detects_vowel_confusion_log_lug() -> None:

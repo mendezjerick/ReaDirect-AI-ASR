@@ -20,6 +20,10 @@ DEFAULT_GOP_CONFIG = {
     "min_alignment_quality": 0.25,
     "weak_threshold": 0.55,
     "acceptable_threshold": 0.75,
+    "short_word_assist_enabled": True,
+    "short_word_assist_min_overall": 0.60,
+    "short_word_assist_min_consonant_score": 0.80,
+    "short_word_assist_max_phonemes": 5,
     "min_audio_quality_required": True,
     "skip_on_retry_required": True,
     "skip_on_uncertain_audio": True,
@@ -233,6 +237,17 @@ def compute_gop(
         sequence_similarity = phoneme_similarity(expected_phonemes, decoded) if decoded else 0.0
         transcript_support = _transcript_support(expected, raw_transcript or "")
         decision = "accepted_by_pronunciation_evidence" if overall >= threshold else "rejected_low_gop"
+        short_word_assist = _short_word_gop_assist(
+            expected_text=expected,
+            expected_phonemes=expected_phonemes,
+            phoneme_scores=phoneme_scores,
+            overall=overall,
+            alignment_quality=alignment_quality,
+            prompt_type=detected_prompt_type,
+            config=active_config,
+        )
+        if short_word_assist["accepted"] and decision == "rejected_low_gop":
+            decision = "accepted_by_short_word_gop_structure"
 
         return {
             **base,
@@ -266,6 +281,7 @@ def compute_gop(
             "gop_duration_seconds": evidence.get("duration_seconds"),
             "gop_fallback_used": False,
             "gop_error": None,
+            "gop_short_word_assist": short_word_assist,
             "debug_components": {
                 "expected_phoneme_source": expected_source,
                 "expected_phoneme_variants": expected_variants,
@@ -323,6 +339,81 @@ def _map_expected_to_model_labels(expected_phonemes: list[str], vocabulary: dict
         mapped.append(match)
 
     return mapped, missing
+
+
+def _short_word_gop_assist(
+    *,
+    expected_text: str,
+    expected_phonemes: list[str],
+    phoneme_scores: list[dict[str, Any]],
+    overall: float,
+    alignment_quality: str,
+    prompt_type: str,
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    base = {
+        "accepted": False,
+        "reason": "",
+        "confidence": round(float(overall), 6),
+        "rule": "short_word_consonant_structure_with_allowed_vowel_variant",
+    }
+    if not bool(config.get("short_word_assist_enabled", True)):
+        return {**base, "reason": "short-word GOP assist is disabled"}
+    if prompt_type not in {"word", "rhyme", "rhyming_word"}:
+        return {**base, "reason": f"prompt type {prompt_type} is not a short word prompt"}
+    normalized_expected = normalize_for_wer(expected_text)
+    if not normalized_expected or " " in normalized_expected:
+        return {**base, "reason": "expected text is not a single short word"}
+    max_phonemes = int(config.get("short_word_assist_max_phonemes", 5) or 5)
+    if len(expected_phonemes) < 2 or len(expected_phonemes) > max_phonemes:
+        return {**base, "reason": "expected phoneme count is outside short-word assist limits"}
+    if alignment_quality != "usable":
+        return {**base, "reason": "GOP alignment is not usable"}
+    min_overall = float(config.get("short_word_assist_min_overall", 0.60))
+    if float(overall) < min_overall:
+        return {**base, "reason": "overall GOP is below short-word assist threshold"}
+    if len(phoneme_scores) != len(expected_phonemes):
+        return {**base, "reason": "phoneme score count does not match expected phoneme count"}
+
+    min_consonant = float(config.get("short_word_assist_min_consonant_score", 0.80))
+    consonant_scores: list[float] = []
+    weak_vowels: list[dict[str, Any]] = []
+    weak_consonants: list[dict[str, Any]] = []
+    unsupported_vowels: list[dict[str, Any]] = []
+
+    for index, phone in enumerate(expected_phonemes):
+        score_item = phoneme_scores[index]
+        score = float(score_item.get("score") or 0.0)
+        phone_base = _base_phone(phone)
+        if phone_base in VOWELS:
+            if score < min_consonant:
+                weak_vowels.append(score_item)
+                nearest = _normalize_model_token(score_item.get("nearest_competitor"))
+                if nearest not in _model_label_candidates(phone_base):
+                    unsupported_vowels.append(score_item)
+            continue
+        consonant_scores.append(score)
+        if score < min_consonant:
+            weak_consonants.append(score_item)
+
+    if len(consonant_scores) < 2:
+        return {**base, "reason": "short-word assist requires at least two consonant phonemes"}
+    if weak_consonants:
+        return {**base, "reason": "one or more expected consonants had weak acoustic GOP evidence", "weak_consonants": weak_consonants}
+    if unsupported_vowels:
+        return {**base, "reason": "weak vowel competitor is not an allowed acoustic variant", "weak_vowels": weak_vowels}
+    if not weak_vowels:
+        return {**base, "reason": "no weak allowed vowel variant needed short-word assist"}
+
+    return {
+        **base,
+        "accepted": True,
+        "reason": "Acoustic GOP matched the expected short-word consonant structure and the weak vowel matched an allowed acoustic variant",
+        "consonant_scores": [round(item, 6) for item in consonant_scores],
+        "weak_vowels": weak_vowels,
+        "min_overall": min_overall,
+        "min_consonant_score": min_consonant,
+    }
 
 
 def ctc_forced_align(
@@ -484,7 +575,28 @@ def apply_gop_to_transcript_meta(transcript_meta: dict[str, Any], gop: dict[str,
     updated.update(gop_response_fields(gop))
     debug_metadata = dict(updated.get("debug_metadata", {}) or {})
     debug_metadata["gop_evidence"] = gop_evidence_object(updated, gop)
+    if isinstance(gop.get("gop_short_word_assist"), dict):
+        debug_metadata["gop_short_word_assist"] = gop["gop_short_word_assist"]
     updated["debug_metadata"] = debug_metadata
+
+    if isinstance(gop.get("gop_short_word_assist"), dict) and gop["gop_short_word_assist"].get("accepted") is True:
+        expected = str(updated.get("expected_text") or "").strip()
+        prompt_type = str(updated.get("prompt_type") or gop.get("gop_prompt_type") or "")
+        if expected and prompt_type in {"word", "rhyme", "rhyming_word"}:
+            confidence = float(gop["gop_short_word_assist"].get("confidence") or gop.get("overall_gop_score") or 0.0)
+            updated["corrected_transcript"] = expected
+            updated["displayed_transcript"] = expected
+            updated["accepted"] = True
+            updated["normalization_applied"] = True
+            updated["normalization_reason"] = str(gop["gop_short_word_assist"].get("reason") or "Acoustic GOP matched the expected short-word consonant structure")
+            updated["correction_strategy_used"] = "gop_assisted_short_word_structure"
+            updated["accepted_by_phoneme_evidence"] = True
+            updated["gop_correction_applied"] = True
+            updated["gop_decision"] = "accepted_by_short_word_gop_structure"
+            updated["corrected_wer"] = 0.0
+            updated["corrected_cer"] = 0.0
+            updated["composite_score"] = max(float(updated.get("composite_score", 0.0) or 0.0), confidence)
+            return updated
 
     if gop.get("gop_decision") != "accepted_by_pronunciation_evidence":
         return updated
@@ -671,8 +783,17 @@ def _normalize_token(value: Any) -> str:
     return "".join(char for char in str(value or "").upper() if char.isalpha())
 
 
+def _base_phone(value: Any) -> str:
+    return "".join(char for char in str(value or "").upper() if not char.isdigit())
+
+
 def _normalize_model_token(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _model_label_candidates(arpabet_phone: str) -> set[str]:
+    base = _base_phone(arpabet_phone)
+    return {_normalize_model_token(item) for item in ARPABET_TO_MODEL_LABELS.get(base, [])}
 
 
 def _fallback_expected_phonemes(text: str) -> list[str]:
