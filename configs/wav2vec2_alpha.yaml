@@ -1,0 +1,73 @@
+run:
+  name: Alpha
+  seed: 42
+
+model:
+  base_checkpoint: facebook/wav2vec2-base-960h
+  base_model_path: ${WAV2VEC2_ALPHA_BASE_MODEL_PATH:-models/wav2vec2-base-960h}
+  output_model_path: models/asr/alpha
+  checkpoint_dir: checkpoints/asr/alpha
+  report_dir: reports/asr/alpha
+  log_dir: logs/asr/alpha
+
+data:
+  sample_rate: 16000
+  min_duration_seconds: 0.2
+  max_duration_seconds: 30.0
+  preprocessing_num_proc: 1
+
+  gigaspeech:
+    cache_dir: ${GIGASPEECH_CACHE_DIR:-external_datasets/hf_cache}
+    dataset_name: speechcolab/gigaspeech
+    subset: xs
+    train_split: train
+    validation_split: validation
+    test_split: test
+    max_train_samples: null
+
+  speechocean:
+    train_manifest: ${SPEECHOCEAN_TRAIN_MANIFEST:-external_datasets/manifests/speechocean_train.jsonl}
+    validation_manifest: ${SPEECHOCEAN_VALID_MANIFEST:-external_datasets/manifests/speechocean_valid.jsonl}
+    test_manifest: ${SPEECHOCEAN_TEST_MANIFEST:-external_datasets/manifests/speechocean_test.jsonl}
+    max_train_samples: 1000
+
+  readirect_letters:
+    root_dir: ${READIRECT_LETTERS_ROOT:-external_datasets/readirect_letters}
+    train_manifest: ${READIRECT_LETTERS_TRAIN_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_train.jsonl}
+    validation_manifest: ${READIRECT_LETTERS_VALID_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_valid.jsonl}
+    test_manifest: ${READIRECT_LETTERS_TEST_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_test.jsonl}
+    max_train_samples: null
+
+  sampling:
+    strategy: capped_concat
+    shuffle: true
+    expected_approximate_mix:
+      gigaspeech: 0.84
+      speechocean: 0.09
+      readirect_letters: 0.07
+    oversample: false
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 2
+  learning_rate: 0.00003
+  warmup_steps: 500
+  save_steps: 500
+  logging_steps: 25
+  fp16: true_if_cuda_available
+  freeze_feature_encoder: true
+  gradient_checkpointing: true
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  require_cuda: true
+
+evaluation:
+  default_split: validation
+  batch_size: 4
+  hard_case_manifest: null
+  metrics:
+    - wer
+    - cer
+    - readirect_letter_accuracy
+

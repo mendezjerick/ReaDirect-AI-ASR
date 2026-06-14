@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
@@ -30,6 +31,7 @@ from readirect_asr.text.reinforcement_corrections import append_supervised_corre
 
 SERVICE_NAME = "ReaDirect AI/ASR Service"
 SERVICE_VERSION = "0.1.0"
+SERVICE_STARTED_AT = datetime.now(timezone.utc).isoformat()
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,13 +46,26 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def load_active_asr_model() -> None:
+    provider = get_service().asr_provider
+    if hasattr(provider, "warmup"):
+        provider.warmup()
+
+
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     service = get_service()
     provider_status = service.asr_provider.status() if hasattr(service.asr_provider, "status") else {}
     missing_paths = list(provider_status.get("missing_model_paths", []) or [])
     architecture = str(provider_status.get("asr_architecture", "wav2vec2_only" if service.provider_name != "mock" else "mock"))
-    service_status = "ok" if service.provider_name == "mock" or not missing_paths else "degraded"
+    warnings = list(provider_status.get("warnings", []) or [])
+    loaded = bool(provider_status.get("asr_model_loaded", service.provider_name == "mock"))
+    service_status = "healthy"
+    if missing_paths or not loaded:
+        service_status = "error"
+    elif warnings:
+        service_status = "degraded"
     reinforcement_status = reinforcement_status_from_config(config.get("transcript_normalization", {}))
     qa_config = audio_quality_config(config.get("audio_quality", {}))
     gop_enabled = bool(config.get("gop", {}).get("enabled", False))
@@ -96,6 +111,27 @@ def health() -> HealthResponse:
         },
         pause_detection_enabled=True,
         uncertainty_decision_enabled=True,
+        asr_model_name=str(provider_status.get("asr_model_name", "")),
+        asr_model_path=str(provider_status.get("asr_model_path", "")),
+        asr_model_exists=bool(provider_status.get("asr_model_exists", False)),
+        asr_model_loaded=loaded,
+        processor_loaded=bool(provider_status.get("processor_loaded", False)),
+        device=str(provider_status.get("device", "")),
+        decode_mode=str(provider_status.get("decode_mode", "")),
+        beam_search_enabled=bool(provider_status.get("beam_search_enabled", False)),
+        language_model_enabled=bool(provider_status.get("language_model_enabled", False)),
+        language_model_loaded=bool(provider_status.get("language_model_loaded", False)),
+        language_model_path=provider_status.get("language_model_path"),
+        decoder_backend=str(provider_status.get("decoder_backend", "")),
+        beam_width=int(provider_status.get("beam_width", 0)),
+        alpha=float(provider_status.get("alpha", 0.0)),
+        beta=float(provider_status.get("beta", 0.0)),
+        hotwords=list(provider_status.get("hotwords", []) or []),
+        hotword_weight=float(provider_status.get("hotword_weight", 0.0)),
+        ffmpeg_available=bool(provider_status.get("ffmpeg_available", False)),
+        torchcodec_available=bool(provider_status.get("torchcodec_available", False)),
+        service_started_at=SERVICE_STARTED_AT,
+        warnings=warnings,
         **reinforcement_status,
     )
 
@@ -121,6 +157,14 @@ def version() -> VersionResponse:
                 "wav2vec2_phoneme_model_path": config.get("asr", {}).get("wav2vec2_phoneme_model_path"),
                 "allow_wav2vec2_base_fallback": config.get("asr", {}).get("allow_wav2vec2_base_fallback"),
                 "whisper_removed": True,
+                "model_name": config.get("asr", {}).get("model_name"),
+                "decode_mode": config.get("asr", {}).get("decode_mode"),
+                "beam_width": config.get("asr", {}).get("beam_width"),
+                "lm_path": config.get("asr", {}).get("lm_path"),
+                "alpha": config.get("asr", {}).get("alpha"),
+                "beta": config.get("asr", {}).get("beta"),
+                "hotwords": config.get("asr", {}).get("hotwords"),
+                "hotword_weight": config.get("asr", {}).get("hotword_weight"),
             },
             "analysis": {
                 "content_index_loaded": service.content_repository.is_loaded(),

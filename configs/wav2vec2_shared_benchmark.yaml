@@ -1,0 +1,54 @@
+run:
+  name: ReaDirect Shared ASR Benchmark
+  seed: 20260609
+
+benchmark:
+  rows_per_source: 250
+  sample_rate: 16000
+  min_duration_seconds: 0.2
+  max_duration_seconds: 30.0
+  output_dir: reports/asr/shared_benchmark
+  beam_lm_output_dir: reports/asr/shared_benchmark_beam_lm
+  manifest_summary: reports/asr/shared_benchmark/shared_benchmark_manifest.json
+
+sources:
+  librispeech:
+    manifest: external_datasets/manifests/librispeech_test_clean.jsonl
+    split: test-clean
+    leakage: clean
+
+  gigaspeech:
+    parquet_dir: ${GIGASPEECH_EVAL_PATH:-external_datasets/gigaspeech_eval_parquet/parquet-data/xs}
+    file_glob: validation-*.parquet
+    split: validation
+    leakage: clean
+
+  readirect_letters:
+    root_dir: external_datasets/readirect_letters
+    manifest: external_datasets/readirect_letters/manifests/readirect_letters_test.jsonl
+    split: test
+    leakage: clean
+
+  speechocean:
+    manifest: external_datasets/manifests/speechocean_test.jsonl
+    split: test
+    leakage: clean
+
+  slr83:
+    root_dir: external_datasets/SLR83
+    female_dir: southern_english_female
+    male_dir: southern_english_male
+    index_file: line_index.csv
+    epsilon_split_manifest: reports/asr/epsilon/slr83_split_manifest.json
+    split: epsilon_speaker_heldout
+    leakage: clean_except_delta
+
+models:
+  base: models/wav2vec2-base-960h
+  v1: models/wav2vec2-readirect-asr
+  v2: models/wav2vec2-readirect-asr-letters-v2
+  alpha: models/asr/alpha
+  beta: models/asr/beta
+  gamma: models/asr/gamma
+  delta: models/asr/delta
+  epsilon: models/asr/epsilon

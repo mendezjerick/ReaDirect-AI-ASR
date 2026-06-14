@@ -44,6 +44,27 @@ class HealthResponse(BaseModel):
     audio_quality_thresholds: dict[str, Any] = Field(default_factory=dict)
     pause_detection_enabled: bool = True
     uncertainty_decision_enabled: bool = True
+    asr_model_name: str = ""
+    asr_model_path: str = ""
+    asr_model_exists: bool = False
+    asr_model_loaded: bool = False
+    processor_loaded: bool = False
+    device: str = ""
+    decode_mode: str = ""
+    beam_search_enabled: bool = False
+    language_model_enabled: bool = False
+    language_model_loaded: bool = False
+    language_model_path: str | None = None
+    decoder_backend: str = ""
+    beam_width: int = 0
+    alpha: float = 0.0
+    beta: float = 0.0
+    hotwords: list[str] = Field(default_factory=list)
+    hotword_weight: float = 0.0
+    ffmpeg_available: bool = False
+    torchcodec_available: bool = False
+    service_started_at: str = ""
+    warnings: list[str] = Field(default_factory=list)
 
 
 class VersionResponse(BaseModel):
@@ -270,6 +291,11 @@ class AnalysisResponse(BaseModel):
     debug_info: Optional[dict[str, Any]] = None
     processing_seconds: float = 0.0
     error: Optional[str] = None
+    asr_model_name: str = ""
+    decode_mode: str = ""
+    beam_search: bool = False
+    language_model_used: bool = False
+    decoder_backend: str = ""
 
 
 class ContentItemRequest(BaseModel):

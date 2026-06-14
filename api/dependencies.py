@@ -45,8 +45,16 @@ def get_config() -> dict[str, Any]:
     config["analysis"]["content_index_path"] = os.getenv("CONTENT_INDEX_PATH", config["analysis"].get("content_index_path", "data/manifests/content_index.csv"))
     config["analysis"]["enriched_content_index_path"] = os.getenv("ENRICHED_CONTENT_INDEX_PATH", config["analysis"].get("enriched_content_index_path", "content_bank_enriched/enriched_content_index.csv"))
     config["asr"]["provider"] = os.getenv("ASR_PROVIDER", config["asr"].get("provider", "wav2vec2_only"))
-    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", config["asr"].get("model_size", "models/wav2vec2-readirect-asr-letters-v2"))
-    config["asr"]["wav2vec2_asr_model_path"] = os.getenv("WAV2VEC2_ASR_MODEL_PATH", config["asr"].get("wav2vec2_asr_model_path", "models/wav2vec2-readirect-asr-letters-v2"))
+    active_model_path = os.getenv(
+        "ASR_MODEL_PATH",
+        os.getenv(
+            "WAV2VEC2_ASR_MODEL_PATH",
+            config["asr"].get("wav2vec2_asr_model_path", "models/asr/epsilon"),
+        ),
+    )
+    config["asr"]["model_name"] = os.getenv("ASR_MODEL_NAME", config["asr"].get("model_name", "epsilon"))
+    config["asr"]["model_size"] = os.getenv("ASR_MODEL_SIZE", active_model_path)
+    config["asr"]["wav2vec2_asr_model_path"] = active_model_path
     config["asr"]["wav2vec2_phoneme_model_path"] = os.getenv("WAV2VEC2_PHONEME_MODEL_PATH", config["asr"].get("wav2vec2_phoneme_model_path", "models/wav2vec2-phoneme"))
     config["asr"]["wav2vec2_base_asr_model_path"] = os.getenv("WAV2VEC2_BASE_ASR_MODEL_PATH", config["asr"].get("wav2vec2_base_asr_model_path", "models/wav2vec2-readirect-asr"))
     config["asr"]["allow_wav2vec2_base_fallback"] = os.getenv("ALLOW_WAV2VEC2_BASE_FALLBACK", str(config["asr"].get("allow_wav2vec2_base_fallback", False))).lower() in {"1", "true", "yes"}
@@ -56,6 +64,21 @@ def get_config() -> dict[str, Any]:
     config["asr"]["language"] = os.getenv("ASR_LANGUAGE", config["asr"].get("language", "en"))
     config["asr"]["task"] = os.getenv("ASR_TASK", config["asr"].get("task", "transcribe"))
     config["asr"]["beam_size"] = int(os.getenv("ASR_BEAM_SIZE", str(config["asr"].get("beam_size", 1))))
+    config["asr"]["decode_mode"] = os.getenv("ASR_DECODE_MODE", config["asr"].get("decode_mode", "beam_lm"))
+    config["asr"]["beam_width"] = int(os.getenv("ASR_BEAM_WIDTH", str(config["asr"].get("beam_width", 100))))
+    config["asr"]["lm_path"] = os.getenv("ASR_LM_PATH", config["asr"].get("lm_path", "external_datasets/language_models/3-gram.pruned.1e-7.arpa"))
+    config["asr"]["alpha"] = float(os.getenv("ASR_ALPHA", str(config["asr"].get("alpha", 0.5))))
+    config["asr"]["beta"] = float(os.getenv("ASR_BETA", str(config["asr"].get("beta", 1.0))))
+    config["asr"]["hotwords"] = [
+        value.strip()
+        for value in os.getenv("ASR_HOTWORDS", ",".join(config["asr"].get("hotwords", []))).split(",")
+        if value.strip()
+    ]
+    config["asr"]["hotword_weight"] = float(os.getenv("ASR_HOTWORD_WEIGHT", str(config["asr"].get("hotword_weight", 5.0))))
+    config["asr"]["allow_no_lm_fallback"] = _env_bool(
+        "ASR_ALLOW_NO_LM_FALLBACK",
+        bool(config["asr"].get("allow_no_lm_fallback", False)),
+    )
     audio_quality = config["audio_quality"]
     audio_quality["min_duration_seconds"] = float(os.getenv("AUDIO_MIN_DURATION_SECONDS", str(audio_quality.get("min_duration_seconds", 1.0))))
     audio_quality["max_duration_seconds"] = float(os.getenv("AUDIO_MAX_DURATION_SECONDS", str(audio_quality.get("max_duration_seconds", 30.0))))

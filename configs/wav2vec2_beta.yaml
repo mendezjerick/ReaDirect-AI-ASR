@@ -1,0 +1,75 @@
+run:
+  name: Beta
+  seed: 43
+
+model:
+  alpha_checkpoint_path: ${ALPHA_CHECKPOINT_PATH:-models/asr/alpha}
+  reference_base_model_path: ${WAV2VEC2_ALPHA_BASE_MODEL_PATH:-models/wav2vec2-base-960h}
+  output_model_path: models/asr/beta
+  checkpoint_dir: checkpoints/asr/beta
+  report_dir: reports/asr/beta
+  log_dir: logs/asr/beta
+
+data:
+  sample_rate: 16000
+  min_duration_seconds: 0.2
+  max_duration_seconds: 30.0
+  preprocessing_num_proc: 1
+
+  gigaspeech:
+    parquet_dir: ${GIGASPEECH_S_PATH:-external_datasets/gigaspeech_s_parquet/parquet-data/s}
+    cache_dir: ${GIGASPEECH_CACHE_DIR:-external_datasets/hf_cache}
+    train_glob: train-*.parquet
+    max_train_samples: 12000
+
+  speechocean:
+    train_manifest: ${SPEECHOCEAN_TRAIN_MANIFEST:-external_datasets/manifests/speechocean_train.jsonl}
+    validation_manifest: ${SPEECHOCEAN_VALID_MANIFEST:-external_datasets/manifests/speechocean_valid.jsonl}
+    test_manifest: ${SPEECHOCEAN_TEST_MANIFEST:-external_datasets/manifests/speechocean_test.jsonl}
+    max_train_samples: 1000
+
+  readirect_letters:
+    root_dir: ${READIRECT_LETTERS_ROOT:-external_datasets/readirect_letters}
+    train_manifest: ${READIRECT_LETTERS_TRAIN_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_train.jsonl}
+    validation_manifest: ${READIRECT_LETTERS_VALID_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_valid.jsonl}
+    test_manifest: ${READIRECT_LETTERS_TEST_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_test.jsonl}
+    max_train_samples: null
+
+  sampling:
+    strategy: capped_concat
+    shuffle: true
+    oversample: false
+    expected_approximate_mix:
+      gigaspeech: 0.871
+      speechocean: 0.073
+      readirect_letters: 0.057
+
+training:
+  num_train_epochs: 2
+  max_allowed_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 2
+  learning_rate: 0.00001
+  warmup_ratio: 0.05
+  logging_steps: 25
+  fp16: true_if_cuda_available
+  freeze_feature_encoder: true
+  gradient_checkpointing: true
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  require_cuda: true
+  early_stopping_patience: 2
+  early_stopping_threshold: 0.0
+
+evaluation:
+  shared_validation_datasets:
+    - speechocean
+    - readirect_letters
+  hard_case_manifest: null
+  comparison_artifacts:
+    base: reports/asr/alpha/base_960h_shared_validation_evaluation.json
+    v1: outputs/evaluation/wav2vec2_v1_valid_on_letters_v2_mix_eval.json
+    v2: outputs/evaluation/wav2vec2_letters_v2_valid_eval.json
+    alpha: reports/asr/alpha/alpha_validation_evaluation.json
+

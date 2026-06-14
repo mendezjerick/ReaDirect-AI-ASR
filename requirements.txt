@@ -21,6 +21,18 @@ accelerate
 scikit-learn
 tensorboard
 
+# Alpha cached-audio decoding. TorchCodec must match the installed PyTorch,
+# and FFmpeg shared libraries must be available at runtime.
+torchcodec
+
+# Optional CTC beam-search backend. The repository includes a no-LM pure
+# Python prefix-beam fallback for Windows environments where this cannot load.
+# Install without dependency resolution to preserve this project's NumPy 2.x:
+# python -m pip install --no-deps pyctcdecode pygtrie
+# External LM decoding additionally requires KenLM Python bindings:
+# Windows prerequisite: Visual Studio 2022 Build Tools with the VCTools workload.
+# python -m pip install https://github.com/kpu/kenlm/archive/master.zip
+
 # Optional conversion/runtime dependencies. Install only when needed:
 # ctranslate2
 # phonemizer

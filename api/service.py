@@ -214,6 +214,7 @@ class AIAnalysisService:
                 cmudict_loader=self.cmudict_loader,
             )
             normalization = TranscriptNormalizationResult(**transcript_meta)
+            decoder_metadata = dict(asr.debug_metadata or {})
             actual_for_analysis = normalization.corrected_transcript
             if normalization.prompt_type in {"sentence", "paragraph", "passage", "final_sentence", "reading_passage"}:
                 actual_for_analysis = normalization.raw_transcript
@@ -249,6 +250,7 @@ class AIAnalysisService:
                 audio_quality=audio_quality,
                 pause_metrics=pause_metrics,
                 uncertainty=uncertainty,
+                asr_metadata=decoder_metadata,
             )
         except Exception as exc:
             return self._error_response("audio", request_id, "analysis_failed", "Audio analysis failed.", started, warnings, exc)
@@ -464,6 +466,7 @@ class AIAnalysisService:
         pause_metrics: dict[str, Any] | None = None,
         uncertainty: dict[str, Any] | None = None,
         developer_reinforcement: dict[str, Any] | None = None,
+        asr_metadata: dict[str, Any] | None = None,
     ) -> AnalysisResponse:
         include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
         if include_debug and debug_info is None:
@@ -702,6 +705,11 @@ class AIAnalysisService:
             debug_info=_json_safe(debug_info) if include_debug else None,
             processing_seconds=round(time.perf_counter() - started, 3),
             error=None,
+            asr_model_name=str((asr_metadata or {}).get("asr_model_name", "")),
+            decode_mode=str((asr_metadata or {}).get("decode_mode", "")),
+            beam_search=bool((asr_metadata or {}).get("beam_search", False)),
+            language_model_used=bool((asr_metadata or {}).get("language_model_used", False)),
+            decoder_backend=str((asr_metadata or {}).get("decoder_backend", "")),
         )
         logger.info("request_id=%s endpoint=%s provider=%s prompt_id=%s ok=true", request_id, mode, self.provider_name, prompt_id)
         return response

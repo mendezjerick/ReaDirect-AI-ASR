@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from readirect_asr.asr.base import ASRProvider
 from readirect_asr.asr.result import ASRResult
 from readirect_asr.text.normalization import normalize_transcript
+from training.ctc_decoding import CTCTextDecoder, DecodeSettings
 
 
 class Wav2Vec2OnlyASR(ASRProvider):
@@ -16,19 +19,38 @@ class Wav2Vec2OnlyASR(ASRProvider):
 
     def __init__(
         self,
-        model_path: str = "models/wav2vec2-readirect-asr-letters-v2",
+        model_path: str = "models/asr/epsilon",
+        model_name: str = "epsilon",
         phoneme_model_path: str = "models/wav2vec2-phoneme",
         base_model_path: str = "models/wav2vec2-readirect-asr",
         allow_base_fallback: bool = False,
         device: str = "cpu",
         sampling_rate: int = 16000,
+        decode_mode: str = "beam_lm",
+        beam_width: int = 100,
+        lm_path: str | None = "external_datasets/language_models/3-gram.pruned.1e-7.arpa",
+        alpha: float = 0.5,
+        beta: float = 1.0,
+        hotwords: tuple[str, ...] = (),
+        hotword_weight: float = 5.0,
+        allow_no_lm_fallback: bool = False,
     ) -> None:
         self.model_path = model_path
+        self.model_name = model_name
         self.phoneme_model_path = phoneme_model_path
         self.base_model_path = base_model_path
         self.allow_base_fallback = allow_base_fallback
         self.device = device
         self.sampling_rate = sampling_rate
+        self.requested_decode_mode = decode_mode
+        self.decode_mode = decode_mode
+        self.beam_width = beam_width
+        self.lm_path = lm_path
+        self.alpha = alpha
+        self.beta = beta
+        self.hotwords = hotwords
+        self.hotword_weight = hotword_weight
+        self.allow_no_lm_fallback = allow_no_lm_fallback
         self.model_size = model_path
         self.model_family = "wav2vec2"
         self.asr_route = "wav2vec2_only"
@@ -39,6 +61,9 @@ class Wav2Vec2OnlyASR(ASRProvider):
         self._torch: Any | None = None
         self._actual_device: str | None = None
         self._active_model_path: str | None = None
+        self._decoder: CTCTextDecoder | None = None
+        self._startup_warnings: list[str] = []
+        self._loaded_at: str | None = None
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
     @property
@@ -57,9 +82,27 @@ class Wav2Vec2OnlyASR(ASRProvider):
             missing_paths.append(self.phoneme_model_path)
         active_model = (asr_path or Path(self.model_path)).as_posix()
         metadata = _model_metadata(Path(active_model))
+        decoder_metadata = self._decoder.metadata() if self._decoder is not None else {
+            "decode_mode": self.decode_mode,
+            "beam_search": self.decode_mode in {"beam", "beam_no_lm", "beam_lm"},
+            "language_model_used": False,
+            "decoder_backend": "not_loaded",
+            "beam_width": self.beam_width,
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "hotwords": list(self.hotwords),
+            "hotword_weight": self.hotword_weight,
+            "lm_path": str(Path(self.lm_path).resolve()) if self.lm_path else None,
+        }
+        decoder_metadata["decode_mode"] = self.decode_mode
         return {
             "asr_architecture": self.asr_route,
             "active_asr_model": "wav2vec2",
+            "asr_model_name": self.model_name,
+            "asr_model_path": str(Path(active_model).resolve()),
+            "asr_model_exists": asr_path is not None,
+            "asr_model_loaded": self._model is not None,
+            "processor_loaded": self._processor is not None,
             "active_asr_model_path": active_model,
             "wav2vec2_asr_available": asr_path is not None,
             "wav2vec2_asr_model_name": active_model,
@@ -68,8 +111,33 @@ class Wav2Vec2OnlyASR(ASRProvider):
             "base_fallback_enabled": self.allow_base_fallback,
             "using_base_fallback": asr_path == Path(self.base_model_path),
             "missing_model_paths": missing_paths,
+            "device": self._actual_device or self.device,
+            "beam_search_enabled": bool(decoder_metadata["beam_search"]),
+            "language_model_enabled": self.requested_decode_mode == "beam_lm",
+            "language_model_loaded": bool(decoder_metadata["language_model_used"]),
+            "language_model_path": decoder_metadata.get("lm_path"),
+            "allow_no_lm_fallback": self.allow_no_lm_fallback,
+            "service_model_loaded_at": self._loaded_at,
+            "ffmpeg_available": shutil.which("ffmpeg") is not None,
+            "torchcodec_available": _module_available("torchcodec"),
+            "warnings": list(self._startup_warnings),
+            **decoder_metadata,
             **metadata,
         }
+
+    def warmup(self) -> None:
+        model_dir = self._select_asr_model_path(strict=True)
+        assert model_dir is not None
+        required = ("config.json", "model.safetensors", "vocab.json", "processor_config.json")
+        missing = [name for name in required if not (model_dir / name).exists()]
+        if missing:
+            raise RuntimeError(f"Epsilon ASR model is incomplete at {model_dir}; missing {missing}")
+        self._load_model()
+        print(f"Active ASR model: {self.model_name} ({model_dir.resolve()})")
+        print(
+            f"ASR decoder: mode={self.decode_mode}, backend={self._decoder.backend if self._decoder else 'not_loaded'}, "
+            f"LM={self._decoder.language_model_used if self._decoder else False}"
+        )
 
     def _select_asr_model_path(self, strict: bool = True) -> Path | None:
         primary = Path(self.model_path)
@@ -102,9 +170,48 @@ class Wav2Vec2OnlyASR(ASRProvider):
             self._processor = Wav2Vec2Processor.from_pretrained(str(model_dir), local_files_only=True)
             self._model = Wav2Vec2ForCTC.from_pretrained(str(model_dir), local_files_only=True).to(actual_device)
             self._model.eval()
+            self._initialize_decoder()
+            self._loaded_at = datetime.now(timezone.utc).isoformat()
         self._torch = torch
         self._actual_device = actual_device
         return self._model, self._processor, torch, actual_device
+
+    def _initialize_decoder(self) -> None:
+        assert self._processor is not None
+        mode = "beam" if self.decode_mode == "beam_no_lm" else self.decode_mode
+        settings = DecodeSettings(
+            decode_mode=mode,
+            beam_width=self.beam_width,
+            alpha=self.alpha,
+            beta=self.beta,
+            lm_path=self.lm_path if mode == "beam_lm" else None,
+            hotwords=self.hotwords,
+            hotword_weight=self.hotword_weight,
+        )
+        try:
+            self._decoder = CTCTextDecoder(self._processor, settings)
+        except Exception as exc:
+            if mode != "beam_lm" or not self.allow_no_lm_fallback:
+                raise RuntimeError(
+                    f"Failed to initialize requested ASR decoder '{self.decode_mode}': {exc}"
+                ) from exc
+            warning = (
+                f"KenLM decoder failed: {exc}. Explicit ASR_ALLOW_NO_LM_FALLBACK=true "
+                "enabled fallback to true no-LM beam search."
+            )
+            self._startup_warnings.append(warning)
+            self.decode_mode = "beam_no_lm"
+            self._decoder = CTCTextDecoder(
+                self._processor,
+                DecodeSettings(
+                    decode_mode="beam",
+                    beam_width=self.beam_width,
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    hotwords=self.hotwords,
+                    hotword_weight=self.hotword_weight,
+                ),
+            )
 
     def _load_phoneme_model(self) -> tuple[Any, Any, Any, str]:
         model_dir = Path(self.phoneme_model_path)
@@ -141,8 +248,9 @@ class Wav2Vec2OnlyASR(ASRProvider):
             input_values = inputs.input_values.to(actual_device)
             with torch.no_grad():
                 logits = model(input_values).logits
-            predicted_ids = torch.argmax(logits, dim=-1)
-            decoded = processor.batch_decode(predicted_ids)[0].strip()
+            if self._decoder is None:
+                raise RuntimeError("ASR decoder was not initialized.")
+            decoded = self._decoder.decode(logits[0].float().cpu().numpy()).strip()
             inference_ms = round((time.perf_counter() - inference_started) * 1000, 3)
             observed_phonemes, phoneme_ms, phoneme_error, phoneme_frame_count = self._phoneme_evidence(audio, sr)
             normalized = normalize_transcript(decoded)
@@ -171,6 +279,11 @@ class Wav2Vec2OnlyASR(ASRProvider):
                     "actual_device": actual_device,
                     "raw_transcript_original": decoded,
                     "base_fallback_used": self.active_model_path == self.base_model_path,
+                    "asr_model_name": self.model_name,
+                    **{
+                        **self._decoder.metadata(),
+                        "decode_mode": self.decode_mode,
+                    },
                 },
             )
         except Exception as exc:
@@ -283,15 +396,19 @@ def _ctc_decode_ids(ids: list[int], vocabulary: dict[int, str], blank_token_id: 
 
 
 def _model_metadata(model_dir: Path) -> dict[str, Any]:
-    metadata_path = model_dir / "readirect_model_metadata.json"
-    if not metadata_path.exists():
+    metadata_paths = (
+        model_dir / "readirect_epsilon_metadata.json",
+        model_dir / "readirect_model_metadata.json",
+    )
+    metadata_path = next((path for path in metadata_paths if path.exists()), None)
+    if metadata_path is None:
         return {}
     try:
         data = json.loads(metadata_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
-    model_name = str(data.get("model_name", ""))
-    model_version = str(data.get("model_version") or "")
+    model_name = str(data.get("model_name") or data.get("run_name") or "")
+    model_version = str(data.get("model_version") or model_name.lower())
     if not model_version and model_name.endswith("letters-v2"):
         model_version = "letters-v2"
     return {
@@ -300,6 +417,14 @@ def _model_metadata(model_dir: Path) -> dict[str, Any]:
         "training_type": str(data.get("training_type") or ""),
         "training_mix": _format_training_mix(data.get("training_mix")),
     }
+
+
+def _module_available(name: str) -> bool:
+    try:
+        __import__(name)
+        return True
+    except Exception:
+        return False
 
 
 def _format_training_mix(value: Any) -> str:

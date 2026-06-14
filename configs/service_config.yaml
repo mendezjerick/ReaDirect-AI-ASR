@@ -14,12 +14,21 @@ analysis:
 
 asr:
   provider: wav2vec2_only
-  wav2vec2_asr_model_path: models/wav2vec2-readirect-asr-letters-v2
+  model_name: epsilon
+  wav2vec2_asr_model_path: models/asr/epsilon
   wav2vec2_phoneme_model_path: models/wav2vec2-phoneme
   wav2vec2_base_asr_model_path: models/wav2vec2-readirect-asr
   allow_wav2vec2_base_fallback: false
-  model_size: models/wav2vec2-readirect-asr-letters-v2
-  device: cpu
+  model_size: models/asr/epsilon
+  device: cuda
+  decode_mode: beam_lm
+  beam_width: 100
+  lm_path: external_datasets/language_models/3-gram.pruned.1e-7.arpa
+  alpha: 0.5
+  beta: 1.0
+  hotwords: []
+  hotword_weight: 5.0
+  allow_no_lm_fallback: false
   language: en
   timeout_seconds: 60
 

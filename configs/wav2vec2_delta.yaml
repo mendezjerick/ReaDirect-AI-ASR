@@ -1,0 +1,75 @@
+run:
+  name: Delta
+  seed: 45
+
+model:
+  beta_checkpoint_path: ${BETA_CHECKPOINT_PATH:-models/asr/beta}
+  reference_base_model_path: ${WAV2VEC2_ALPHA_BASE_MODEL_PATH:-models/wav2vec2-base-960h}
+  output_model_path: models/asr/delta
+  checkpoint_dir: models/asr/delta/checkpoints
+  report_dir: reports/asr/delta
+  log_dir: reports/asr/delta/logs
+
+data:
+  sample_rate: 16000
+  min_duration_seconds: 0.2
+  max_duration_seconds: 30.0
+  preprocessing_num_proc: 1
+
+  gigaspeech:
+    parquet_dir: ${GIGASPEECH_S_PATH:-external_datasets/gigaspeech_s_parquet/parquet-data/s}
+    cache_dir: ${GIGASPEECH_CACHE_DIR:-external_datasets/hf_cache}
+    train_glob: train-*.parquet
+    validation_split: validation
+
+  slr83:
+    root_dir: ${SLR83_ROOT:-external_datasets/SLR83}
+    female_dir: southern_english_female
+    male_dir: southern_english_male
+    index_file: line_index.csv
+
+  readirect_letters:
+    root_dir: ${READIRECT_LETTERS_ROOT:-external_datasets/readirect_letters}
+    train_manifest: ${READIRECT_LETTERS_TRAIN_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_train.jsonl}
+    validation_manifest: ${READIRECT_LETTERS_VALID_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_valid.jsonl}
+    test_manifest: ${READIRECT_LETTERS_TEST_MANIFEST:-external_datasets/readirect_letters/manifests/readirect_letters_test.jsonl}
+
+  evaluation_speechocean:
+    validation_manifest: ${SPEECHOCEAN_VALID_MANIFEST:-external_datasets/manifests/speechocean_valid.jsonl}
+    test_manifest: ${SPEECHOCEAN_TEST_MANIFEST:-external_datasets/manifests/speechocean_test.jsonl}
+
+  sampling:
+    strategy: deterministic_virtual_epoch
+    effective_epoch_rows: ${DELTA_EFFECTIVE_EPOCH_ROWS:-40000}
+    shuffle: true
+    ratios:
+      gigaspeech: 0.50
+      slr83_southern_english: 0.40
+      readirect_letters: 0.10
+
+training:
+  num_train_epochs: 1
+  max_allowed_epochs: 2
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 2
+  learning_rate: 0.000005
+  warmup_ratio: 0.03
+  logging_steps: 25
+  eval_steps: 500
+  save_steps: 500
+  fp16: true_if_cuda_available
+  freeze_feature_encoder: true
+  gradient_checkpointing: true
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  require_cuda: true
+  early_stopping_patience: 2
+  early_stopping_threshold: 0.0
+
+evaluation:
+  include_gigaspeech_validation: true
+  hard_case_manifest: null
+  comparison_artifacts:
+    beta: reports/asr/beta/beta_shared_validation_evaluation.json
+    gamma: reports/asr/gamma/gamma_shared_validation_evaluation.json
