@@ -118,3 +118,4 @@
 2026-06-14T15:22:36Z	expected_text=first	raw_transcript=firs	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
 2026-06-14T15:22:45Z	expected_text=arthur	raw_transcript=arter	prompt_type=word	target_csv=word-reinforcement.csv	status=duplicate	reason=correction already exists	created_by=admin@readirect.local
 2026-06-14T15:22:51Z	expected_text=fairest	raw_transcript=first	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
+2026-06-15T01:37:03Z	expected_text=once	raw_transcript=one	prompt_type=word	target_csv=word-reinforcement.csv	status=saved	reason=new correction added	created_by=admin@readirect.local
