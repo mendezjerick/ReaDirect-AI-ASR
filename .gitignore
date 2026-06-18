@@ -116,3 +116,4 @@ content_bank_enriched/reports/*
 !content_bank_enriched/**/.gitkeep
 
 service_config.yaml
+configs/service_config.yaml
