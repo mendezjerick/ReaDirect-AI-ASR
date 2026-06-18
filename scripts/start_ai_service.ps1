@@ -15,15 +15,20 @@ $env:ASR_LM_PATH = Join-Path $Repo "external_datasets\language_models\3-gram.pru
 $env:ASR_HOTWORDS = ""
 $env:ASR_HOTWORD_WEIGHT = "5.0"
 $env:ASR_ALLOW_NO_LM_FALLBACK = "false"
-$env:ASR_DEVICE = if ($env:ASR_DEVICE) { $env:ASR_DEVICE } else { "cuda" }
 
 if (-not (Test-Path -LiteralPath $Python)) {
     throw "AI service virtual environment was not found at $Python. Create the .venv before starting ASR."
 }
 
+if (-not $env:ASR_DEVICE) {
+    $cudaAvailable = & $Python -c "import torch; print('true' if torch.cuda.is_available() else 'false')"
+    $env:ASR_DEVICE = if ($cudaAvailable.Trim() -eq "true") { "cuda" } else { "cpu" }
+}
+
 Write-Host "Using local .venv"
 Write-Host "Active ASR model: $env:ASR_MODEL_NAME ($env:ASR_MODEL_PATH)"
 Write-Host "Decoder: $env:ASR_DECODE_MODE; LM: $env:ASR_LM_PATH"
+Write-Host "Device: $env:ASR_DEVICE"
 & $Python -c "import sys; print('Python:', sys.executable)"
 & $Python scripts/validate_ai_service_startup.py
 & $Python -m uvicorn api.main:app --host 127.0.0.1 --port 8001

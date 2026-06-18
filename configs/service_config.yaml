@@ -20,8 +20,8 @@ asr:
   wav2vec2_base_asr_model_path: models/wav2vec2-readirect-asr
   allow_wav2vec2_base_fallback: false
   model_size: models/asr/epsilon
-  device: cuda
-  decode_mode: beam_lm
+  device: cpu
+  decode_mode: beam
   beam_width: 100
   lm_path: external_datasets/language_models/3-gram.pruned.1e-7.arpa
   alpha: 0.5
@@ -30,7 +30,7 @@ asr:
   hotword_weight: 5.0
   allow_no_lm_fallback: false
   language: en
-  timeout_seconds: 60
+  timeout_seconds: 240
 
 audio_quality:
   min_duration_seconds: 1.0

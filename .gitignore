@@ -114,3 +114,5 @@ content_bank_enriched/**/*.zip
 content_bank_enriched/reports/*
 !content_bank_enriched/README.md
 !content_bank_enriched/**/.gitkeep
+
+service_config.yaml
