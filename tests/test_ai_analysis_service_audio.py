@@ -25,6 +25,23 @@ def test_mock_asr_transcript_flows_into_reading_analyzer(tmp_path: Path) -> None
     assert response.ok is True
     assert response.transcript == "cat"
     assert response.error_type == "correct"
+    assert response.trace == {}
+
+
+def test_audio_trace_is_optional_and_expected_centric_when_requested(tmp_path: Path) -> None:
+    audio = tmp_path / "sample.wav"
+    audio.write_bytes(b"fake")
+    response = _service(tmp_path).analyze_audio(
+        AnalyzeAudioRequest(audio_path=str(audio), expected_text="cat", include_trace=True)
+    )
+
+    assert response.ok is True
+    assert response.trace["final_transcript"] == "cat"
+    assert response.trace["expected_centric"]["expected"] == "cat"
+    assert response.trace["expected_centric"]["heard"] == "cat"
+    assert response.trace["expected_centric"]["match"] is True
+    assert response.trace["decoding"]["partial_steps"]
+    assert response.trace_notes
 
 
 def test_audio_analysis_scores_corrected_transcript_and_preserves_raw(tmp_path: Path) -> None:

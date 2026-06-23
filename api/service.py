@@ -106,6 +106,7 @@ class AIAnalysisService:
         started = time.perf_counter()
         request_id = new_request_id()
         warnings: list[str] = []
+        include_trace = bool(request.include_trace or request.debug_trace)
         try:
             context = self.resolve_expected_context(
                 prompt_id=request.prompt_id,
@@ -166,7 +167,12 @@ class AIAnalysisService:
                     uncertainty=quality_decision,
                 )
 
-            asr = self.transcribe_audio(str(audio_path), expected_text=expected_text, content_metadata=context["content_metadata"])
+            asr = self.transcribe_audio(
+                str(audio_path),
+                expected_text=expected_text,
+                content_metadata=context["content_metadata"],
+                include_trace=include_trace,
+            )
             if asr.error:
                 warnings.append("transcription_failed")
                 return self._error_response("audio", request_id, "transcription_failed", asr.error, started, warnings, debug_info=asr.to_dict() if request.debug else None)
@@ -221,6 +227,14 @@ class AIAnalysisService:
             analysis = self.run_reading_analysis(expected_text, actual_for_analysis, context["accepted_answers"], context["content_metadata"])
             analysis = self._apply_gop_to_analysis(analysis, gop)
             adaptive = self._maybe_recommend(request.learner_history, request.candidate_items, context, analysis, request.debug)
+            trace, trace_notes = self._build_asr_trace(
+                asr=asr,
+                expected_text=expected_text,
+                normalization=normalization,
+                gop=gop,
+                analysis=analysis,
+                uncertainty=uncertainty,
+            ) if include_trace else ({}, [])
             return self.build_response(
                 request_id=request_id,
                 mode="audio",
@@ -251,6 +265,8 @@ class AIAnalysisService:
                 pause_metrics=pause_metrics,
                 uncertainty=uncertainty,
                 asr_metadata=decoder_metadata,
+                trace=trace,
+                trace_notes=trace_notes,
             )
         except Exception as exc:
             return self._error_response("audio", request_id, "analysis_failed", "Audio analysis failed.", started, warnings, exc)
@@ -331,17 +347,45 @@ class AIAnalysisService:
             "enrichment_metadata": _json_safe(repo_enrichment),
         }
 
-    def transcribe_audio(self, audio_path: str, expected_text: str = "", content_metadata: dict[str, Any] | None = None) -> ASRResult:
+    def transcribe_audio(
+        self,
+        audio_path: str,
+        expected_text: str = "",
+        content_metadata: dict[str, Any] | None = None,
+        include_trace: bool = False,
+    ) -> ASRResult:
         metadata = content_metadata or {}
         if self.provider_name == "mock":
             transcript = str(metadata.get("mock_transcript") or metadata.get("actual_text") or expected_text or "")
+            trace = {}
+            trace_notes: list[str] = []
+            if include_trace:
+                trace = {
+                    "audio": {
+                        "sample_rate": None,
+                        "duration_ms": None,
+                        "num_samples": None,
+                        "pcm_preview": [],
+                        "byte_preview_binary": [],
+                    },
+                    "decoding": {
+                        "raw_transcript": transcript,
+                        "partial_steps": _partial_text_steps(transcript),
+                    },
+                    "beam_search": [],
+                    "final_transcript": transcript,
+                }
+                trace_notes = ["Mock ASR provider does not expose real audio/model tensors."]
             return ASRResult(
                 transcript=transcript,
                 normalized_transcript=normalize_transcript(transcript),
                 provider="mock",
                 model_size=None,
+                trace=trace,
+                trace_notes=trace_notes,
+                debug_metadata={"trace": trace, "trace_notes": trace_notes} if include_trace else {},
             )
-        result = self.asr_provider.transcribe(audio_path)
+        result = self.asr_provider.transcribe(audio_path, include_trace=include_trace, debug_trace=include_trace)
         if isinstance(result, ASRResult):
             return result
         transcript = str(result.get("transcript", ""))
@@ -366,6 +410,8 @@ class AIAnalysisService:
             phoneme_inference_time_ms=result.get("phoneme_inference_time_ms"),
             phoneme_error=result.get("phoneme_error"),
             debug_metadata=dict(result.get("debug_metadata", {}) or {}),
+            trace=dict(result.get("trace", {}) or {}),
+            trace_notes=list(result.get("trace_notes", []) or []),
             error=result.get("error"),
         )
 
@@ -428,6 +474,55 @@ class AIAnalysisService:
             },
         }
 
+    def _build_asr_trace(
+        self,
+        *,
+        asr: ASRResult,
+        expected_text: str,
+        normalization: TranscriptNormalizationResult,
+        gop: dict[str, Any],
+        analysis: dict[str, Any],
+        uncertainty: dict[str, Any],
+    ) -> tuple[dict[str, Any], list[str]]:
+        debug_metadata = dict(asr.debug_metadata or {})
+        trace = dict(asr.trace or debug_metadata.get("trace") or {})
+        notes = list(asr.trace_notes or debug_metadata.get("trace_notes") or [])
+        raw_transcript = str(getattr(normalization, "raw_transcript", asr.transcript) or asr.transcript or "")
+        displayed_transcript = str(getattr(normalization, "displayed_transcript", raw_transcript) or raw_transcript)
+        if bool(uncertainty.get("retry_required", False)):
+            displayed_transcript = raw_transcript
+
+        match = bool(
+            getattr(normalization, "accepted", False)
+            or analysis.get("is_correct", False)
+            or analysis.get("is_accepted", False)
+        )
+        confidence = _first_number(
+            getattr(normalization, "dynamic_correction_confidence", None),
+            getattr(normalization, "asr_spelling_variant_confidence", None),
+            gop.get("gop_confidence"),
+            gop.get("overall_gop_score"),
+            asr.confidence,
+        )
+        trace["gop"] = {
+            "score": _first_number(gop.get("overall_gop_score"), gop.get("gop_score")),
+            "verdict": str(gop.get("gop_decision") or gop.get("alignment_quality") or "not_available"),
+            "phoneme_scores": _compact_phoneme_scores(gop.get("gop_phoneme_scores") or gop.get("phoneme_scores") or []),
+        }
+        trace["expected_centric"] = {
+            "expected": expected_text,
+            "heard": displayed_transcript,
+            "normalized_expected": normalize_transcript(expected_text),
+            "normalized_heard": normalize_transcript(displayed_transcript),
+            "match": match,
+            "confidence": confidence,
+            "verdict": "accepted" if match else "not_accepted",
+        }
+        trace["final_transcript"] = displayed_transcript
+        if not trace.get("beam_search"):
+            notes.append("Beam candidates unavailable unless the active decoder returns real beam alternatives.")
+        return _json_safe(trace), list(dict.fromkeys(str(note) for note in notes if str(note).strip()))
+
     def run_reading_analysis(
         self,
         expected_text: str,
@@ -467,6 +562,8 @@ class AIAnalysisService:
         uncertainty: dict[str, Any] | None = None,
         developer_reinforcement: dict[str, Any] | None = None,
         asr_metadata: dict[str, Any] | None = None,
+        trace: dict[str, Any] | None = None,
+        trace_notes: list[str] | None = None,
     ) -> AnalysisResponse:
         include_debug = debug and bool(self.config.get("api", {}).get("debug", True))
         if include_debug and debug_info is None:
@@ -703,6 +800,8 @@ class AIAnalysisService:
             reinforcement_reason=str(developer_reinforcement_payload.get("reason", "")),
             warnings=warnings,
             debug_info=_json_safe(debug_info) if include_debug else None,
+            trace=_json_safe(trace or {}),
+            trace_notes=list(trace_notes or []),
             processing_seconds=round(time.perf_counter() - started, 3),
             error=None,
             asr_model_name=str((asr_metadata or {}).get("asr_model_name", "")),
@@ -1028,3 +1127,48 @@ def _analysis_to_history_item(context: dict[str, Any], analysis: dict[str, Any])
 
 # Backward-compatible name used by earlier tests/imports.
 AnalysisService = AIAnalysisService
+
+
+def _first_number(*values: Any) -> float | None:
+    for value in values:
+        if value is None:
+            continue
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            continue
+        if not math.isnan(number):
+            return round(number, 6)
+    return None
+
+
+def _compact_phoneme_scores(scores: Any, limit: int = 8) -> list[dict[str, Any]]:
+    if not isinstance(scores, list):
+        return []
+    compact: list[dict[str, Any]] = []
+    for item in scores[:limit]:
+        if not isinstance(item, dict):
+            continue
+        phoneme = str(item.get("phoneme") or item.get("phone") or item.get("expected") or "").strip()
+        score = _first_number(item.get("score"), item.get("gop_score"), item.get("confidence"))
+        if phoneme or score is not None:
+            row: dict[str, Any] = {}
+            if phoneme:
+                row["phoneme"] = phoneme
+            if score is not None:
+                row["score"] = score
+            compact.append(row)
+    return compact
+
+
+def _partial_text_steps(text: str, limit: int = 12) -> list[str]:
+    steps: list[str] = []
+    current = ""
+    for character in str(text):
+        current += character
+        normalized = normalize_transcript(current)
+        if normalized and (not steps or steps[-1] != normalized):
+            steps.append(normalized)
+        if len(steps) >= limit:
+            break
+    return steps

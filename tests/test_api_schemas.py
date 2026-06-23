@@ -7,8 +7,9 @@ def test_analyze_text_request_validates() -> None:
 
 
 def test_analyze_audio_request_validates() -> None:
-    request = AnalyzeAudioRequest(audio_path="sample.wav", expected_text="cat")
+    request = AnalyzeAudioRequest(audio_path="sample.wav", expected_text="cat", include_trace=True)
     assert request.audio_path == "sample.wav"
+    assert request.include_trace is True
 
 
 def test_analyze_audio_request_accepts_numeric_ids() -> None:
@@ -18,7 +19,16 @@ def test_analyze_audio_request_accepts_numeric_ids() -> None:
 
 
 def test_analysis_response_serializes() -> None:
-    response = AnalysisResponse(ok=True, request_id="r1", mode="text", provider="mock")
+    response = AnalysisResponse(
+        ok=True,
+        request_id="r1",
+        mode="text",
+        provider="mock",
+        trace={"final_transcript": "cat"},
+        trace_notes=["compact trace only"],
+    )
     data = response.model_dump()
     assert data["ok"] is True
     assert data["warnings"] == []
+    assert data["trace"]["final_transcript"] == "cat"
+    assert data["trace_notes"] == ["compact trace only"]

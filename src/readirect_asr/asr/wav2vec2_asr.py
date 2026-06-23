@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from readirect_asr.asr.base import ASRProvider
 from readirect_asr.asr.result import ASRResult
 from readirect_asr.text.normalization import normalize_transcript
@@ -234,7 +236,7 @@ class Wav2Vec2OnlyASR(ASRProvider):
         return self._phoneme_model, self._phoneme_processor, torch, actual_device
 
     def transcribe(self, audio_path: str, **kwargs: Any) -> ASRResult:
-        del kwargs
+        include_trace = bool(kwargs.get("include_trace") or kwargs.get("debug_trace"))
         started = time.perf_counter()
         path = Path(audio_path)
         if not path.exists():
@@ -247,13 +249,42 @@ class Wav2Vec2OnlyASR(ASRProvider):
             inputs = processor(audio, sampling_rate=sr, return_tensors="pt", padding=True)
             input_values = inputs.input_values.to(actual_device)
             with torch.no_grad():
-                logits = model(input_values).logits
+                outputs = model(input_values, output_hidden_states=include_trace, return_dict=True)
+                logits = outputs.logits
             if self._decoder is None:
                 raise RuntimeError("ASR decoder was not initialized.")
             decoded = self._decoder.decode(logits[0].float().cpu().numpy()).strip()
             inference_ms = round((time.perf_counter() - inference_started) * 1000, 3)
             observed_phonemes, phoneme_ms, phoneme_error, phoneme_frame_count = self._phoneme_evidence(audio, sr)
             normalized = normalize_transcript(decoded)
+            trace: dict[str, Any] = {}
+            trace_notes: list[str] = []
+            if include_trace:
+                trace, trace_notes = _build_wav2vec2_trace(
+                    audio=audio,
+                    sr=sr,
+                    input_values=input_values,
+                    outputs=outputs,
+                    logits=logits,
+                    processor=processor,
+                    decoder=self._decoder,
+                    decoded=decoded,
+                    torch=torch,
+                )
+                trace["final_transcript"] = normalized
+            debug_metadata = {
+                "actual_device": actual_device,
+                "raw_transcript_original": decoded,
+                "base_fallback_used": self.active_model_path == self.base_model_path,
+                "asr_model_name": self.model_name,
+                **{
+                    **self._decoder.metadata(),
+                    "decode_mode": self.decode_mode,
+                },
+            }
+            if include_trace:
+                debug_metadata["trace"] = trace
+                debug_metadata["trace_notes"] = trace_notes
             return ASRResult(
                 transcript=normalized,
                 normalized_transcript=normalized,
@@ -275,16 +306,9 @@ class Wav2Vec2OnlyASR(ASRProvider):
                 phoneme_model_used=self.phoneme_model_path,
                 phoneme_inference_time_ms=phoneme_ms,
                 phoneme_error=phoneme_error,
-                debug_metadata={
-                    "actual_device": actual_device,
-                    "raw_transcript_original": decoded,
-                    "base_fallback_used": self.active_model_path == self.base_model_path,
-                    "asr_model_name": self.model_name,
-                    **{
-                        **self._decoder.metadata(),
-                        "decode_mode": self.decode_mode,
-                    },
-                },
+                debug_metadata=debug_metadata,
+                trace=trace,
+                trace_notes=trace_notes,
             )
         except Exception as exc:
             return ASRResult(
@@ -346,6 +370,184 @@ class Wav2Vec2OnlyASR(ASRProvider):
             return _normalize_phoneme_output(decoded), round((time.perf_counter() - started) * 1000, 3), None, int(logits.shape[1])
         except Exception as exc:
             return [], None, str(exc), None
+
+
+def _build_wav2vec2_trace(
+    *,
+    audio: Any,
+    sr: int,
+    input_values: Any,
+    outputs: Any,
+    logits: Any,
+    processor: Any,
+    decoder: CTCTextDecoder,
+    decoded: str,
+    torch: Any,
+) -> tuple[dict[str, Any], list[str]]:
+    notes = [
+        "Full audio and model tensors omitted; compact previews only.",
+        "Logits preview limited to top 5 tokens from one high-confidence nonblank frame.",
+    ]
+    trace: dict[str, Any] = {
+        "audio": _audio_trace(audio, sr),
+        "features": {
+            "type": "wav2vec2_input_values",
+            "shape": _shape(input_values),
+            "preview": _tensor_preview(input_values, 8),
+        },
+        "embeddings": _embedding_trace(outputs),
+        "logits": _logits_trace(logits, processor, torch),
+        "decoding": _decoding_trace(logits, processor, decoded, torch),
+        "beam_search": [],
+    }
+
+    if not trace["embeddings"]:
+        notes.append("Embedding hidden states were unavailable from this model output.")
+
+    if decoder.beam_search_used:
+        beam_method = getattr(decoder, "beam_candidates", None)
+        if callable(beam_method):
+            try:
+                trace["beam_search"] = beam_method(logits[0].float().detach().cpu().numpy(), top_k=3)
+            except Exception as exc:
+                trace["beam_search"] = []
+                notes.append(f"Beam candidates could not be extracted: {exc}")
+        if not trace["beam_search"]:
+            notes.append("Beam search is active, but this decoder backend did not expose alternatives.")
+    else:
+        notes.append("Beam search not active for this request.")
+
+    return trace, notes
+
+
+def _audio_trace(audio: Any, sr: int) -> dict[str, Any]:
+    values = np.asarray(audio, dtype=np.float32)
+    preview = values[:8]
+    byte_preview = np.clip(preview, -1.0, 1.0)
+    byte_values = (byte_preview * 32767).astype(np.int16).tobytes()[:8]
+    rms = float(np.sqrt(np.mean(np.square(values)))) if values.size else 0.0
+    peak = float(np.max(np.abs(values))) if values.size else 0.0
+    duration_ms = (len(values) / float(sr) * 1000.0) if sr else 0.0
+    return {
+        "sample_rate": int(sr),
+        "duration_ms": _round(duration_ms),
+        "num_samples": int(values.size),
+        "pcm_preview": [_round(item) for item in preview.tolist()],
+        "byte_preview_binary": [format(byte, "08b") for byte in byte_values],
+        "rms": _round(rms),
+        "peak": _round(peak),
+    }
+
+
+def _embedding_trace(outputs: Any) -> dict[str, Any]:
+    hidden_states = getattr(outputs, "hidden_states", None)
+    if not hidden_states:
+        return {}
+    hidden = hidden_states[-1].detach().cpu()
+    frame_values = hidden[0] if len(hidden.shape) == 3 else hidden
+    return {
+        "source": "wav2vec2_last_hidden_state",
+        "shape": _shape(hidden),
+        "pooled_preview": _tensor_preview(frame_values.mean(dim=0), 8),
+        "frame_preview": _tensor_preview(frame_values[0], 8) if int(frame_values.shape[0]) > 0 else [],
+    }
+
+
+def _logits_trace(logits: Any, processor: Any, torch: Any) -> dict[str, Any]:
+    frame_logits = logits[0].float().detach().cpu()
+    if len(frame_logits.shape) != 2 or int(frame_logits.shape[0]) <= 0:
+        return {"source": "wav2vec2_ctc_logits", "shape": _shape(logits), "top_tokens": []}
+
+    probabilities = torch.nn.functional.softmax(frame_logits, dim=-1)
+    ranking = probabilities.clone()
+    blank_id = _blank_token_id(processor)
+    if blank_id is not None and 0 <= blank_id < int(ranking.shape[-1]):
+        ranking[:, blank_id] = -1.0
+    frame_scores = ranking.max(dim=-1).values
+    frame_index = int(torch.argmax(frame_scores).item()) if int(frame_scores.numel()) > 0 else 0
+    top_k = min(5, int(frame_logits.shape[-1]))
+    _, top_ids = torch.topk(ranking[frame_index], k=top_k)
+    vocabulary = _processor_vocabulary(processor)
+    return {
+        "source": "wav2vec2_ctc_logits",
+        "shape": _shape(logits),
+        "frame_index": frame_index,
+        "top_tokens": [
+            {
+                "token": _display_token(vocabulary.get(int(token_id), ""), int(token_id), blank_id),
+                "score": _round(frame_logits[frame_index, int(token_id)].item()),
+                "probability": _round(probabilities[frame_index, int(token_id)].item()),
+            }
+            for token_id in top_ids.tolist()
+        ],
+    }
+
+
+def _decoding_trace(logits: Any, processor: Any, decoded: str, torch: Any) -> dict[str, Any]:
+    frame_logits = logits[0].float().detach().cpu()
+    predicted_ids = torch.argmax(frame_logits, dim=-1).tolist()
+    vocabulary = _processor_vocabulary(processor)
+    blank_id = _blank_token_id(processor)
+    collapsed: list[int] = []
+    previous: int | None = None
+    for token_id in predicted_ids:
+        token_id = int(token_id)
+        if token_id == previous:
+            continue
+        previous = token_id
+        if blank_id is not None and token_id == blank_id:
+            continue
+        collapsed.append(token_id)
+
+    partial_steps: list[str] = []
+    running = ""
+    for token_id in collapsed:
+        token = str(vocabulary.get(token_id, ""))
+        running += " " if token == "|" else token
+        normalized = normalize_transcript(running)
+        if normalized and (not partial_steps or partial_steps[-1] != normalized):
+            partial_steps.append(normalized)
+        if len(partial_steps) >= 12:
+            break
+
+    return {
+        "token_ids": collapsed[:24],
+        "tokens": [_display_token(vocabulary.get(token_id, ""), token_id, blank_id) for token_id in collapsed[:24]],
+        "partial_steps": partial_steps,
+        "raw_transcript": decoded,
+    }
+
+
+def _shape(value: Any) -> list[int]:
+    shape = getattr(value, "shape", None)
+    if shape is None:
+        return []
+    return [int(item) for item in list(shape)]
+
+
+def _tensor_preview(value: Any, limit: int = 8) -> list[float]:
+    detached = value.detach().cpu().flatten() if hasattr(value, "detach") else np.asarray(value).flatten()
+    items = detached[:limit].tolist()
+    return [_round(item) for item in items]
+
+
+def _round(value: Any) -> float:
+    try:
+        return round(float(value), 6)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _display_token(token: str, token_id: int, blank_id: int | None) -> str:
+    if blank_id is not None and int(token_id) == int(blank_id):
+        return "<blank>"
+    if token == "|":
+        return "<space>"
+    if token == "":
+        return f"<token:{token_id}>"
+    if token and 0xE000 <= ord(token[0]) <= 0xF8FF:
+        return f"<suppressed:{token_id}>"
+    return token
 
 
 def _load_audio(path: Path, sampling_rate: int) -> tuple[Any, int]:

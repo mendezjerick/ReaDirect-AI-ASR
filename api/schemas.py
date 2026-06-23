@@ -103,6 +103,8 @@ class AnalyzeAudioRequest(BaseModel):
     learner_history: list[dict[str, Any]] = Field(default_factory=list)
     candidate_items: list[dict[str, Any]] = Field(default_factory=list)
     debug: bool = False
+    include_trace: bool = False
+    debug_trace: bool = False
     developer_reinforcement_enabled: bool = False
     developer_user_role: str | None = None
     developer_user_id: str | int | None = None
@@ -289,6 +291,8 @@ class AnalysisResponse(BaseModel):
     reinforcement_reason: str = ""
     warnings: list[str] = Field(default_factory=list)
     debug_info: Optional[dict[str, Any]] = None
+    trace: dict[str, Any] = Field(default_factory=dict)
+    trace_notes: list[str] = Field(default_factory=list)
     processing_seconds: float = 0.0
     error: Optional[str] = None
     asr_model_name: str = ""

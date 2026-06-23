@@ -45,6 +45,8 @@ class ASRResult:
     decoded_acoustic_phonemes: list[str] = field(default_factory=list)
     acoustic_frame_count: int | None = None
     debug_metadata: dict[str, Any] = field(default_factory=dict)
+    trace: dict[str, Any] = field(default_factory=dict)
+    trace_notes: list[str] = field(default_factory=list)
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:

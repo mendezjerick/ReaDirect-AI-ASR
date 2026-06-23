@@ -10,10 +10,13 @@ def test_asr_result_serializes_segments_and_words() -> None:
         words=[ASRWord(word="hello", start=0.0, end=1.0, probability=0.9)],
         provider="mock",
         model_size="test",
+        trace={"final_transcript": "hello"},
+        trace_notes=["compact"],
     )
 
     data = result.to_dict()
 
     assert data["segments"][0]["text"] == "hello"
     assert data["words"][0]["probability"] == 0.9
-
+    assert data["trace"]["final_transcript"] == "hello"
+    assert data["trace_notes"] == ["compact"]

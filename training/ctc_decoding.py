@@ -291,6 +291,56 @@ class CTCTextDecoder:
             beta=self.settings.beta,
         )
 
+    def beam_candidates(self, logits: np.ndarray, top_k: int = 3) -> list[dict[str, Any]]:
+        """Return compact real beam alternatives when the active backend exposes them."""
+        if self._pyctcdecode is None or not hasattr(self._pyctcdecode, "decode_beams"):
+            return []
+
+        validate_decoder_vocabulary(self.processor, int(np.asarray(logits).shape[-1]))
+        _, _, suppressed_ids = tokenizer_id_maps(self.processor)
+        masked = mask_suppressed_logits(logits, suppressed_ids)
+        try:
+            beams = self._pyctcdecode.decode_beams(
+                masked,
+                beam_width=self.settings.beam_width,
+                hotwords=list(self.settings.hotwords) or None,
+                hotword_weight=self.settings.hotword_weight,
+            )
+        except Exception:
+            return []
+
+        candidates: list[dict[str, Any]] = []
+        for beam in list(beams or [])[: max(0, top_k)]:
+            text = ""
+            score: float | None = None
+            confidence: float | None = None
+            if isinstance(beam, dict):
+                text = str(beam.get("text") or beam.get("candidate") or beam.get("transcript") or "").strip()
+                raw_score = beam.get("score", beam.get("logit_score", beam.get("lm_score")))
+                raw_confidence = beam.get("confidence")
+            elif isinstance(beam, tuple) and beam:
+                text = str(beam[0]).strip()
+                numeric = [item for item in beam[1:] if isinstance(item, (int, float))]
+                raw_score = numeric[0] if numeric else None
+                raw_confidence = numeric[1] if len(numeric) > 1 else None
+            else:
+                text = str(beam).strip()
+                raw_score = None
+                raw_confidence = None
+
+            if raw_score is not None:
+                score = round(float(raw_score), 6)
+            if raw_confidence is not None:
+                confidence = round(float(raw_confidence), 6)
+            if text:
+                candidate = {"candidate": text}
+                if score is not None:
+                    candidate["score"] = score
+                if confidence is not None:
+                    candidate["confidence"] = confidence
+                candidates.append(candidate)
+        return candidates
+
     def metadata(self) -> dict[str, Any]:
         return {
             **self.settings.to_dict(),
