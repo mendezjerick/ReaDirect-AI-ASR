@@ -844,9 +844,9 @@ class AIAnalysisService:
                 if expected_text:
                     reasons.append("expected_text_without_reliable_asr_evidence")
             if asr.confidence is not None and asr.confidence < float(self.config.get("transcript_normalization", {}).get("low_confidence_threshold", 0.50)):
-                reasons.append("low_asr_confidence")
+                notes.append("ASR confidence was low, but audio contained processable speech.")
             if normalization and str(normalization.confidence_level).lower().startswith("low"):
-                reasons.append("low_normalization_confidence")
+                notes.append("Expected-centric normalization confidence was low; score as an answer mismatch, not unusable audio.")
 
         unique_reasons = list(dict.fromkeys(reasons))
         retry_required = bool(unique_reasons and qa_config["retry_on_bad_quality"])

@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import numpy as np
+import soundfile as sf
+
 from api.schemas import AnalyzeAudioRequest
 from api.service import AIAnalysisService
 from readirect_asr.asr.mock_asr import MockASR
@@ -16,6 +19,27 @@ def _service(tmp_path: Path) -> AIAnalysisService:
     loader = CMUDictLoader(cmu / "cmudict.dict", cmu / "cmudict.phones", cmu / "cmudict.symbols").load()
     repo = ContentRepository(tmp_path / "missing.csv", tmp_path / "missing2.csv").load()
     return AIAnalysisService(MockASR(), loader, repo, {"api": {"debug": True}, "asr": {"provider": "mock"}})
+
+
+def _tone(path: Path, seconds: float = 1.2, sample_rate: int = 16000) -> Path:
+    t = np.linspace(0.0, seconds, int(seconds * sample_rate), endpoint=False)
+    waveform = 0.2 * np.sin(2.0 * np.pi * 220.0 * t)
+    sf.write(str(path), waveform.astype(np.float32), sample_rate)
+    return path
+
+
+class WrongLowConfidenceASR:
+    provider = "wrong_low_confidence"
+    model_size = "test-asr"
+
+    def transcribe(self, audio_path: str, **kwargs):
+        return {
+            "transcript": "justice",
+            "confidence": 0.1,
+            "provider": self.provider,
+            "model_used": self.model_size,
+            "asr_route": "wav2vec2_only",
+        }
 
 
 def test_mock_asr_transcript_flows_into_reading_analyzer(tmp_path: Path) -> None:
@@ -90,6 +114,35 @@ def test_audio_analysis_applies_dynamic_expected_word_correction(tmp_path: Path)
     assert response.correction_strategy_used == "dynamic_asr_spelling_variant"
     assert response.dynamic_correction_sub_strategy == "vowel_tolerant_consonant_skeleton_match"
     assert response.asr_spelling_variant_applied is True
+
+
+def test_wrong_audible_low_confidence_transcript_is_not_retry_required(tmp_path: Path) -> None:
+    audio = _tone(tmp_path / "valid-wrong.wav")
+    base = _service(tmp_path)
+    service = AIAnalysisService(WrongLowConfidenceASR(), base.cmudict_loader, base.content_repository, {
+        "api": {"debug": True},
+        "asr": {"provider": "wrong_low_confidence"},
+        "audio_quality": {
+            "min_duration_seconds": 1.0,
+            "enable_quality_gate": True,
+            "retry_on_bad_quality": True,
+        },
+        "transcript_normalization": {
+            "low_confidence_threshold": 0.5,
+        },
+    })
+
+    response = service.analyze_audio(AnalyzeAudioRequest(audio_path=str(audio), expected_text="cat", debug=True))
+
+    assert response.ok is True
+    assert response.raw_transcript == "justice"
+    assert response.displayed_transcript == "justice"
+    assert response.accepted is False
+    assert response.is_correct is False
+    assert response.retry_required is False
+    assert response.quality_gate_failed is False
+    assert "low_asr_confidence" not in response.uncertainty_reasons
+    assert any("low" in note.lower() for note in response.developer_quality_notes)
 
 
 def test_missing_audio_path_returns_safe_error(tmp_path: Path) -> None:
