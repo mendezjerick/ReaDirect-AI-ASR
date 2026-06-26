@@ -236,7 +236,6 @@ def dataset_distribution(dataset: Any) -> dict[str, int]:
 
 
 def prepare_alpha_dataset(dataset: Any, processor: Any, config: dict[str, Any]):
-    sample_rate = int(config["data"].get("sample_rate", 16000))
     vocab = set(processor.tokenizer.get_vocab().keys())
 
     def prepare(row: dict[str, Any]) -> dict[str, Any]:

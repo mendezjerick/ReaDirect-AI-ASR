@@ -36,10 +36,10 @@ class FasterWhisperASR(ASRProvider):
 
     def is_available(self) -> bool:
         try:
-            import faster_whisper  # noqa: F401
+            from faster_whisper import WhisperModel
         except ImportError:
             return False
-        return True
+        return WhisperModel is not None
 
     def _load_model(self) -> Any:
         try:
@@ -123,4 +123,3 @@ class FasterWhisperASR(ASRProvider):
                 processing_seconds=round(time.perf_counter() - started, 3),
                 error=str(exc),
             )
-

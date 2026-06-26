@@ -1067,7 +1067,6 @@ def _expand_operation(operation: dict[str, Any], chunk_index: int) -> list[dict[
     expected_words = list(operation.get("expected_words", []) or [])
     recognized_words = list(operation.get("recognized_words", []) or [])
     recognized_chunk = str(operation.get("recognized_chunk", ""))
-    expected_chunk = str(operation.get("expected_chunk", ""))
     chunk_id = f"chunk_{chunk_index:03d}"
 
     if not expected_words:

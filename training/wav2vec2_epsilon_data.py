@@ -20,7 +20,6 @@ from training.wav2vec2_delta_data import (
     SOURCE_SLR83,
     _manifest_valid_rows,
     _sample_to_count,
-    load_delta_gigaspeech_sample,
     parse_slr83_rows,
 )
 from training.wav2vec2_manifest_utils import resolve_repo_path

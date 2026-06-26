@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from readirect_asr.scoring.answer_matching import match_answer, normalize_answer, parse_accepted_answers
+from readirect_asr.scoring.answer_matching import match_answer, parse_accepted_answers
 from readirect_asr.scoring.feedback_hints import generate_feedback_hint
 from readirect_asr.scoring.phoneme_comparison import compare_phonemes
 from readirect_asr.scoring.skill_signals import infer_skill_signal
@@ -116,4 +116,3 @@ def _result(
         "confidence": "heuristic",
         "explanation": explanation,
     }
-

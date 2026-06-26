@@ -36,8 +36,9 @@ def main() -> int:
     if provider not in VALID_PROVIDERS:
         errors.append(f"invalid ASR_PROVIDER: {provider}")
     try:
-        import api.main  # noqa: F401
+        import api.main as api_main
 
+        getattr(api_main, "__name__", None)
         checks.append("FastAPI app imports successfully")
     except Exception as exc:
         errors.append(f"FastAPI import failed: {exc}")
@@ -60,8 +61,9 @@ def main() -> int:
         except Exception as exc:
             errors.append(f"{package} unavailable or failed to import: {exc}")
     try:
-        import g2p_en  # noqa: F401
+        import g2p_en
 
+        getattr(g2p_en, "__name__", None)
         checks.append("g2p_en installed")
     except Exception as exc:
         warnings.append(f"g2p_en unavailable; expected phoneme generation will use CMUdict/custom letter dictionary first: {exc}")

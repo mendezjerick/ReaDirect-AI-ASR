@@ -26,7 +26,6 @@ def missing_audio_paths(df: pd.DataFrame, audio_base_path: str | Path = ".") -> 
         return missing
 
     for value in df["audio_path"].fillna(""):
-        audio_path = Path(str(value))
         candidate = _resolve_audio_candidate(str(value), audio_base_path)
         if str(value).strip() and not candidate.exists():
             missing.append(str(value))

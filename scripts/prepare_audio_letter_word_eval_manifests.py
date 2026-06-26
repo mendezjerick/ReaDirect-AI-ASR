@@ -13,7 +13,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from training.wav2vec2_manifest_utils import audio_info, make_manifest_row, resolve_repo_path, write_jsonl
+from training.wav2vec2_manifest_utils import make_manifest_row, resolve_repo_path, write_jsonl
 
 
 LETTERS = list(string.ascii_uppercase)
