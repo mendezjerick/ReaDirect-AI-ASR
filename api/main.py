@@ -4,9 +4,11 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -51,6 +53,56 @@ def load_active_asr_model() -> None:
     provider = get_service().asr_provider
     if hasattr(provider, "warmup"):
         provider.warmup()
+
+
+@app.get("/live")
+def live() -> dict[str, str]:
+    return {
+        "status": "alive",
+        "service": SERVICE_NAME,
+    }
+
+
+@app.get("/ready", response_model=None)
+def ready() -> dict[str, Any] | JSONResponse:
+    try:
+        service = get_service()
+        provider_status = service.asr_provider.status() if hasattr(service.asr_provider, "status") else {}
+        provider_name = service.provider_name
+        missing_paths = list(provider_status.get("missing_model_paths", []) or [])
+        warnings = list(provider_status.get("warnings", []) or [])
+        mock_provider = provider_name == "mock"
+        model_loaded = bool(provider_status.get("asr_model_loaded", mock_provider))
+        processor_loaded = bool(provider_status.get("processor_loaded", mock_provider))
+        local_model_paths_loaded = not missing_paths
+        service_ready = bool(model_loaded and local_model_paths_loaded and (mock_provider or processor_loaded))
+        payload = {
+            "status": "ready" if service_ready else "not_ready",
+            "service": SERVICE_NAME,
+            "provider": provider_name,
+            "model_loaded": model_loaded,
+            "processor_loaded": processor_loaded,
+            "local_model_paths_loaded": local_model_paths_loaded,
+            "missing_model_paths_count": len(missing_paths),
+            "warnings_count": len(warnings),
+        }
+    except Exception:
+        payload = {
+            "status": "not_ready",
+            "service": SERVICE_NAME,
+            "provider": "unknown",
+            "model_loaded": False,
+            "processor_loaded": False,
+            "local_model_paths_loaded": False,
+            "missing_model_paths_count": 0,
+            "warnings_count": 0,
+        }
+        return JSONResponse(status_code=503, content=payload)
+
+    if service_ready:
+        return payload
+
+    return JSONResponse(status_code=503, content=payload)
 
 
 @app.get("/health", response_model=HealthResponse)

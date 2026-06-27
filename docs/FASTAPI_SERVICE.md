@@ -13,6 +13,8 @@ The FastAPI service is the Laravel-facing API for ReaDirect AI/ASR analysis.
 
 ## Endpoints
 
+- `GET /live`
+- `GET /ready`
 - `GET /health`
 - `GET /version`
 - `POST /analyze-text`
@@ -39,6 +41,12 @@ Health check:
 ```powershell
 Invoke-WebRequest http://127.0.0.1:8001/health -UseBasicParsing
 ```
+
+Runtime status endpoints:
+
+- `GET /live` is a lightweight process liveness check. It returns HTTP 200 when the FastAPI process can answer requests and does not require or trigger ASR model loading.
+- `GET /ready` is the ASR readiness check. It returns HTTP 200 only when the current provider/model state is ready for ASR requests, and HTTP 503 when the provider is not ready. It reports safe summary fields and does not expose model file paths.
+- `GET /health` is the legacy detailed health and diagnostics endpoint. Keep existing callers on `/health` until Laravel or deployment scripts are explicitly migrated to `/live` and `/ready`.
 
 Text smoke test:
 
