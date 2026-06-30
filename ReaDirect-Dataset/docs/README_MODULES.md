@@ -16,16 +16,16 @@ Module CSVs are item banks. When a learner starts or resumes a module, the syste
 
 Practice activities may select a small set of active items for the requested activity type. Mini mastery checks select 10 active mastery items for the module attempt. The UI should read from locked `module_attempt_items`, not directly from random item-bank queries.
 
-## Module Bank Expansion
+## Module Bank Sync
 
-The module activity banks were expanded to 500 active rows per module CSV while preserving the existing headers, module keys, activity type names, mastery flags, and selection-rule behavior.
+The module activity banks mirror the Laravel seed-data source of truth and use lesson-specific activity keys.
 
-- Module 1 uses five 100-row segments: `hear_and_repeat`, `see_letter_say_sound`, `match_sound_to_letter`, `sound_drill`, and `mastery_check`.
-- Module 2 uses five 100-row segments: `read_word`, `word_family_drill`, `minimal_pair`, `word_accuracy_challenge`, and `mastery_check`.
-- Module 3 uses five 80-row practice segments plus a 100-row mastery segment: `read_sentence`, `read_with_coach`, `timed_sentence_reading`, `pause_practice`, `fluency_challenge`, and `mastery_check`.
-- `module_activity_selection_rules.csv`, the `rules` folder, mastery decisions, scoring rules, agents, prompts, feedback logic, and runtime behavior were not changed.
+- Module 1 uses four lesson segments plus `mastery_check`: `letter_pair_identification`, `highlighted_first_letter`, `first_letter_identification`, and `missing_first_letter`.
+- Module 2 uses four lesson segments plus `mastery_check`: `display_word_reading`, `split_word_reading`, `highlighted_rhyme_word`, and `highlighted_sentence_word`.
+- Module 3 uses four lesson segments plus `mastery_check`: `simple_sentence_reading`, `comma_pause_reading`, `full_stop_pause_reading`, and `mixed_punctuation_fluency`.
+- `module_activity_selection_rules.csv` keeps four active lesson boxes per module and separate module mastery checks.
 
-Run `python scripts/generate_module_datasets.py` from the repository root to regenerate the expanded module banks. Run `python scripts/validate_module_datasets.py` to check row counts, required columns, IDs, sequences, activity segment counts, mastery flags, active flags, and accepted-answer alignment.
+Run `python scripts/generate_module_datasets.py` from the repository root to sync the module banks from the Laravel seed-data folder. Run `python scripts/validate_module_datasets.py` to check row counts, required columns, prompt IDs, activity segment counts, mastery flags, and accepted-answer alignment.
 
 ## Feedback and Decisions
 

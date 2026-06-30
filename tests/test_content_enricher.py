@@ -16,7 +16,7 @@ def _loader(tmp_path: Path) -> CMUDictLoader:
 
 
 def test_enriches_single_word_cat(tmp_path: Path) -> None:
-    result = ContentEnricher(_loader(tmp_path)).enrich_row({"expected_text": "cat", "module_key": "module_2", "activity_type": "read_word"})
+    result = ContentEnricher(_loader(tmp_path)).enrich_row({"expected_text": "cat", "module_key": "module_2", "activity_type": "display_word_reading"})
     assert result["expected_phonemes"] == "K AE T"
     assert result["phoneme_pattern"] == "CVC"
     assert result["skill_group"] == "word_reading"
@@ -31,7 +31,7 @@ def test_handles_missing_cmudict_word(tmp_path: Path) -> None:
 
 def test_enriches_sentence_and_letter(tmp_path: Path) -> None:
     enricher = ContentEnricher(_loader(tmp_path))
-    sentence = enricher.enrich_row({"expected_text": "red cat sat", "module_key": "module_3", "activity_type": "read_sentence"})
+    sentence = enricher.enrich_row({"expected_text": "red cat sat", "module_key": "module_3", "activity_type": "simple_sentence_reading"})
     letter = enricher.enrich_row({"expected_text": "A", "module_key": "module_1", "activity_type": "letter_sound"})
     assert sentence["skill_group"] == "sentence_reading"
     assert sentence["word_count"] == 3
@@ -44,4 +44,3 @@ def test_enrich_dataframe(tmp_path: Path) -> None:
     enriched = ContentEnricher(_loader(tmp_path)).enrich_dataframe(df)
     assert enriched.loc[0, "prompt_id"] == "M2-001"
     assert enriched.loc[0, "expected_phonemes"] == "K AE T"
-

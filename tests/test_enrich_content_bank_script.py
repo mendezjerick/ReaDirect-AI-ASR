@@ -16,7 +16,7 @@ def _cmu(tmp_path: Path) -> Path:
 
 def test_script_runs_on_tiny_content_index(tmp_path: Path) -> None:
     index = tmp_path / "content_index.csv"
-    pd.DataFrame([{"prompt_id": "M2-001", "source_file": "module2_word_reading_activities.csv", "source_group": "modules", "module_key": "module_2", "activity_type": "read_word", "expected_text": "cat", "prompt_text": "Read cat"}]).to_csv(index, index=False)
+    pd.DataFrame([{"prompt_id": "M2-001", "source_file": "module2_word_reading_activities.csv", "source_group": "modules", "module_key": "module_2", "activity_type": "display_word_reading", "expected_text": "cat", "prompt_text": "Read cat"}]).to_csv(index, index=False)
     output = tmp_path / "out"
     df = script.enrich_content_bank(tmp_path / "empty", _cmu(tmp_path), output, content_index=index)
     assert (output / "enriched_content_index.csv").exists()
@@ -29,4 +29,3 @@ def test_dry_run_writes_nothing(tmp_path: Path) -> None:
     output = tmp_path / "out"
     script.enrich_content_bank(tmp_path / "empty", _cmu(tmp_path), output, content_index=index, dry_run=True)
     assert not output.exists()
-

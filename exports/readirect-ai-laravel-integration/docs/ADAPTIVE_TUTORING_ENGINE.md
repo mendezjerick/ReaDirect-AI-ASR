@@ -92,7 +92,7 @@ Example request:
     {
       "prompt_id": "M2-014",
       "module_key": "module_2",
-      "activity_type": "read_word",
+      "activity_type": "display_word_reading",
       "prompt_text": "Read the word.",
       "expected_text": "hat",
       "error_focus": "final_consonant",

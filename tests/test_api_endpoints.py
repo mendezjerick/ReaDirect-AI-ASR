@@ -10,7 +10,7 @@ client = TestClient(app)
 
 def test_version_and_content_item_endpoints() -> None:
     version = client.get("/version")
-    content = client.post("/content-item", json={"expected_text": "cat", "module_key": "module_2", "activity_type": "read_word"})
+    content = client.post("/content-item", json={"expected_text": "cat", "module_key": "module_2", "activity_type": "display_word_reading"})
     assert version.status_code == 200
     assert version.json()["service"] == "ReaDirect AI/ASR Service"
     assert content.status_code == 200

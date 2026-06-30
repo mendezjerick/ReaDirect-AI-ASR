@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate ReaDirect module activity CSV banks."""
+"""Validate the AI-ASR copy of the current ReaDirect module CSV banks."""
 
 from __future__ import annotations
 
@@ -12,91 +12,99 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ROOT / "modules"
 
+COMMON_REQUIRED_COLUMNS = [
+    "prompt_id",
+    "source_file",
+    "source_group",
+    "module_key",
+    "task_type",
+    "activity_type",
+    "prompt_text",
+    "expected_text",
+    "accepted_answers",
+    "is_active",
+    "is_mastery_item",
+    "metadata",
+]
+
 MODULE_SPECS = {
     "module1_letter_sound_activities.csv": {
         "module_key": "module_1",
-        "header": [
-            "id",
-            "module_key",
-            "activity_type",
-            "sequence",
-            "prompt_text",
-            "expected_answer",
-            "accepted_answers",
-            "difficulty",
-            "points",
-            "is_mastery_item",
-            "is_active",
-        ],
+        "required_columns": COMMON_REQUIRED_COLUMNS,
         "counts": {
-            "hear_and_repeat": 100,
-            "see_letter_say_sound": 100,
-            "match_sound_to_letter": 100,
-            "sound_drill": 100,
-            "mastery_check": 100,
+            "letter_pair_identification": 26,
+            "highlighted_first_letter": 26,
+            "first_letter_identification": 26,
+            "missing_first_letter": 26,
+            "mastery_check": 26,
         },
     },
     "module2_word_reading_activities.csv": {
         "module_key": "module_2",
-        "header": [
-            "id",
-            "module_key",
-            "activity_type",
-            "sequence",
-            "prompt_text",
-            "target_word",
-            "expected_answer",
-            "accepted_answers",
-            "word_family",
-            "difficulty",
-            "points",
-            "is_mastery_item",
-            "is_active",
-        ],
+        "required_columns": COMMON_REQUIRED_COLUMNS,
         "counts": {
-            "read_word": 100,
-            "word_family_drill": 100,
-            "minimal_pair": 100,
-            "word_accuracy_challenge": 100,
-            "mastery_check": 100,
+            "display_word_reading": 50,
+            "split_word_reading": 30,
+            "highlighted_rhyme_word": 34,
+            "highlighted_sentence_word": 25,
+            "mastery_check": 25,
         },
     },
     "module3_sentence_fluency_activities.csv": {
         "module_key": "module_3",
-        "header": [
-            "id",
-            "module_key",
-            "activity_type",
-            "sequence",
-            "prompt_text",
-            "expected_answer",
-            "accepted_answers",
-            "difficulty",
-            "points",
-            "is_mastery_item",
-            "is_active",
+        "required_columns": [
+            *COMMON_REQUIRED_COLUMNS,
+            "target_read_time_seconds",
+            "min_fluent_time_seconds",
+            "max_fluent_time_seconds",
+            "target_wcpm",
+            "min_expected_wcpm",
+            "max_expected_wcpm",
+            "pace_feedback_rule",
+            "pace_mastery_required",
         ],
         "counts": {
-            "read_sentence": 80,
-            "read_with_coach": 80,
-            "timed_sentence_reading": 80,
-            "pause_practice": 80,
-            "fluency_challenge": 80,
-            "mastery_check": 100,
+            "simple_sentence_reading": 50,
+            "comma_pause_reading": 50,
+            "full_stop_pause_reading": 35,
+            "mixed_punctuation_fluency": 35,
+            "mastery_check": 36,
+        },
+    },
+    "module_activity_selection_rules.csv": {
+        "module_key": None,
+        "required_columns": [
+            "prompt_id",
+            "source_file",
+            "source_group",
+            "module_key",
+            "activity_type",
+            "is_active",
+            "metadata",
+        ],
+        "counts": {
+            "letter_pair_identification": 1,
+            "highlighted_first_letter": 1,
+            "first_letter_identification": 1,
+            "missing_first_letter": 1,
+            "display_word_reading": 1,
+            "split_word_reading": 1,
+            "highlighted_rhyme_word": 1,
+            "highlighted_sentence_word": 1,
+            "simple_sentence_reading": 1,
+            "comma_pause_reading": 1,
+            "full_stop_pause_reading": 1,
+            "mixed_punctuation_fluency": 1,
+            "mastery_check": 3,
         },
     },
 }
 
 
-def load_csv(path: Path, expected_header: list[str]) -> list[dict[str, str]]:
+def load_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
-        if reader.fieldnames != expected_header:
-            raise ValueError(
-                f"{path.relative_to(ROOT)} has columns {reader.fieldnames}, "
-                f"expected {expected_header}"
-            )
-        return list(reader)
+        return list(reader.fieldnames or []), list(reader)
 
 
 def require(condition: bool, message: str, errors: list[str]) -> None:
@@ -104,27 +112,26 @@ def require(condition: bool, message: str, errors: list[str]) -> None:
         errors.append(message)
 
 
+def truthy(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes"}
+
+
 def validate_file(filename: str, spec: dict[str, object], errors: list[str]) -> None:
-    rows = load_csv(MODULES / filename, spec["header"])  # type: ignore[arg-type]
+    header, rows = load_csv(MODULES / filename)
+    required_columns = spec["required_columns"]  # type: ignore[assignment]
     expected_counts = spec["counts"]  # type: ignore[assignment]
-    module_key = spec["module_key"]
+    expected_total = sum(Counter(expected_counts).values())
+    expected_module_key = spec["module_key"]
 
-    require(len(rows) == 500, f"{filename} has {len(rows)} rows, expected 500", errors)
+    missing = [column for column in required_columns if column not in header]
+    require(not missing, f"{filename} is missing required columns: {missing}", errors)
+    require(len(rows) == expected_total, f"{filename} has {len(rows)} rows, expected {expected_total}", errors)
 
-    ids = [row["id"] for row in rows]
+    ids = [row["prompt_id"] for row in rows if "prompt_id" in row]
     duplicate_ids = [item_id for item_id, count in Counter(ids).items() if count > 1]
-    require(not duplicate_ids, f"{filename} has duplicate IDs: {duplicate_ids}", errors)
+    require(not duplicate_ids, f"{filename} has duplicate prompt IDs: {duplicate_ids}", errors)
 
-    sequences = []
-    for row in rows:
-        try:
-            sequences.append(int(row["sequence"]))
-        except ValueError:
-            errors.append(f"{filename} row {row['id']} has nonnumeric sequence {row['sequence']}")
-
-    require(sorted(sequences) == list(range(1, 501)), f"{filename} sequences must be 1-500", errors)
-
-    actual_counts = Counter(row["activity_type"] for row in rows)
+    actual_counts = Counter(row.get("activity_type", "") for row in rows)
     require(
         actual_counts == Counter(expected_counts),
         f"{filename} activity counts are {dict(actual_counts)}, expected {expected_counts}",
@@ -132,30 +139,22 @@ def validate_file(filename: str, spec: dict[str, object], errors: list[str]) -> 
     )
 
     for row in rows:
-        row_id = row["id"]
-        activity_type = row["activity_type"]
-        accepted = [answer.strip().casefold() for answer in row["accepted_answers"].split("|")]
-        expected = row["expected_answer"].strip().casefold()
+        row_id = row.get("prompt_id", "<missing>")
+        activity_type = row.get("activity_type", "")
+        expected = row.get("expected_text", "").strip().casefold()
+        accepted = [answer.strip().casefold() for answer in row.get("accepted_answers", "").split("|") if answer.strip()]
 
-        require(row["module_key"] == module_key, f"{filename} {row_id} has wrong module_key", errors)
+        if expected_module_key:
+            require(row.get("module_key") == expected_module_key, f"{filename} {row_id} has wrong module_key", errors)
         require(activity_type in expected_counts, f"{filename} {row_id} has unknown activity_type", errors)
-        require(bool(row["prompt_text"].strip()), f"{filename} {row_id} has blank prompt_text", errors)
-        require(bool(row["expected_answer"].strip()), f"{filename} {row_id} has blank expected_answer", errors)
-        require(expected in accepted, f"{filename} {row_id} accepted_answers omit expected_answer", errors)
-        require(row["points"] == "1", f"{filename} {row_id} points must be 1", errors)
-        require(row["is_active"] == "1", f"{filename} {row_id} must be active", errors)
-        require(
-            row["is_mastery_item"] == ("1" if activity_type == "mastery_check" else "0"),
-            f"{filename} {row_id} has incorrect is_mastery_item",
-            errors,
-        )
-
-        if filename.startswith("module2"):
-            require(bool(row["target_word"].strip()), f"{filename} {row_id} has blank target_word", errors)
-            require(bool(row["word_family"].strip()), f"{filename} {row_id} has blank word_family", errors)
+        require(activity_type or filename == "module_activity_selection_rules.csv", f"{filename} {row_id} has blank activity_type", errors)
+        if filename != "module_activity_selection_rules.csv":
+            require(bool(row.get("prompt_text", "").strip()), f"{filename} {row_id} has blank prompt_text", errors)
+            require(bool(expected), f"{filename} {row_id} has blank expected_text", errors)
+            require(expected in accepted, f"{filename} {row_id} accepted_answers omit expected_text", errors)
             require(
-                row["target_word"].strip().casefold() == expected,
-                f"{filename} {row_id} target_word must match expected_answer",
+                truthy(row.get("is_mastery_item", "")) == (activity_type == "mastery_check"),
+                f"{filename} {row_id} has incorrect is_mastery_item",
                 errors,
             )
 
@@ -176,7 +175,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print("Validation passed: each module CSV has 500 rows with valid segments and answers.")
+    print("Validation passed: module CSVs match the current lesson activity keys and row counts.")
     return 0
 
 

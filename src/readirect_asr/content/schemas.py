@@ -10,10 +10,10 @@ ASSESSMENT_SCHEMAS: dict[str, list[str]] = {
 }
 
 MODULE_SCHEMAS: dict[str, list[str]] = {
-    "module1_letter_sound_activities.csv": ["id", "module_key", "activity_type", "prompt_text", "expected_answer", "accepted_answers", "is_active"],
-    "module2_word_reading_activities.csv": ["id", "module_key", "activity_type", "prompt_text", "expected_answer", "accepted_answers", "is_active"],
-    "module3_sentence_fluency_activities.csv": ["id", "module_key", "activity_type", "prompt_text", "expected_answer", "accepted_answers", "is_active"],
-    "module_activity_selection_rules.csv": ["id", "module_key", "activity_type", "is_active"],
+    "module1_letter_sound_activities.csv": ["prompt_id", "module_key", "activity_type", "prompt_text", "expected_text", "accepted_answers", "is_active"],
+    "module2_word_reading_activities.csv": ["prompt_id", "module_key", "activity_type", "prompt_text", "expected_text", "accepted_answers", "is_active"],
+    "module3_sentence_fluency_activities.csv": ["prompt_id", "module_key", "activity_type", "prompt_text", "expected_text", "accepted_answers", "is_active"],
+    "module_activity_selection_rules.csv": ["prompt_id", "module_key", "activity_type", "is_active"],
     "module_feedback_templates.csv": ["id", "module_key", "activity_type", "error_type", "feedback_text", "is_active"],
     "mastery_thresholds.csv": ["id"],
 }
@@ -51,4 +51,3 @@ OPTIONAL_CONTENT_FILES = [
     "rules/crla_classification_rules.csv",
     "rules/module_mastery_rules.csv",
 ]
-

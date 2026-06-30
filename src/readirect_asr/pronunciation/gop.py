@@ -66,12 +66,6 @@ LETTER_SOUND_PHONEMES = {
 
 LETTER_SOUND_HINTS = {
     "letter_sound",
-    "sound_drill",
-    "see_letter_say_sound",
-    "match_sound_to_letter",
-    "hear_and_repeat",
-    "listen_and_say",
-    "mastery_check",
 }
 
 ARPABET_TO_MODEL_LABELS = {

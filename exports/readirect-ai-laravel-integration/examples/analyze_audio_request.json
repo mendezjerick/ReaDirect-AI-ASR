@@ -6,7 +6,7 @@
   ],
   "prompt_id": "M2-001",
   "module_key": "module_2",
-  "activity_type": "read_word",
+  "activity_type": "display_word_reading",
   "learner_history": [],
   "debug": false
 }

@@ -143,7 +143,7 @@ Example:
   ],
   "current_context": {
     "module_key": "module_2",
-    "activity_type": "read_word"
+    "activity_type": "display_word_reading"
   },
   "candidate_items": [],
   "top_k": 5

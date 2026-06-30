@@ -195,8 +195,13 @@ class ContentEnricher:
             if "sequence" in question or "first" in question or "next" in question:
                 return "sequencing"
             return "comprehension_detail"
-        if "sentence" in activity or "fluency" in activity:
-            return "fluency_pacing" if "timed" in activity or "fluency" in activity else "sentence_tracking"
+        if "sentence" in activity or "fluency" in activity or "pause" in activity or "punctuation" in activity:
+            pacing_lesson = (
+                "comma_pause_reading",
+                "full_stop_pause_reading",
+                "mixed_punctuation_fluency",
+            )
+            return "fluency_pacing" if activity in pacing_lesson or "fluency" in activity else "sentence_tracking"
         vowels = extract_vowel_phonemes(phonemes)
         pattern = str(enrichment.get("phoneme_pattern") or self.infer_phoneme_pattern(phonemes))
         if pattern == "CVC" and vowels:
@@ -299,4 +304,3 @@ class ContentEnricher:
     @staticmethod
     def metadata_json(value: Any) -> str:
         return json.dumps(value, ensure_ascii=True, sort_keys=True)
-

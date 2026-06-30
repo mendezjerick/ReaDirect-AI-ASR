@@ -114,7 +114,7 @@ def _write_laravel_env(path: Path) -> None:
 
 def _write_examples(folder: Path) -> None:
     examples = {
-        "analyze_audio_request.json": {"audio_path": "data/samples/sample.wav", "expected_text": "cat", "accepted_answers": ["cat"], "prompt_id": "M2-001", "module_key": "module_2", "activity_type": "read_word", "learner_history": [], "debug": False},
+        "analyze_audio_request.json": {"audio_path": "data/samples/sample.wav", "expected_text": "cat", "accepted_answers": ["cat"], "prompt_id": "M2-001", "module_key": "module_2", "activity_type": "display_word_reading", "learner_history": [], "debug": False},
         "analyze_audio_response.json": {"ok": True, "request_id": "uuid", "transcript": "cat", "normalized_transcript": "cat", "provider": "hf_whisper_local", "expected_text": "cat", "is_correct": True, "similarity_label": "exact", "error_type": "correct", "warnings": [], "error": None},
         "analyze_text_request.json": {"expected_text": "cat", "actual_text": "cap", "accepted_answers": ["cat"], "debug": True},
         "recommend_next_request.json": {"learner_history": [{"error_type": "final_sound_error", "skill_signal": "final_consonant", "is_correct": False}], "candidate_items": [{"prompt_id": "M2-014", "expected_text": "hat", "error_focus": "final_consonant", "difficulty_level": "easy"}]},
